@@ -7,7 +7,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-logo">
         <span role="img" aria-label="logo" style={{ fontSize: 28, marginRight: 8 }}>🌙</span>
-        <span className="navbar-title">HealthBridge</span>
+        <span className="navbar-title">CareSync</span>
       </div>
       <div className="navbar-links">
         <Link to="/" className={location.pathname === "/" ? "active" : ""}>Dashboard</Link>

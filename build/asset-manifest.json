@@ -1,10 +1,45 @@
 {
   "files": {
-    "main.js": "/static/js/main.af6ec3cf.js",
+    "main.css": "/static/css/main.b0ae3f24.css",
+    "main.js": "/static/js/main.0d29f102.js",
+    "static/media/roboto-latin-900-normal.woff2": "/static/media/roboto-latin-900-normal.7e398a127a40e6b5372a.woff2",
+    "static/media/roboto-math-900-normal.woff2": "/static/media/roboto-math-900-normal.acfb3cd2ce1231b457a4.woff2",
+    "static/media/roboto-latin-900-normal.woff": "/static/media/roboto-latin-900-normal.1b9ada5b62af4a9d7551.woff",
+    "static/media/roboto-math-900-normal.woff": "/static/media/roboto-math-900-normal.57c9d0803b71298974b2.woff",
+    "static/media/roboto-cyrillic-ext-900-normal.woff2": "/static/media/roboto-cyrillic-ext-900-normal.bb37f5fe792d8cd658d4.woff2",
+    "static/media/fira-mono-latin-400-normal.woff2": "/static/media/fira-mono-latin-400-normal.ef008d89a73446532e23.woff2",
+    "static/media/fira-mono-cyrillic-ext-400-normal.woff2": "/static/media/fira-mono-cyrillic-ext-400-normal.0e5c9afd1ddaa65ae66a.woff2",
+    "static/media/roboto-cyrillic-ext-900-normal.woff": "/static/media/roboto-cyrillic-ext-900-normal.5659821b3e52a1e419f7.woff",
+    "static/media/fira-mono-latin-400-normal.woff": "/static/media/fira-mono-latin-400-normal.f07ebe15a13e05cf511c.woff",
+    "static/media/roboto-latin-ext-900-normal.woff2": "/static/media/roboto-latin-ext-900-normal.119899de64a8da611bf5.woff2",
+    "static/media/fira-mono-cyrillic-ext-400-normal.woff": "/static/media/fira-mono-cyrillic-ext-400-normal.d21b116da20f0aaff0ca.woff",
+    "static/media/roboto-latin-ext-900-normal.woff": "/static/media/roboto-latin-ext-900-normal.b622142c315c747feee4.woff",
+    "static/media/fira-mono-latin-ext-400-normal.woff2": "/static/media/fira-mono-latin-ext-400-normal.5ac496d2000b50cc5885.woff2",
+    "static/media/roboto-cyrillic-900-normal.woff2": "/static/media/roboto-cyrillic-900-normal.4f8aec453ac25e217272.woff2",
+    "static/media/roboto-symbols-900-normal.woff2": "/static/media/roboto-symbols-900-normal.d9b54f5c95cc9239294c.woff2",
+    "static/media/fira-mono-greek-400-normal.woff2": "/static/media/fira-mono-greek-400-normal.56f6c33e3fb0e1e5605d.woff2",
+    "static/media/fira-mono-latin-ext-400-normal.woff": "/static/media/fira-mono-latin-ext-400-normal.9556071f1ac193dc2770.woff",
+    "static/media/roboto-cyrillic-900-normal.woff": "/static/media/roboto-cyrillic-900-normal.ecb9e39977ea7913d9f2.woff",
+    "static/media/roboto-greek-900-normal.woff2": "/static/media/roboto-greek-900-normal.0b67ab057780ea2c7c2a.woff2",
+    "static/media/fira-mono-cyrillic-400-normal.woff2": "/static/media/fira-mono-cyrillic-400-normal.f97c73d60507dd507eeb.woff2",
+    "static/media/roboto-symbols-900-normal.woff": "/static/media/roboto-symbols-900-normal.55cac60c0d9ff9c0baf8.woff",
+    "static/media/fira-mono-greek-400-normal.woff": "/static/media/fira-mono-greek-400-normal.5e4973f24002fc12fb1e.woff",
+    "static/media/roboto-vietnamese-900-normal.woff2": "/static/media/roboto-vietnamese-900-normal.b6e4898bbf6308f31114.woff2",
+    "static/media/fira-mono-greek-ext-400-normal.woff2": "/static/media/fira-mono-greek-ext-400-normal.3c4824d9b24a922f30e0.woff2",
+    "static/media/fira-mono-cyrillic-400-normal.woff": "/static/media/fira-mono-cyrillic-400-normal.5fda0981582b4ce76652.woff",
+    "static/media/roboto-greek-900-normal.woff": "/static/media/roboto-greek-900-normal.314db5c94047dc831ef0.woff",
+    "static/media/fira-mono-greek-ext-400-normal.woff": "/static/media/fira-mono-greek-ext-400-normal.f562c767eb3b3ce5faee.woff",
+    "static/media/roboto-vietnamese-900-normal.woff": "/static/media/roboto-vietnamese-900-normal.fd2a7d7d8bbc0c4c40f8.woff",
+    "static/media/fira-mono-symbols2-400-normal.woff2": "/static/media/fira-mono-symbols2-400-normal.09d56bb38014129726a5.woff2",
+    "static/media/fira-mono-symbols2-400-normal.woff": "/static/media/fira-mono-symbols2-400-normal.589563c8172c95ac9157.woff",
+    "static/media/roboto-greek-ext-900-normal.woff2": "/static/media/roboto-greek-ext-900-normal.3e12789243d35bac4725.woff2",
+    "static/media/roboto-greek-ext-900-normal.woff": "/static/media/roboto-greek-ext-900-normal.9d6f8edf79b6f005d852.woff",
     "index.html": "/index.html",
-    "main.af6ec3cf.js.map": "/static/js/main.af6ec3cf.js.map"
+    "main.b0ae3f24.css.map": "/static/css/main.b0ae3f24.css.map",
+    "main.0d29f102.js.map": "/static/js/main.0d29f102.js.map"
   },
   "entrypoints": [
-    "static/js/main.af6ec3cf.js"
+    "static/css/main.b0ae3f24.css",
+    "static/js/main.0d29f102.js"
   ]
 }

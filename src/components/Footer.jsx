@@ -4,10 +4,10 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div>
-        &copy; {new Date().getFullYear()} <b>HealthBridge</b> &mdash; All rights reserved.
+        &copy; {new Date().getFullYear()} <b>CareSync</b> &mdash; All rights reserved.
       </div>
       <div className="footer-social">
-        <a href="https://github.com/MayankT10/HealthBridge" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+        <a href="https://github.com/vallabhatech/CareSync" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
           {/* GitHub SVG Logo */}
           <svg height="22" width="22" viewBox="0 0 16 16" fill="#b0b0b0" style={{ verticalAlign: 'middle' }}>
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
