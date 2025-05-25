@@ -32,7 +32,7 @@ This project was developed collaboratively during a hackathon by our team:
 ## 🌐 Live Demo
 
 You can try CareSync online here:  
-[https://health-bridge-dream-hacks.vercel.app/](https://health-bridge-dream-hacks.vercel.app/)
+
 
 ---
 
