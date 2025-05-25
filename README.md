@@ -33,7 +33,7 @@ This project was developed collaboratively during a hackathon by our team:
 ## 🌐 Live Demo
 
 You can try CareSync online here:  
-
+https://care-sync-iota.vercel.app/
 
 ---
 
