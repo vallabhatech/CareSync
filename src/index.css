@@ -1,0 +1,36 @@
+body {
+  font-family: 'Open Sans', Arial, sans-serif;
+  background: #f4f8fb;
+  margin: 0;
+  padding: 0;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', Arial, sans-serif;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  background: #e3f2fd;
+}
+::-webkit-scrollbar-thumb {
+  background: #1976d2;
+  border-radius: 4px;
+}
+/* Add to index.css */
+.dark-page-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #18181a 0%, #232526 100%);
+  color: #e0e0e0;
+  padding: 40px 0;
+}
+.dark-page-container {
+  max-width: 600px;
+  margin: 0 auto;
+  background: rgba(32,32,36,0.92);
+  border-radius: 18px;
+  box-shadow: 0 4px 32px 0 rgba(0,0,0,0.13);
+  padding: 36px 22px 28px 22px;
+}
