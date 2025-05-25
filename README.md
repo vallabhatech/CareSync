@@ -6,7 +6,7 @@ Accessible healthcare web app for medicine tracking, symptom checking, and smart
 
 ## 🚀 About
 
-**HealthBridge** was built as a team project during a hackathon to empower users with easy, accessible healthcare tools.  
+**CareSync** was built as a team project during a hackathon to empower users with easy, accessible healthcare tools.  
 Our goal: make health management simple, smart, and available to everyone.
 
 ---
@@ -25,15 +25,13 @@ Our goal: make health management simple, smart, and available to everyone.
 
 This project was developed collaboratively during a hackathon by our team:
 
-- [MayankT10](https://github.com/MayankT10)
-- [ram-mittal](https://github.com/ram-mittal)
-- [preetx77](https://github.com/preetx77)
+- [vallabhatech](https://github.com/vallabhatech)
 
 ---
 
 ## 🌐 Live Demo
 
-You can try HealthBridge online here:  
+You can try CareSync online here:  
 [https://health-bridge-dream-hacks.vercel.app/](https://health-bridge-dream-hacks.vercel.app/)
 
 ---
@@ -98,6 +96,6 @@ For major changes, please open an issue first to discuss what you would like to 
 
 ---
 
-**HealthBridge** — Empowering communities through accessible healthcare solutions.
+**CareSync** — Empowering communities through accessible healthcare solutions.
 
 
