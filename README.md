@@ -1,4 +1,4 @@
-# HealthBridge Web
+# CareSync Web
 
 Accessible healthcare web app for medicine tracking, symptom checking, and smart referrals.
 
@@ -26,6 +26,7 @@ Our goal: make health management simple, smart, and available to everyone.
 This project was developed collaboratively during a hackathon by our team:
 
 - [vallabhatech](https://github.com/vallabhatech)
+- [HazariThanusree-2005](https://github.com/HazariThanusree-2005)
 
 ---
 
