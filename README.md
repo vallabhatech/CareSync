@@ -43,6 +43,7 @@ https://care-sync-iota.vercel.app/
 - Material-UI (MUI)
 - OpenStreetMap Nominatim API
 - Custom CSS
+- Bootstrap
 
 ---
 
