@@ -174,11 +174,16 @@ export default function Dashboard() {
           margin-bottom: 7px;
           color: #1976d2;
           letter-spacing: 0.5px;
+          min-height: 3rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
         }
         .dashboard-card-desc {
           font-size: 1rem;
           color: #555;
-          margin-bottom: 20px;
+          margin-bottom: 24px;
           text-align: center;
         }
         .dashboard-card-btn {
@@ -191,6 +196,11 @@ export default function Dashboard() {
           font-size: 1rem;
           transition: background 0.2s, box-shadow 0.2s;
           box-shadow: 0 2px 8px 0 #1976d255;
+          margin-top: auto;
+          display: block;
+          width: 100%;
+          text-align: center;
+          box-sizing: border-box;
         }
         .dashboard-card-btn:hover {
           background: #43e97b;
