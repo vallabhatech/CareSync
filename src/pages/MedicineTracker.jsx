@@ -1,7 +1,26 @@
 import React, { useState } from 'react';
 
 export default function MedicineTracker() {
-  const [medicines, setMedicines] = useState([]);
+  const [medicines, setMedicines] = useState(() => {
+    const saved = localStorage.getItem('caresync_medicines');
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      // Ensure all loaded medicines have an id
+      return parsed.map(med => {
+        if (!med.id) {
+          return {
+            ...med,
+            id: Date.now().toString() + Math.random().toString(36).substring(2, 9)
+          };
+        }
+        return med;
+      });
+    } catch (e) {
+      return [];
+    }
+  });
+
   const [name, setName] = useState('');
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
@@ -11,11 +30,25 @@ export default function MedicineTracker() {
 
   const addMedicine = () => {
     if (name && time && date) {
-      setMedicines([...medicines, { name, time, date }]);
+      const newMed = {
+        id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+        name,
+        time,
+        date
+      };
+      const updated = [...medicines, newMed];
+      setMedicines(updated);
+      localStorage.setItem('caresync_medicines', JSON.stringify(updated));
       setName('');
       setTime('');
       setDate('');
     }
+  };
+
+  const deleteMedicine = (id) => {
+    const updated = medicines.filter(med => med.id !== id);
+    setMedicines(updated);
+    localStorage.setItem('caresync_medicines', JSON.stringify(updated));
   };
 
   // Filter medicines for today's reminders
@@ -32,9 +65,16 @@ export default function MedicineTracker() {
           ) : (
             <ul className="medtracker-reminder-list">
               {todaysReminders.map((med, idx) => (
-                <li key={idx} className="medtracker-reminder-item">
+                <li key={med.id || idx} className="medtracker-reminder-item">
                   <span className="medtracker-pill">{med.name}</span>
                   <span className="medtracker-time">{med.time}</span>
+                  <button 
+                    className="medtracker-delete-btn" 
+                    onClick={() => deleteMedicine(med.id)}
+                    title="Delete reminder"
+                  >
+                    🗑️
+                  </button>
                 </li>
               ))}
             </ul>
@@ -67,10 +107,17 @@ export default function MedicineTracker() {
             <li className="medtracker-list-empty">No medicines scheduled yet.</li>
           )}
           {medicines.map((med, idx) => (
-            <li key={idx} className="medtracker-list-item">
+            <li key={med.id || idx} className="medtracker-list-item">
               <span className="medtracker-pill">{med.name}</span>
               <span className="medtracker-date">{med.date}</span>
               <span className="medtracker-time">{med.time}</span>
+              <button 
+                className="medtracker-delete-btn" 
+                onClick={() => deleteMedicine(med.id)}
+                title="Delete medicine"
+              >
+                🗑️
+              </button>
             </li>
           ))}
         </ul>
@@ -197,6 +244,23 @@ export default function MedicineTracker() {
         .medtracker-date {
           color: #1976d2;
           font-weight: 600;
+        }
+        .medtracker-delete-btn {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          font-size: 1.1rem;
+          padding: 4px;
+          margin-left: auto;
+          transition: transform 0.2s, opacity 0.2s;
+          opacity: 0.6;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .medtracker-delete-btn:hover {
+          transform: scale(1.2);
+          opacity: 1;
         }
         @media (max-width: 700px) {
           .medtracker-container { padding: 16px 4px; }
