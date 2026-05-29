@@ -255,7 +255,6 @@ function Navbar() {
       <Toolbar>
         <LocalHospitalIcon sx={{ mr: 1 }} />
         <Typography variant="h6" fontWeight={700} sx={{ flexGrow: 1 }}>
-          // Ensure the title is always a link to home
           <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>
           CareSync
           </a>
