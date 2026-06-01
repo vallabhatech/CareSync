@@ -14,49 +14,60 @@ const healthQuotes = [
   "Wellness is a journey, not a destination.",
 ];
 
-const features = [
-  {
-    title: "Today's Medicines",
-    desc: "2 medicines scheduled for today.",
-    link: "/medicine-tracker",
-    icon: "💊",
-    btn: "View Medicine Tracker",
-  },
-  {
-    title: "Recent Symptom Checks",
-    desc: "Last check: No major symptoms detected.",
-    link: "/symptom-checker",
-    icon: "🔍",
-    btn: "Check Symptoms",
-  },
-  {
-    title: "Nearby Clinics",
-    desc: "3 clinics within 5km.",
-    link: "/clinics-nearby",
-    icon: "📍",
-    btn: "Find Clinics",
-  },
-  {
-    title: "Profile & Settings",
-    desc: "Update your preferences and profile.",
-    link: "/settings",
-    icon: "⚙️",
-    btn: "Go to Settings",
-  }
-];
-
 export default function Dashboard() {
   const [quote, setQuote] = useState(healthQuotes[0]);
+  const [todayCount, setTodayCount] = useState(0);
 
   useEffect(() => {
     setQuote(healthQuotes[Math.floor(Math.random() * healthQuotes.length)]);
     // eslint-disable-next-line
   }, []);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('caresync_medicines');
+    const medicines = saved ? JSON.parse(saved) : [];
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todays = medicines.filter(med => med.date === todayStr);
+    setTodayCount(todays.length);
+  }, []);
+
   const generateQuote = () => {
     let idx = Math.floor(Math.random() * healthQuotes.length);
     setQuote(healthQuotes[idx]);
   };
+
+  const dynamicFeatures = [
+    {
+      title: "Today's Medicines",
+      desc: todayCount === 1 
+        ? "1 medicine scheduled for today." 
+        : `${todayCount} medicines scheduled for today.`,
+      link: "/medicine-tracker",
+      icon: "💊",
+      btn: "View Medicine Tracker",
+    },
+    {
+      title: "Recent Symptom Checks",
+      desc: "Last check: No major symptoms detected.",
+      link: "/symptom-checker",
+      icon: "🔍",
+      btn: "Check Symptoms",
+    },
+    {
+      title: "Nearby Clinics",
+      desc: "3 clinics within 5km.",
+      link: "/clinics-nearby",
+      icon: "📍",
+      btn: "Find Clinics",
+    },
+    {
+      title: "Profile & Settings",
+      desc: "Update your preferences and profile.",
+      link: "/settings",
+      icon: "⚙️",
+      btn: "Go to Settings",
+    }
+  ];
 
   return (
     <div className="dashboard-bg">
@@ -68,7 +79,7 @@ export default function Dashboard() {
           <button className="dashboard-quote-btn" onClick={generateQuote}>New Quote</button>
         </div>
         <div className="dashboard-features">
-          {features.map((feature, idx) => (
+          {dynamicFeatures.map((feature, idx) => (
             <div className="dashboard-card" key={idx}>
               <div className="dashboard-icon">{feature.icon}</div>
               <div className="dashboard-card-title">{feature.title}</div>
@@ -174,11 +185,16 @@ export default function Dashboard() {
           margin-bottom: 7px;
           color: #1976d2;
           letter-spacing: 0.5px;
+          min-height: 3rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
         }
         .dashboard-card-desc {
           font-size: 1rem;
           color: #555;
-          margin-bottom: 20px;
+          margin-bottom: 24px;
           text-align: center;
         }
         .dashboard-card-btn {
@@ -191,6 +207,11 @@ export default function Dashboard() {
           font-size: 1rem;
           transition: background 0.2s, box-shadow 0.2s;
           box-shadow: 0 2px 8px 0 #1976d255;
+          margin-top: auto;
+          display: block;
+          width: 100%;
+          text-align: center;
+          box-sizing: border-box;
         }
         .dashboard-card-btn:hover {
           background: #43e97b;
