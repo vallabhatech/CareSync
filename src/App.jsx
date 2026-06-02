@@ -255,9 +255,9 @@ function Navbar() {
       <Toolbar>
         <LocalHospitalIcon sx={{ mr: 1 }} />
         <Typography variant="h6" fontWeight={700} sx={{ flexGrow: 1 }}>
-          <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>
-          CareSync
-          </a>
+          <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
+            CareSync
+          </Link>
         </Typography>
         <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2 }}>
           {NAV_LINKS.map(link => (
