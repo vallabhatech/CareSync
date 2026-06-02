@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import MedicationIcon from '@mui/icons-material/Medication';
+import SearchIcon from '@mui/icons-material/Search';
+import PlaceIcon from '@mui/icons-material/Place';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const healthQuotes = [
   "Health is the greatest wealth.",
@@ -36,44 +40,71 @@ export default function Dashboard() {
     setQuote(healthQuotes[idx]);
   };
 
+  const getGreeting = () => {
+  const hour = new Date().getHours();
+
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+  };
+  
   const dynamicFeatures = [
     {
       title: "Today's Medicines",
-      desc: todayCount === 1 
-        ? "1 medicine scheduled for today." 
+      desc: todayCount === 1
+        ? "1 medicine scheduled for today."
         : `${todayCount} medicines scheduled for today.`,
       link: "/medicine-tracker",
-      icon: "💊",
+      icon: <MedicationIcon fontSize="large" color="primary" />,
       btn: "View Medicine Tracker",
     },
     {
       title: "Recent Symptom Checks",
       desc: "Last check: No major symptoms detected.",
       link: "/symptom-checker",
-      icon: "🔍",
+      icon: <SearchIcon fontSize="large" color="primary" />,
       btn: "Check Symptoms",
     },
     {
       title: "Nearby Clinics",
       desc: "3 clinics within 5km.",
       link: "/clinics-nearby",
-      icon: "📍",
+      icon: <PlaceIcon fontSize="large" color="primary" />,
       btn: "Find Clinics",
     },
     {
       title: "Profile & Settings",
       desc: "Update your preferences and profile.",
       link: "/settings",
-      icon: "⚙️",
+      icon: <SettingsIcon fontSize="large" color="primary" />,
       btn: "Go to Settings",
     }
   ];
-
+  
   return (
     <div className="dashboard-bg">
       <div className="dashboard-overlay"></div>
       <div className="dashboard-container">
-        <h1 className="dashboard-title">Dashboard</h1>
+        <div className="dashboard-header">
+          <h1 className="dashboard-title">{getGreeting()} 👋</h1>
+          <p className="dashboard-subtitle"> Here's your health overview for today.  </p>
+        </div>
+        <div className="dashboard-stats">
+          <div className="stat-card">
+            <h2>{todayCount}</h2>
+            <p>Medicines Today</p>
+          </div>
+
+          <div className="stat-card">
+            <h2>3</h2>
+            <p>Clinics Nearby</p>
+          </div>
+
+          <div className="stat-card">
+            <h2>✓</h2>
+            <p>Health Status</p>
+          </div>
+        </div>
         <div className="dashboard-quote-section">
           <div className="dashboard-quote">{quote}</div>
           <button className="dashboard-quote-btn" onClick={generateQuote}>New Quote</button>
@@ -117,6 +148,38 @@ export default function Dashboard() {
           color: #222;
           letter-spacing: 1.5px;
           text-shadow: 0 2px 16px #fff6;
+        }
+        .dashboard-header {
+          margin-bottom: 24px;
+        }
+        .dashboard-subtitle {
+          font-size: 1.1rem;
+            color: #666;
+            margin-top: -10px;
+            margin-bottom: 0;
+        }
+        .dashboard-stats {
+          display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+          background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .stat-card h2 {
+          margin: 0;
+          font-size: 2rem;
+          color: #1976d2;
+        }
+        .stat-card p {
+          margin-top: 8px;
+          color: #666;
+          font-weight: 600;
         }
         .dashboard-quote-section {
           display: flex;
