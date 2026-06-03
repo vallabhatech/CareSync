@@ -1,0 +1,58 @@
+# Issue Welcome Workflow
+# This workflow automatically posts a friendly welcome comment when a new issue is opened.
+# It thanks the contributor, mentions maintainers will review it, and encourages providing details.
+
+name: Issue Welcome
+
+on:
+  issues:
+    types: [opened]
+
+# Set least-privilege permissions
+permissions:
+  issues: write
+
+jobs:
+  welcome-issue:
+    name: Post Welcome Comment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post welcome comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const repository = context.payload.repository;
+            
+            // Check if the issue already has a welcome comment to avoid duplicates
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+            });
+            
+            const hasWelcomeComment = comments.data.some(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Thanks for opening this issue')
+            );
+            
+            if (hasWelcomeComment) {
+              console.log('Welcome comment already exists, skipping.');
+              return;
+            }
+            
+            // Post the welcome comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `Thanks for opening this issue! 🚀 We appreciate your contribution to CareSync. A maintainer will review it shortly.
+
+To help us address your issue effectively, please consider providing:
+- Screenshots or screen recordings if applicable
+- Relevant logs or error messages
+- Steps to reproduce the issue
+- Your environment details (OS, browser, app version, etc.)
+
+If you haven't already, please take a moment to review our [contributing guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md).`
+            });

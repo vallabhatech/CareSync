@@ -1,0 +1,79 @@
+# Label Management Workflow
+# This workflow automatically applies the "elusoc" label to new issues and pull requests.
+# If the label doesn't exist, it will be created automatically.
+
+name: Label Management
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+# Set least-privilege permissions
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read  # Required to check repository labels
+
+jobs:
+  apply-label:
+    name: Apply Label
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply elusoc label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labelName = 'elusoc';
+            const labelColor = '0066cc';
+            const labelDescription = 'Issues and pull requests for elusoc';
+            
+            // Check if the label already exists
+            try {
+              await github.rest.issues.getLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: labelName
+              });
+              console.log(`Label "${labelName}" already exists`);
+            } catch (error) {
+              if (error.status === 404) {
+                // Label doesn't exist, create it
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: labelName,
+                  color: labelColor,
+                  description: labelDescription
+                });
+                console.log(`Created label "${labelName}"`);
+              } else {
+                throw error;
+              }
+            }
+            
+            // Apply the label to the issue or pull request
+            if (context.eventName === 'issues') {
+              const issue = context.payload.issue;
+              
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: [labelName]
+              });
+              
+              console.log(`Applied label "${labelName}" to issue #${issue.number}`);
+            } else if (context.eventName === 'pull_request') {
+              const pullRequest = context.payload.pull_request;
+              
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequest.number,
+                labels: [labelName]
+              });
+              
+              console.log(`Applied label "${labelName}" to PR #${pullRequest.number}`);
+            }

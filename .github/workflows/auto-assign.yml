@@ -1,0 +1,54 @@
+# Auto-Assign Workflow
+# This workflow automatically assigns the maintainer (vallabhatech) to new issues and pull requests.
+# This ensures that all new contributions are tracked and reviewed.
+
+name: Auto Assign
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+# Set least-privilege permissions
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  auto-assign:
+    name: Assign Maintainer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign to vallabhatech
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const assignee = 'vallabhatech';
+            
+            // Determine if this is an issue or pull request
+            if (context.eventName === 'issues') {
+              const issue = context.payload.issue;
+              
+              // Assign the issue
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: [assignee]
+              });
+              
+              console.log(`Assigned issue #${issue.number} to ${assignee}`);
+            } else if (context.eventName === 'pull_request') {
+              const pullRequest = context.payload.pull_request;
+              
+              // Assign the pull request
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequest.number,
+                assignees: [assignee]
+              });
+              
+              console.log(`Assigned PR #${pullRequest.number} to ${assignee}`);
+            }
