@@ -113,7 +113,22 @@ cd CareSync
 npm install
 ```
 
-3. **Start the development server**
+3. **Configure environment variables**
+
+Copy the example environment file and adjust the values as needed:
+
+```bash
+cp .env.example .env
+```
+
+CareSync is a [Create React App](https://create-react-app.dev/) project, so
+all environment variables **must** be prefixed with `REACT_APP_` to be exposed
+to the browser, are embedded at **build time** (you must restart `npm start`
+after changing them), and are read via `process.env.REACT_APP_*`. See the
+[Environment Variables](#-environment-variables) reference below for what each
+one does.
+
+4. **Start the development server**
 
 ```bash
 npm start
@@ -123,6 +138,35 @@ The app will open automatically at:
 👉 **[http://localhost:3000](http://localhost:3000)**
 
 ---
+
+## 🔑 Environment Variables
+
+CareSync reads configuration from a `.env` file at the project root. Start by
+copying the template:
+
+```bash
+cp .env.example .env
+```
+
+Because this is a Create React App project, every variable **must** begin with
+`REACT_APP_`. Variables are inlined into the build at compile time, so after
+editing `.env` you must stop and restart the dev server (`npm start`) for
+changes to take effect. Never commit your real `.env` file — only
+`.env.example` (with empty or placeholder values) belongs in version control.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `REACT_APP_MAP_API_KEY` | No | _(empty)_ | API key for a maps provider (e.g. Google Maps), reserved for future paid map integrations. The current Clinic Locator uses the free OpenStreetMap/Nominatim API and does **not** require this key, so it can be left blank for local development. |
+| `REACT_APP_API_BASE_URL` | No | `http://localhost:5000` | Base URL of the backend API, used as a prefix for backend requests if/when a backend is integrated. CareSync is currently a frontend-only app, so this is a forward-looking placeholder. |
+| `REACT_APP_ENABLE_ANALYTICS` | No | `false` | Feature flag to toggle analytics. Set to `true` to enable analytics-related behavior; left `false` by default for local development and privacy. |
+
+> **Note:** All three variables are currently **optional** — CareSync runs
+> locally with an unmodified `.env` (or no `.env` at all). They exist to
+> document the configuration surface and to support planned backend,
+> paid-maps, and analytics integrations.
+
+---
+
 
 ## ⚡ Quick Deploy
 
