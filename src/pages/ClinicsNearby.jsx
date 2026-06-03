@@ -83,35 +83,31 @@ export default function ClinicsNearby() {
       setShowFallback(false);
     } catch (err) {
       setLocationError('Failed to fetch clinics. Try again later.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const geocodeLocation = async (query) => {
-    try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
-      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-      const data = await res.json();
-      if (data.length === 0) {
-        throw new Error('Location not found. Please try another city or postal code.');
-      }
-      return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-    } catch (err) {
-      throw new Error(err.message || 'Failed to find location.');
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const data = await res.json();
+    if (data.length === 0) {
+      throw new Error('Location not found. Please try another city or postal code.');
     }
+    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
   };
 
   const handleFindClinics = () => {
     setLocationError('');
     setSearchError('');
     setClinics([]);
-    setLoading(true);
     if (!navigator.geolocation) {
       setLocationError('Location access is unavailable. You can search using a city name, postal code, manually enter coordinates, or retry location access.');
       setShowFallback(true);
-      setLoading(false);
       return;
     }
+    setLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -133,8 +129,8 @@ export default function ClinicsNearby() {
     }
     if (isThrottled()) return;
     try {
-      const coords = await geocodeLocation(cityQuery);
-      fetchClinics(coords.lat, coords.lon);
+      const result = await geocodeLocation(cityQuery);
+      fetchClinics(result.lat, result.lon);
     } catch (err) {
       setSearchError(err.message);
     }
@@ -189,6 +185,7 @@ export default function ClinicsNearby() {
           <Button
             variant="contained"
             onClick={handleFindClinics}
+            disabled={loading}
             sx={{
               fontWeight: 700,
               fontSize: '1.1rem',
@@ -209,7 +206,7 @@ export default function ClinicsNearby() {
               <Typography variant="h6" fontWeight={600} mb={2} color="#1976d2">
                 Alternative Search Methods
               </Typography>
-              
+
               <Box mb={3}>
                 <Typography variant="subtitle1" fontWeight={600} mb={1}>Search by City or Postal Code</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
@@ -225,9 +222,9 @@ export default function ClinicsNearby() {
                   </Button>
                 </Box>
               </Box>
-              
+
               <Divider sx={{ my: 2 }} />
-              
+
               <Box mb={3}>
                 <Typography variant="subtitle1" fontWeight={600} mb={1}>Manual Coordinates</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
@@ -250,9 +247,9 @@ export default function ClinicsNearby() {
                   </Button>
                 </Box>
               </Box>
-              
+
               <Divider sx={{ my: 2 }} />
-              
+
               <Box>
                 <Typography variant="body2" color="text.secondary" mb={1}>
                   Location access provides more accurate results for nearby clinics.
@@ -271,7 +268,7 @@ export default function ClinicsNearby() {
         )}
         {!loading && clinics.length > 0 && (
           <List>
-            {clinics.map((clinic, idx) => (
+            {clinics.map((clinic) => (
               <Paper
                 key={clinic.place_id}
                 elevation={3}
@@ -308,9 +305,7 @@ export default function ClinicsNearby() {
                       fontWeight: 600,
                       borderColor: '#1976d2',
                       color: '#1976d2',
-                      '&:hover': {
-                        background: '#e3eafc'
-                      }
+                      '&:hover': { background: '#e3eafc' }
                     }}
                   >
                     View on Map
