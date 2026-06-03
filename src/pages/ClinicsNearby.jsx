@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
-import { Box, Typography, List, ListItem, ListItemText, Button, CircularProgress, Alert, Paper } from '@mui/material';
+import { Box, Typography, List, ListItem, Button, CircularProgress, Alert, Paper, TextField, Card, CardContent, Divider } from '@mui/material';
 
 export default function ClinicsNearby() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
-  const [coords, setCoords] = useState(null);
+  const [showFallback, setShowFallback] = useState(false);
+  const [cityQuery, setCityQuery] = useState('');
+  const [lat, setLat] = useState('');
+  const [lon, setLon] = useState('');
+  const [searchError, setSearchError] = useState('');
 
-  const fetchClinics = async (lat, lon) => {
+  const fetchClinics = async (latitude, longitude) => {
     setLoading(true);
     setLocationError('');
+    setSearchError('');
     try {
       const delta = 0.1;
-      const left = lon - delta;
-      const right = lon + delta;
-      const top = lat + delta;
-      const bottom = lat - delta;
+      const left = longitude - delta;
+      const right = longitude + delta;
+      const top = latitude + delta;
+      const bottom = latitude - delta;
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=clinic&limit=10&addressdetails=1&extratags=1&bounded=1&viewbox=${left},${top},${right},${bottom}`;
       const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
       const data = await res.json();
@@ -23,31 +28,89 @@ export default function ClinicsNearby() {
         setLocationError('No clinics found nearby. Try increasing your search area.');
       }
       setClinics(data);
+      setShowFallback(false);
     } catch (err) {
       setLocationError('Failed to fetch clinics. Try again later.');
     }
     setLoading(false);
   };
 
+  const geocodeLocation = async (query) => {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+      const data = await res.json();
+      if (data.length === 0) {
+        throw new Error('Location not found. Please try another city or postal code.');
+      }
+      return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    } catch (err) {
+      throw new Error(err.message || 'Failed to find location.');
+    }
+  };
+
   const handleFindClinics = () => {
     setLocationError('');
+    setSearchError('');
+    setClinics([]);
     setLoading(true);
     if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser.');
+      setLocationError('Location access is unavailable. You can search using a city name, postal code, manually enter coordinates, or retry location access.');
+      setShowFallback(true);
       setLoading(false);
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        setCoords({ latitude, longitude });
         fetchClinics(latitude, longitude);
       },
       () => {
-        setLocationError('Unable to retrieve your location. Please allow location access.');
+        setLocationError('Location access is unavailable. You can search using a city name, postal code, manually enter coordinates, or retry location access.');
+        setShowFallback(true);
         setLoading(false);
       }
     );
+  };
+
+  const handleCitySearch = async () => {
+    if (!cityQuery.trim()) {
+      setSearchError('Please enter a city name or postal code.');
+      return;
+    }
+    try {
+      const coords = await geocodeLocation(cityQuery);
+      fetchClinics(coords.lat, coords.lon);
+    } catch (err) {
+      setSearchError(err.message);
+    }
+  };
+
+  const handleCoordSearch = () => {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
+    
+    if (!lat || !lon) {
+      setSearchError('Please enter both latitude and longitude.');
+      return;
+    }
+    if (latitude < -90 || latitude > 90) {
+      setSearchError('Latitude must be between -90 and 90.');
+      return;
+    }
+    if (longitude < -180 || longitude > 180) {
+      setSearchError('Longitude must be between -180 and 180.');
+      return;
+    }
+    
+    setSearchError('');
+    fetchClinics(latitude, longitude);
+  };
+
+  const handleRetryLocation = () => {
+    setShowFallback(false);
+    setClinics([]);
+    handleFindClinics();
   };
 
   return (
@@ -76,6 +139,68 @@ export default function ClinicsNearby() {
           </Button>
         </Box>
         {locationError && <Alert severity="error" sx={{ mb: 2 }}>{locationError}</Alert>}
+        {searchError && <Alert severity="error" sx={{ mb: 2 }}>{searchError}</Alert>}
+        {showFallback && (
+          <Card sx={{ mb: 3, borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2} color="#1976d2">
+                Alternative Search Methods
+              </Typography>
+              
+              <Box mb={3}>
+                <Typography variant="subtitle1" fontWeight={600} mb={1}>Search by City or Postal Code</Typography>
+                <Box display="flex" gap={1} flexWrap="wrap">
+                  <TextField
+                    placeholder="Enter city or postal code"
+                    value={cityQuery}
+                    onChange={(e) => setCityQuery(e.target.value)}
+                    size="small"
+                    sx={{ flexGrow: 1, minWidth: 200 }}
+                  />
+                  <Button variant="contained" onClick={handleCitySearch} disabled={loading}>
+                    Search
+                  </Button>
+                </Box>
+              </Box>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Box mb={3}>
+                <Typography variant="subtitle1" fontWeight={600} mb={1}>Manual Coordinates</Typography>
+                <Box display="flex" gap={1} flexWrap="wrap">
+                  <TextField
+                    placeholder="Latitude"
+                    value={lat}
+                    onChange={(e) => setLat(e.target.value)}
+                    size="small"
+                    sx={{ width: 120 }}
+                  />
+                  <TextField
+                    placeholder="Longitude"
+                    value={lon}
+                    onChange={(e) => setLon(e.target.value)}
+                    size="small"
+                    sx={{ width: 120 }}
+                  />
+                  <Button variant="contained" onClick={handleCoordSearch} disabled={loading}>
+                    Search
+                  </Button>
+                </Box>
+              </Box>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Box>
+                <Typography variant="body2" color="text.secondary" mb={1}>
+                  Location access provides more accurate results for nearby clinics.
+                </Typography>
+                <Button variant="outlined" onClick={handleRetryLocation} disabled={loading}>
+                  Retry Location Access
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
         {loading && (
           <Box display="flex" justifyContent="center" mt={2}>
             <CircularProgress color="primary" />
