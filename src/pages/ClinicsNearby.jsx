@@ -6,7 +6,44 @@ export default function ClinicsNearby() {
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [coords, setCoords] = useState(null);
-
+/**
+   * Fetches nearby clinics from the OpenStreetMap Nominatim search API.
+   *
+   * Builds a bounding box of ±`delta` (0.1°, roughly ~11 km) around the given
+   * coordinates and queries Nominatim for places matching "clinic" within it.
+   *
+   * Endpoint:
+   *   GET https://nominatim.openstreetmap.org/search
+   *
+   * Query parameters used:
+   *   - format=json        → JSON response
+   *   - q=clinic           → free-text search term
+   *   - limit=10           → cap results at 10
+   *   - addressdetails=1   → include a structured address breakdown
+   *   - extratags=1        → include extra OSM tags
+   *   - bounded=1          → restrict results to the viewbox
+   *   - viewbox=left,top,right,bottom → the bounding box
+   *                          (left=lon-δ, top=lat+δ, right=lon+δ, bottom=lat-δ)
+   * Request header: `Accept-Language: en` to prefer English place names.
+   *
+   * Response: an array of place objects. Fields used by this component:
+   *   - place_id      → React list key
+   *   - display_name  → full place name (first segment shown as the title)
+   *   - lat, lon      → used to build the "View on Map" Google Maps link
+   * An empty array sets a "no clinics found" message.
+   *
+   * Rate limits / usage policy: the public Nominatim service allows at most
+   * **1 request per second** and requires a valid identifying User-Agent /
+   * Referer per the OSM usage policy
+   * (https://operations.osmfoundation.org/policies/nominatim/). It is intended
+   * for light use only — avoid bulk or automated querying, and consider a
+   * self-hosted instance or a commercial provider for production traffic.
+   *
+   * @async
+   * @param {number} lat - Latitude of the user's current location.
+   * @param {number} lon - Longitude of the user's current location.
+   * @returns {Promise<void>} Updates `clinics`, `loading`, and `locationError` state.
+   */
   const fetchClinics = async (lat, lon) => {
     setLoading(true);
     setLocationError('');
