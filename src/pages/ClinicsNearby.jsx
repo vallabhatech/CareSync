@@ -14,12 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 
-/**
- * ClinicsNearby - find nearby clinics using the browser's geolocation.
- *
- * Falls back to city/postal-code lookup or manual latitude/longitude entry if
- * the browser location prompt is unavailable or denied.
- */
+
 export default function ClinicsNearby() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,9 +36,7 @@ export default function ClinicsNearby() {
     return false;
   };
 
-  /**
-   * Fetch nearby clinics from Nominatim around a resolved coordinate pair.
-   */
+  
   const fetchClinics = async (latitude, longitude) => {
     setLoading(true);
     setLocationError('');
