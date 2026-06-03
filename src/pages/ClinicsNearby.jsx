@@ -5,6 +5,7 @@ export default function ClinicsNearby() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [coords, setCoords] = useState(null);       // last resolved coordinates (from any source)
   const [showFallback, setShowFallback] = useState(false);
   const [cityQuery, setCityQuery] = useState('');
   const [lat, setLat] = useState('');
@@ -23,10 +24,18 @@ export default function ClinicsNearby() {
     return false;
   };
 
+  /**
+   * Fetches clinics near the given coordinates using Nominatim.
+   * Accepts coordinates from browser geolocation, geocoded city/postal code,
+   * or manually entered values — all routed through the same logic.
+   * @param {number} latitude
+   * @param {number} longitude
+   */
   const fetchClinics = async (latitude, longitude) => {
     setLoading(true);
     setLocationError('');
     setSearchError('');
+    setCoords({ latitude, longitude });
     try {
       const delta = 0.1;
       const left = longitude - delta;
@@ -75,6 +84,7 @@ export default function ClinicsNearby() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
+        setCoords({ latitude, longitude });
         fetchClinics(latitude, longitude);
       },
       () => {
