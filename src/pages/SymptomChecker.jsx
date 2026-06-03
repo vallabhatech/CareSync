@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
 import { Box, Typography, TextField, Button, Chip, Stack, Paper, LinearProgress } from '@mui/material';
-
+/**
+ * COMMON_SYMPTOMS
+ * ---------------
+ * Flat list of selectable symptom names (strings) that powers the input's
+ * autocomplete suggestions and validates user entries. Only values present in
+ * this array can be added — the "Add Symptom" button is disabled for anything
+ * not in this list.
+ *
+ * To add a new symptom: append its display name as a string, keeping the
+ * casing consistent with existing entries (e.g. "Sore throat"), because these
+ * exact strings are compared against the `symptoms` arrays in RISK_RULES below.
+ *
+ * @type {string[]}
+ */
 const COMMON_SYMPTOMS = [
   "Fever", "Cough", "Headache", "Fatigue", "Sore throat", "Runny nose", "Shortness of breath", "Chest pain", "Nausea", "Vomiting", "Diarrhea", "Loss of taste", "Loss of smell", "Muscle pain", "Rash",
   "Sneezing", "Chills", "Night sweats", "Weight loss", "Weight gain", "Dizziness", "Fainting", "Palpitations", "Swelling", "Joint pain", "Back pain", "Abdominal pain", "Constipation", "Heartburn",
@@ -13,7 +26,44 @@ const COMMON_SYMPTOMS = [
   "Erectile dysfunction", "Decreased libido", "Painful urination", "Painful intercourse", "Swollen joints", "Stiff joints", "Muscle weakness", "Muscle twitching", "Muscle cramps", "Sun sensitivity",
   "Photosensitivity", "Dry mouth", "Dry eyes", "Frequent headaches", "Migraines", "Chronic pain", "General malaise"
 ];
-
+/**
+ * RISK_RULES
+ * ----------
+ * The rule set that drives the risk assessment. Each rule maps a set of
+ * symptoms to a possible condition, with metadata used for scoring and display.
+ *
+ * @typedef {Object} RiskRule
+ * @property {string[]} symptoms   - Symptom names that characterize this
+ *                                   condition. Each must exactly match an entry
+ *                                   in COMMON_SYMPTOMS.
+ * @property {string}   condition  - Human-readable name of the possible condition.
+ * @property {number}   probability - Base confidence (0–100) that the full
+ *                                   symptom set indicates this condition. This
+ *                                   is the baseline; the actual displayed value
+ *                                   is re-weighted at match time (see below).
+ * @property {string}   causes     - Short explanation of typical causes.
+ * @property {string[]} solutions  - Recommended actions, shown as a list.
+ * @property {"low"|"medium"|"high"} risk - Severity tier; controls the color
+ *                                   coding and the "… Risk" label in the UI.
+ *
+ * How matching works (in `handleCheckSymptoms`):
+ *   1. A rule is a candidate if the user's selected symptoms include at least
+ *      one of the rule's `symptoms` (`.some(...)`).
+ *   2. For each candidate, two ratios are computed:
+ *        overlap      = matchedSymptoms / rule.symptoms.length
+ *        userCoverage = matchedSymptoms / userSymptoms.length
+ *   3. The displayed probability = round(((overlap + userCoverage) / 2) *
+ *      rule.probability), so partial matches score lower than exact ones.
+ *   4. Results are sorted by that weighted probability, highest first. If no
+ *      rule matches, a generic low-risk "monitor your symptoms" result is shown.
+ *
+ * To add a new rule: append a RiskRule object. Ensure every string in
+ * `symptoms` already exists in COMMON_SYMPTOMS (otherwise it can never match,
+ * since the user can only select from that list), set a sensible base
+ * `probability`, and choose a `risk` tier of "low", "medium", or "high".
+ *
+ * @type {RiskRule[]}
+ */
 const RISK_RULES = [
   {
     symptoms: ["Fever", "Cough", "Shortness of breath"],
