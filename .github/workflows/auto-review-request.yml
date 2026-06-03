@@ -1,0 +1,35 @@
+# Auto Review Request Workflow
+# This workflow automatically requests a review from vallabhatech for new pull requests.
+# This ensures that all code changes are reviewed by the maintainer.
+
+name: Auto Review Request
+
+on:
+  pull_request:
+    types: [opened]
+
+# Set least-privilege permissions
+permissions:
+  pull-requests: write
+
+jobs:
+  request-review:
+    name: Request Review from Maintainer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request review from vallabhatech
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pullRequest = context.payload.pull_request;
+            const reviewer = 'vallabhatech';
+            
+            // Request review from the maintainer
+            await github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullRequest.number,
+              reviewers: [reviewer]
+            });
+            
+            console.log(`Requested review from ${reviewer} for PR #${pullRequest.number}`);

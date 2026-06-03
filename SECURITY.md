@@ -15,7 +15,7 @@ We take the security of CareSync seriously.
 
 If you discover a security vulnerability, please do **not** open an issue. 
 
-Instead, please email **[Your Email Here]** with the subject line "Security Vulnerability - CareSync".
+Instead, please email **vallabha1243@gmail.com** with the subject line "Security Vulnerability - CareSync".
 
 Please include:
 * A description of the vulnerability.

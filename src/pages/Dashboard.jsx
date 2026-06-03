@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import MedicationIcon from '@mui/icons-material/Medication';
+import SearchIcon from '@mui/icons-material/Search';
+import PlaceIcon from '@mui/icons-material/Place';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const healthQuotes = [
   "Health is the greatest wealth.",
@@ -14,43 +18,38 @@ const healthQuotes = [
   "Wellness is a journey, not a destination.",
 ];
 
-const features = [
-  {
-    title: "Today's Medicines",
-    desc: "2 medicines scheduled for today.",
-    link: "/medicine-tracker",
-    icon: "💊",
-    btn: "View Medicine Tracker",
-  },
-  {
-    title: "Recent Symptom Checks",
-    desc: "Last check: No major symptoms detected.",
-    link: "/symptom-checker",
-    icon: "🔍",
-    btn: "Check Symptoms",
-  },
-  {
-    title: "Nearby Clinics",
-    desc: "3 clinics within 5km.",
-    link: "/clinics-nearby",
-    icon: "📍",
-    btn: "Find Clinics",
-  },
-  {
-    title: "Profile & Settings",
-    desc: "Update your preferences and profile.",
-    link: "/settings",
-    icon: "⚙️",
-    btn: "Go to Settings",
-  }
-];
-
+/**
+ * Dashboard — the app landing/overview page.
+ *
+ * Displays a time-based greeting (morning/afternoon/evening), a randomly
+ * rotated health quote, and a grid of feature cards linking to the main
+ * sections. On mount it reads `caresync_medicines` from localStorage to show
+ * how many medicines are scheduled for today.
+ *
+ * Rendered as a route; takes no props and manages its own state
+ * (`quote`, `todayCount`) internally.
+ *
+ * @component
+ * @returns {JSX.Element} The dashboard overview page.
+ *
+ * @example
+ * <Route path="/dashboard" element={<Dashboard />} />
+ */
 export default function Dashboard() {
   const [quote, setQuote] = useState(healthQuotes[0]);
+  const [todayCount, setTodayCount] = useState(0);
 
   useEffect(() => {
     setQuote(healthQuotes[Math.floor(Math.random() * healthQuotes.length)]);
     // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('caresync_medicines');
+    const medicines = saved ? JSON.parse(saved) : [];
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todays = medicines.filter(med => med.date === todayStr);
+    setTodayCount(todays.length);
   }, []);
 
   const generateQuote = () => {
@@ -58,17 +57,77 @@ export default function Dashboard() {
     setQuote(healthQuotes[idx]);
   };
 
+  const getGreeting = () => {
+  const hour = new Date().getHours();
+
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+  };
+  
+  const dynamicFeatures = [
+    {
+      title: "Today's Medicines",
+      desc: todayCount === 1
+        ? "1 medicine scheduled for today."
+        : `${todayCount} medicines scheduled for today.`,
+      link: "/medicine-tracker",
+      icon: <MedicationIcon fontSize="large" color="primary" />,
+      btn: "View Medicine Tracker",
+    },
+    {
+      title: "Recent Symptom Checks",
+      desc: "Last check: No major symptoms detected.",
+      link: "/symptom-checker",
+      icon: <SearchIcon fontSize="large" color="primary" />,
+      btn: "Check Symptoms",
+    },
+    {
+      title: "Nearby Clinics",
+      desc: "3 clinics within 5km.",
+      link: "/clinics-nearby",
+      icon: <PlaceIcon fontSize="large" color="primary" />,
+      btn: "Find Clinics",
+    },
+    {
+      title: "Profile & Settings",
+      desc: "Update your preferences and profile.",
+      link: "/settings",
+      icon: <SettingsIcon fontSize="large" color="primary" />,
+      btn: "Go to Settings",
+    }
+  ];
+  
   return (
     <div className="dashboard-bg">
       <div className="dashboard-overlay"></div>
       <div className="dashboard-container">
-        <h1 className="dashboard-title">Dashboard</h1>
+        <div className="dashboard-header">
+          <h1 className="dashboard-title">{getGreeting()} 👋</h1>
+          <p className="dashboard-subtitle"> Here's your health overview for today.  </p>
+        </div>
+        <div className="dashboard-stats">
+          <div className="stat-card">
+            <h2>{todayCount}</h2>
+            <p>Medicines Today</p>
+          </div>
+
+          <div className="stat-card">
+            <h2>3</h2>
+            <p>Clinics Nearby</p>
+          </div>
+
+          <div className="stat-card">
+            <h2>✓</h2>
+            <p>Health Status</p>
+          </div>
+        </div>
         <div className="dashboard-quote-section">
           <div className="dashboard-quote">{quote}</div>
           <button className="dashboard-quote-btn" onClick={generateQuote}>New Quote</button>
         </div>
         <div className="dashboard-features">
-          {features.map((feature, idx) => (
+          {dynamicFeatures.map((feature, idx) => (
             <div className="dashboard-card" key={idx}>
               <div className="dashboard-icon">{feature.icon}</div>
               <div className="dashboard-card-title">{feature.title}</div>
@@ -106,6 +165,38 @@ export default function Dashboard() {
           color: #222;
           letter-spacing: 1.5px;
           text-shadow: 0 2px 16px #fff6;
+        }
+        .dashboard-header {
+          margin-bottom: 24px;
+        }
+        .dashboard-subtitle {
+          font-size: 1.1rem;
+            color: #666;
+            margin-top: -10px;
+            margin-bottom: 0;
+        }
+        .dashboard-stats {
+          display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+          background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .stat-card h2 {
+          margin: 0;
+          font-size: 2rem;
+          color: #1976d2;
+        }
+        .stat-card p {
+          margin-top: 8px;
+          color: #666;
+          font-weight: 600;
         }
         .dashboard-quote-section {
           display: flex;
@@ -174,11 +265,16 @@ export default function Dashboard() {
           margin-bottom: 7px;
           color: #1976d2;
           letter-spacing: 0.5px;
+          min-height: 3rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
         }
         .dashboard-card-desc {
           font-size: 1rem;
           color: #555;
-          margin-bottom: 20px;
+          margin-bottom: 24px;
           text-align: center;
         }
         .dashboard-card-btn {
@@ -191,6 +287,11 @@ export default function Dashboard() {
           font-size: 1rem;
           transition: background 0.2s, box-shadow 0.2s;
           box-shadow: 0 2px 8px 0 #1976d255;
+          margin-top: auto;
+          display: block;
+          width: 100%;
+          text-align: center;
+          box-sizing: border-box;
         }
         .dashboard-card-btn:hover {
           background: #43e97b;
