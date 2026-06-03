@@ -73,42 +73,16 @@ export default function ClinicsNearby() {
       const top = lat + delta;
       const bottom = lat - delta;
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=clinic&limit=10&addressdetails=1&extratags=1&bounded=1&viewbox=${left},${top},${right},${bottom}`;
-      const res = await fetch(url, {
-        headers: {
-          'Accept-Language': 'en',
-          // Nominatim's usage policy requires an identifying User-Agent.
-          // Requests without one may be rejected (HTTP 403).
-          'User-Agent': 'CareSync/1.0 (https://github.com/vallabhatech/CareSync)',
-        },
-      });
-
-      // Guard against rate-limit / error responses: a non-2xx status returns
-      // an error object or HTML, not the expected array.
-      if (!res.ok) {
-        setLocationError('Clinic search is temporarily unavailable. Please try again in a moment.');
-        setClinics([]);
-        return;
-      }
-
+      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
       const data = await res.json();
-
-      // Validate the shape before using it — defend against unexpected payloads.
-      if (!Array.isArray(data)) {
-        setLocationError('Received an unexpected response. Please try again later.');
-        setClinics([]);
-        return;
-      }
-
       if (data.length === 0) {
         setLocationError('No clinics found nearby. Try increasing your search area.');
       }
       setClinics(data);
     } catch (err) {
-      console.error('Failed to fetch clinics:', err);
       setLocationError('Failed to fetch clinics. Try again later.');
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const handleFindClinics = () => {
@@ -186,10 +160,10 @@ export default function ClinicsNearby() {
                   }}
                 >
                   <Typography variant="h6" fontWeight={700} color="#1976d2" mb={0.5}>
-                    {clinic.display_name?.split(',')[0] || 'Unnamed clinic'}
+                    {clinic.display_name.split(',')[0]}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" mb={1}>
-                    {clinic.display_name || 'Address unavailable'}
+                    {clinic.display_name}
                   </Typography>
                   <Button
                     variant="outlined"
