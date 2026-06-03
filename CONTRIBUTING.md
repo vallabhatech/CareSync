@@ -28,6 +28,30 @@ If you want to ask a question, we assume that you have read the available docume
 - Open a new issue with the tag **enhancement**.
 - Explain why this enhancement would be useful to most CareSync users.
 
+## Finding Something to Work On
+
+Not sure where to start?
+
+### Explore Existing Issues
+Check the Issues tab for:
+- Bugs
+- Enhancements
+- Documentation improvements
+- Feature requests
+
+### Review the Roadmap
+The FUTURE_ROADMAP.md document contains planned features and future improvements for CareSync. Contributors are encouraged to review the roadmap and discuss implementation ideas before starting work.
+
+### Recommended Labels
+Look for issues labeled:
+- good first issue
+- enhancement
+- bug
+- documentation
+
+### Before You Start
+If an issue is not already assigned, leave a comment expressing your interest before beginning work. This helps avoid duplicate efforts and improves collaboration.
+
 ### Your First Code Contribution
 
 1. **Fork the repository** and create your branch from `main`.

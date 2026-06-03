@@ -1,3 +1,18 @@
+# 🚀 CareSync Future Roadmap
+
+This document outlines planned features and improvements for CareSync.
+
+Interested in contributing?
+
+Before starting work on a roadmap item:
+1. Check if an issue already exists.
+2. Comment on the issue to express interest.
+3. Discuss major implementation changes before opening a pull request.
+
+Community contributions are welcome and appreciated.
+
+---
+
 # CareSync: Future Roadmap & Technical Documentation
 
 ## Table of Contents

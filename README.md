@@ -48,7 +48,33 @@ Whether you are managing a chronic condition or just need a quick check-up on sy
 
 ---
 
-## 🛠️ Tech Stack
+## � Looking for Something to Contribute?
+
+Whether you're a first-time contributor or an experienced developer, there are many ways to contribute to CareSync.
+
+### Start Here
+- Check the open Issues for bugs, enhancements, and feature requests.
+- Read the FUTURE_ROADMAP.md file to explore planned features.
+- Review CONTRIBUTING.md for contribution guidelines.
+- Look for issues labeled:
+  - good first issue
+  - enhancement
+  - bug
+  - documentation
+
+### Have an Idea?
+If you would like to work on a new feature that is not currently listed, open a discussion or create a feature request issue before starting development.
+
+We welcome contributions of all sizes, including:
+- Bug fixes
+- UI/UX improvements
+- Documentation updates
+- Performance optimizations
+- New features
+
+---
+
+## �🛠️ Tech Stack
 
 ### Frontend
 
