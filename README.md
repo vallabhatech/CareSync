@@ -125,7 +125,7 @@ CareSync is a [Create React App](https://create-react-app.dev/) project, so
 all environment variables **must** be prefixed with `REACT_APP_` to be exposed
 to the browser, are embedded at **build time** (you must restart `npm start`
 after changing them), and are read via `process.env.REACT_APP_*`. See the
-[Environment Variables](#-environment-variables) reference below for what each
+[Environment Variables](#environment-variables) reference below for what each
 one does.
 
 4. **Start the development server**
