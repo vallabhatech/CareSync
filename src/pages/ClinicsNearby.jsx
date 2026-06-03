@@ -25,11 +25,36 @@ export default function ClinicsNearby() {
   };
 
   /**
-   * Fetches clinics near the given coordinates using Nominatim.
+   * Fetches nearby clinics from the OpenStreetMap Nominatim search API.
+   *
+   * Builds a bounding box of ±`delta` (0.1°, roughly ~11 km) around the given
+   * coordinates and queries Nominatim for places matching "clinic" within it.
+   *
    * Accepts coordinates from browser geolocation, geocoded city/postal code,
    * or manually entered values — all routed through the same logic.
-   * @param {number} latitude
-   * @param {number} longitude
+   *
+   * Endpoint:
+   *   GET https://nominatim.openstreetmap.org/search
+   *
+   * Query parameters used:
+   *   - format=json        → JSON response
+   *   - q=clinic           → free-text search term
+   *   - limit=10           → cap results at 10
+   *   - addressdetails=1   → include a structured address breakdown
+   *   - extratags=1        → include extra OSM tags
+   *   - bounded=1          → restrict results to the viewbox
+   *   - viewbox=left,top,right,bottom → the bounding box
+   *                          (left=lon-δ, top=lat+δ, right=lon+δ, bottom=lat-δ)
+   * Request header: `Accept-Language: en` to prefer English place names.
+   *
+   * Rate limits / usage policy: the public Nominatim service allows at most
+   * **1 request per second** per the OSM usage policy
+   * (https://operations.osmfoundation.org/policies/nominatim/).
+   *
+   * @async
+   * @param {number} latitude - Latitude of the resolved location.
+   * @param {number} longitude - Longitude of the resolved location.
+   * @returns {Promise<void>} Updates `clinics`, `loading`, and `locationError` state.
    */
   const fetchClinics = async (latitude, longitude) => {
     setLoading(true);
