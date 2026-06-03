@@ -63,6 +63,51 @@ If an issue is not already assigned, leave a comment expressing your interest be
 7. Push your branch to GitHub.
 8. Submit a Pull Request to the `main` branch.
 
+## Contributing to Specific Features
+
+Some CareSync features have their own data and conventions. If you're extending
+one of these, here's where to look and how to do it safely.
+
+### Symptom Checker
+
+The symptom checker lives in `src/pages/SymptomChecker.jsx` and is driven by two
+data structures at the top of the file:
+
+- **`COMMON_SYMPTOMS`** — the list of selectable symptom names. The input only
+  accepts values from this list, so any symptom you want users to be able to
+  select must be added here first. Keep the casing consistent with existing
+  entries (e.g. `"Sore throat"`).
+- **`RISK_RULES`** — the rules that map symptoms to possible conditions. Each
+  rule has `symptoms`, `condition`, `probability`, `causes`, `solutions`, and a
+  `risk` tier (`"low"`, `"medium"`, or `"high"`).
+
+**To add a new condition:** append a rule to `RISK_RULES`. For a rule to match
+fully, the strings in its `symptoms` array should exist in `COMMON_SYMPTOMS`
+(users can only select symptoms from that list, so any not present there will
+only ever match partially). See the JSDoc above `RISK_RULES` for the full rule
+shape and how the matching/scoring works. This is medical-adjacent content —
+please keep conditions and suggested actions responsible and general (the app is
+not a substitute for professional medical advice).
+
+### Medicine Tracker
+
+The medicine tracker lives in `src/pages/MedicineTracker.jsx` and stores data in
+the browser's `localStorage` under the key `caresync_medicines`. Each entry has
+the shape `{ id, name, time, date }` (dates are `YYYY-MM-DD` strings).
+
+**To extend it:** keep reads/writes going through `localStorage` with that same
+key and shape so existing users' saved medicines keep working. The Dashboard
+also reads `caresync_medicines` to count today's medicines, so any change to the
+entry shape should be reflected there too.
+
+### Documentation Style
+
+When adding or changing components, please document them with JSDoc following
+the existing style in `src/components/` and `src/pages/` — a short description of
+what the component does, its props (if any), notable internal state or side
+effects, and an `@example`. Consistent docs keep the codebase approachable for
+new contributors.
+
 ## Styleguides
 
 ### Git Commit Messages
