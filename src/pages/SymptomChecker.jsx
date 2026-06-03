@@ -319,7 +319,8 @@ const RISK_RULES = [
 /**
  * SymptomChecker — select symptoms and get a rule-based risk assessment.
  *
- * Lets the user pick from a predefined symptom list (and add custom ones),
+ * Lets the user pick symptoms from a predefined list (only names present in
+ * COMMON_SYMPTOMS can be added; arbitrary entries are rejected),
  * then matches the selection against a set of risk rules to surface possible
  * conditions, probabilities, causes, and suggested actions.
  *
