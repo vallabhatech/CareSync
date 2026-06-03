@@ -10,7 +10,11 @@ import { Box, Typography, TextField, Button, Chip, Stack, Paper, LinearProgress 
  *
  * To add a new symptom: append its display name as a string, keeping the
  * casing consistent with existing entries (e.g. "Sore throat"), because these
- * exact strings are compared against the `symptoms` arrays in RISK_RULES below.
+ * strings are compared against the `symptoms` arrays in RISK_RULES below. Note
+ * that some RISK_RULES entries currently reference symptom names not present in
+ * COMMON_SYMPTOMS (e.g. "Jaundice", "Severe headache"); those can only ever
+ * partially match, since users can only select symptoms from this list. New
+ * rules should prefer names that exist here so they can match on their own.
  *
  * @type {string[]}
  */
@@ -35,7 +39,10 @@ const COMMON_SYMPTOMS = [
  * @typedef {Object} RiskRule
  * @property {string[]} symptoms   - Symptom names that characterize this
  *                                   condition. Each must exactly match an entry
- *                                   in COMMON_SYMPTOMS.
+ *                                   in COMMON_SYMPTOMS so users can select it.
+ *                                   (Some existing rules reference names not in
+ *                                   COMMON_SYMPTOMS and therefore only ever
+ *                                   partially match — avoid this in new rules.)
  * @property {string}   condition  - Human-readable name of the possible condition.
  * @property {number}   probability - Base confidence (0–100) that the full
  *                                   symptom set indicates this condition. This
@@ -58,8 +65,9 @@ const COMMON_SYMPTOMS = [
  *      rule matches, a generic low-risk "monitor your symptoms" result is shown.
  *
  * To add a new rule: append a RiskRule object. Ensure every string in
- * `symptoms` already exists in COMMON_SYMPTOMS (otherwise it can never match,
- * since the user can only select from that list), set a sensible base
+ * `symptoms` already exists in COMMON_SYMPTOMS (otherwise that symptom can
+ * never be selected by the user, so the rule can match only partially at best),
+ * set a sensible base
  * `probability`, and choose a `risk` tier of "low", "medium", or "high".
  *
  * @type {RiskRule[]}
