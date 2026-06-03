@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, Typography, List, ListItem, Button, CircularProgress, Alert, Paper, TextField, Card, CardContent, Divider } from '@mui/material';
 
 export default function ClinicsNearby() {
@@ -10,6 +10,18 @@ export default function ClinicsNearby() {
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
   const [searchError, setSearchError] = useState('');
+  const lastRequestTime = useRef(0);
+
+  // Nominatim policy: max 1 request per second
+  const isThrottled = () => {
+    const now = Date.now();
+    if (now - lastRequestTime.current < 1000) {
+      setSearchError('Please wait a moment before searching again.');
+      return true;
+    }
+    lastRequestTime.current = now;
+    return false;
+  };
 
   const fetchClinics = async (latitude, longitude) => {
     setLoading(true);
@@ -78,6 +90,7 @@ export default function ClinicsNearby() {
       setSearchError('Please enter a city name or postal code.');
       return;
     }
+    if (isThrottled()) return;
     try {
       const coords = await geocodeLocation(cityQuery);
       fetchClinics(coords.lat, coords.lon);
@@ -89,9 +102,17 @@ export default function ClinicsNearby() {
   const handleCoordSearch = () => {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lon);
-    
-    if (!lat || !lon) {
+
+    if (!lat.trim() || !lon.trim()) {
       setSearchError('Please enter both latitude and longitude.');
+      return;
+    }
+    if (isNaN(latitude)) {
+      setSearchError('Latitude must be a valid number.');
+      return;
+    }
+    if (isNaN(longitude)) {
+      setSearchError('Longitude must be a valid number.');
       return;
     }
     if (latitude < -90 || latitude > 90) {
@@ -102,7 +123,8 @@ export default function ClinicsNearby() {
       setSearchError('Longitude must be between -180 and 180.');
       return;
     }
-    
+    if (isThrottled()) return;
+
     setSearchError('');
     fetchClinics(latitude, longitude);
   };
