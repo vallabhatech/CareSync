@@ -5,7 +5,7 @@ export default function ClinicsNearby() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
-  const [coords, setCoords] = useState(null);       // last resolved coordinates (from any source)
+  const [coords, setCoords] = useState(null); // last resolved coordinates (from any source)
   const [showFallback, setShowFallback] = useState(false);
   const [cityQuery, setCityQuery] = useState('');
   const [lat, setLat] = useState('');
@@ -46,6 +46,12 @@ export default function ClinicsNearby() {
    *   - viewbox=left,top,right,bottom → the bounding box
    *                          (left=lon-δ, top=lat+δ, right=lon+δ, bottom=lat-δ)
    * Request header: `Accept-Language: en` to prefer English place names.
+   *
+   * Response: an array of place objects. Fields used by this component:
+   *   - place_id      → React list key
+   *   - display_name  → full place name (first segment shown as the title)
+   *   - lat, lon      → used to build the "View on Map" Google Maps link
+   * An empty array sets a "no clinics found" message.
    *
    * Rate limits / usage policy: the public Nominatim service allows at most
    * **1 request per second** per the OSM usage policy
