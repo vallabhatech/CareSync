@@ -1,5 +1,20 @@
 import React from 'react';
 
+/**
+ * Footer — global site footer shown at the bottom of every page.
+ *
+ * Renders the CareSync copyright line with the current year (computed at
+ * render time via `new Date().getFullYear()`), a GitHub link, and a
+ * "Made with 💚" note. Styling is scoped via an inline `<style>` block.
+ *
+ * Takes no props and holds no state.
+ *
+ * @component
+ * @returns {JSX.Element} The site footer.
+ *
+ * @example
+ * <Footer />
+ */
 export default function Footer() {
   return (
     <footer className="footer">

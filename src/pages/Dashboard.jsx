@@ -18,6 +18,23 @@ const healthQuotes = [
   "Wellness is a journey, not a destination.",
 ];
 
+/**
+ * Dashboard — the app landing/overview page.
+ *
+ * Displays a time-based greeting (morning/afternoon/evening), a randomly
+ * rotated health quote, and a grid of feature cards linking to the main
+ * sections. On mount it reads `caresync_medicines` from localStorage to show
+ * how many medicines are scheduled for today.
+ *
+ * Rendered as a route; takes no props and manages its own state
+ * (`quote`, `todayCount`) internally.
+ *
+ * @component
+ * @returns {JSX.Element} The dashboard overview page.
+ *
+ * @example
+ * <Route path="/dashboard" element={<Dashboard />} />
+ */
 export default function Dashboard() {
   const [quote, setQuote] = useState(healthQuotes[0]);
   const [todayCount, setTodayCount] = useState(0);

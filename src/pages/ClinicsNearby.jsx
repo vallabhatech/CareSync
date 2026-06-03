@@ -1,6 +1,25 @@
 import React, { useState } from 'react';
 import { Box, Typography, List, ListItem, ListItemText, Button, CircularProgress, Alert, Paper } from '@mui/material';
 
+/**
+ * ClinicsNearby — find nearby clinics using the browser's geolocation.
+ *
+ * Requests the user's location via the Geolocation API, then queries the
+ * OpenStreetMap Nominatim search endpoint for clinics within a bounding box
+ * around those coordinates, rendering the results with links to Google Maps.
+ * Handles loading, geolocation-permission errors, and empty results.
+ *
+ * Rendered as a route; takes no props and manages its own state
+ * (`clinics`, `loading`, `locationError`, `coords`) internally.
+ * (The Nominatim API integration — endpoint, parameters, response shape, and
+ * rate limits — is documented separately; see issue #12, Task 2's API task.)
+ *
+ * @component
+ * @returns {JSX.Element} The nearby-clinics page.
+ *
+ * @example
+ * <Route path="/clinics-nearby" element={<ClinicsNearby />} />
+ */
 export default function ClinicsNearby() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);

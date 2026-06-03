@@ -316,6 +316,24 @@ const RISK_RULES = [
   }
 ];
 
+/**
+ * SymptomChecker — select symptoms and get a rule-based risk assessment.
+ *
+ * Lets the user pick symptoms from a predefined list (only names present in
+ * COMMON_SYMPTOMS can be added; arbitrary entries are rejected),
+ * then matches the selection against a set of risk rules to surface possible
+ * conditions, probabilities, causes, and suggested actions.
+ *
+ * Rendered as a route; takes no props and manages its own state internally.
+ * (The `COMMON_SYMPTOMS` and `RISK_RULES` data structures that drive the
+ * matching are documented separately — see issue #12, Task 5.)
+ *
+ * @component
+ * @returns {JSX.Element} The symptom checker page.
+ *
+ * @example
+ * <Route path="/symptom-checker" element={<SymptomChecker />} />
+ */
 export default function SymptomChecker() {
   const [input, setInput] = useState('');
   const [symptoms, setSymptoms] = useState([]);

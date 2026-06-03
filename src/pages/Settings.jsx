@@ -12,6 +12,23 @@ import {
   FormControlLabel
 } from '@mui/material';
 
+/**
+ * Settings — user profile and preferences page.
+ *
+ * Provides a form to edit profile fields (name, email) and upload an avatar
+ * image (previewed via `URL.createObjectURL`), plus a toggle for email
+ * notifications. State is held locally in the component (the form is currently
+ * frontend-only and not yet wired to a backend).
+ *
+ * Rendered as a route; takes no props and manages its own state
+ * (`profile`, `notifications`) internally.
+ *
+ * @component
+ * @returns {JSX.Element} The settings page.
+ *
+ * @example
+ * <Route path="/settings" element={<Settings />} />
+ */
 export default function Settings() {
   const [profile, setProfile] = useState({
     name: 'Jane Doe',

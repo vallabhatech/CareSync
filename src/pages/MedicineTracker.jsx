@@ -1,5 +1,22 @@
 import React, { useState } from 'react';
 
+/**
+ * MedicineTracker — add, view, and delete scheduled medicines.
+ *
+ * Persists the medicine list in localStorage under `caresync_medicines`
+ * (each entry: `{ id, name, time, date }`). Backfills a generated `id` for
+ * any legacy entries missing one. Provides a form to add a medicine (name +
+ * time + date) and surfaces today's entries as reminders.
+ *
+ * Rendered as a route; takes no props and manages its own state
+ * (`medicines`, `name`, `time`, `date`) internally.
+ *
+ * @component
+ * @returns {JSX.Element} The medicine tracker page.
+ *
+ * @example
+ * <Route path="/medicine-tracker" element={<MedicineTracker />} />
+ */
 export default function MedicineTracker() {
   const [medicines, setMedicines] = useState(() => {
     const saved = localStorage.getItem('caresync_medicines');

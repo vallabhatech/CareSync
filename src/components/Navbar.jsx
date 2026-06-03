@@ -1,6 +1,23 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+/**
+ * Navbar — sticky top navigation bar with links to all main routes.
+ *
+ * Renders the CareSync logo and navigation links (Dashboard, Medicines,
+ * Symptoms, Clinics, Settings). Uses React Router's `useLocation` to
+ * highlight the link matching the current `pathname` with an `active` class.
+ * Styling is scoped via an inline `<style>` block, including a mobile
+ * breakpoint at 700px.
+ *
+ * Takes no props; reads the current route internally via `useLocation`.
+ *
+ * @component
+ * @returns {JSX.Element} The top navigation bar.
+ *
+ * @example
+ * <Navbar />
+ */
 export default function Navbar() {
   const location = useLocation();
   return (
