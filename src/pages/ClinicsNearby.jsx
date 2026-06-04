@@ -38,7 +38,42 @@ export default function ClinicsNearby() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
-  const [coords, setCoords] = useState(null);
+  const [searchError, setSearchError] = useState('');
+  const [showFallback, setShowFallback] = useState(false);
+  const [cityQuery, setCityQuery] = useState('');
+  const [lat, setLat] = useState('');
+  const [lon, setLon] = useState('');
+  const lastSearchAtRef = useRef(0);
+
+  const isThrottled = () => {
+    const now = Date.now();
+    if (now - lastSearchAtRef.current < 1500) {
+      setSearchError('Please wait a moment before searching again.');
+      return true;
+    }
+    lastSearchAtRef.current = now;
+    return false;
+  };
+
+  const geocodeLocation = async (query) => {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
+      query
+    )}`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if (!res.ok) {
+      throw new Error('Unable to search that location right now.');
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error('No matching location found. Try a different city or postal code.');
+    }
+
+    return {
+      lat: Number.parseFloat(data[0].lat),
+      lon: Number.parseFloat(data[0].lon),
+    };
+  };
 
   const fetchClinics = async (lat, lon) => {
     setLoading(true);
@@ -71,6 +106,7 @@ export default function ClinicsNearby() {
     setLocationError('');
     setSearchError('');
     setClinics([]);
+    setShowFallback(false);
 
     if (!navigator.geolocation) {
       setLocationError(
@@ -97,6 +133,9 @@ export default function ClinicsNearby() {
   };
 
   const handleCitySearch = async () => {
+    setLocationError('');
+    setSearchError('');
+
     if (!cityQuery.trim()) {
       setSearchError('Please enter a city name or postal code.');
       return;
@@ -108,7 +147,7 @@ export default function ClinicsNearby() {
       const result = await geocodeLocation(cityQuery);
       fetchClinics(result.lat, result.lon);
     } catch (err) {
-      setSearchError(err.message);
+      setSearchError(err instanceof Error ? err.message : 'Unable to search that location.');
     }
   };
 
