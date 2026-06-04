@@ -59,14 +59,32 @@ export default function ClinicsNearby() {
   };
 
   // Geocode a city name or postal code via Nominatim
-  const geocodeLocation = async (query) => {
+    const geocodeLocation = async (query) => {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
     const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    
+    if (!res.ok) {
+      throw new Error(
+        res.status === 429
+          ? 'Location search is temporarily rate-limited. Please try again in a moment.'
+          : 'Failed to resolve that location. Please try again later.'
+      );
+    }
+    
     const data = await res.json();
-    if (!data || data.length === 0) {
+    
+    if (!Array.isArray(data) || data.length === 0) {
       throw new Error('Location not found. Please check your spelling or try a different query.');
     }
-    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    
+    const latitude = Number.parseFloat(data[0].lat);
+    const longitude = Number.parseFloat(data[0].lon);
+    
+    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+      throw new Error('Failed to resolve that location. Please try again later.');
+    }
+    
+    return { lat: latitude, lon: longitude };
   };
 
   const fetchClinics = async (lat, lon) => {
