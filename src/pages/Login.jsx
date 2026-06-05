@@ -9,7 +9,6 @@ import {
   Alert,
   Tabs,
   Tab,
-  Divider,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';

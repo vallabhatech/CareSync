@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 const AuthContext = createContext(null);
 
@@ -44,17 +45,16 @@ export function AuthProvider({ children }) {
     localStorage.setItem('caresync_user', JSON.stringify(updatedUser));
   };
 
-  const value = {
+  const value = React.useMemo(() => ({
     user,
     isAuthenticated,
     loading,
     login,
     logout,
     updateProfile,
-  };
+  }), [user, isAuthenticated, loading, login, logout, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -63,3 +63,7 @@ export function useAuth() {
   }
   return context;
 }
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};}

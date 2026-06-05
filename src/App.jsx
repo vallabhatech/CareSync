@@ -29,7 +29,6 @@ import {
   Settings as SettingsIcon,
   Place as PlaceIcon,
   VolunteerActivism as VolunteerActivismIcon,
-  AccountCircle as AccountCircleIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useNavigate, Link, Routes, Route } from 'react-router-dom';
