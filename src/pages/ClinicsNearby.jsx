@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Box,
@@ -38,7 +38,54 @@ export default function ClinicsNearby() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [searchError, setSearchError] = useState('');
+  const [showFallback, setShowFallback] = useState(false);
+  const [cityQuery, setCityQuery] = useState('');
+  const [lat, setLat] = useState('');
+  const [lon, setLon] = useState('');
   const [coords, setCoords] = useState(null);
+
+  // Rate-limit helper: prevent rapid repeated API calls
+  const lastCallRef = React.useRef(0);
+  const isThrottled = () => {
+    const now = Date.now();
+    if (now - lastCallRef.current < 1000) {
+      setSearchError('Please wait a moment before searching again.');
+      return true;
+    }
+    lastCallRef.current = now;
+    setSearchError('');
+    return false;
+  };
+
+  // Geocode a city name or postal code via Nominatim
+    const geocodeLocation = async (query) => {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    
+    if (!res.ok) {
+      throw new Error(
+        res.status === 429
+          ? 'Location search is temporarily rate-limited. Please try again in a moment.'
+          : 'Failed to resolve that location. Please try again later.'
+      );
+    }
+    
+    const data = await res.json();
+    
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error('Location not found. Please check your spelling or try a different query.');
+    }
+    
+    const latitude = Number.parseFloat(data[0].lat);
+    const longitude = Number.parseFloat(data[0].lon);
+    
+    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+      throw new Error('Failed to resolve that location. Please try again later.');
+    }
+    
+    return { lat: latitude, lon: longitude };
+  };
 
   const fetchClinics = async (lat, lon) => {
     setLoading(true);
@@ -84,6 +131,7 @@ export default function ClinicsNearby() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
+        setCoords({ lat: latitude, lon: longitude });
         fetchClinics(latitude, longitude);
       },
       () => {
@@ -106,6 +154,7 @@ export default function ClinicsNearby() {
 
     try {
       const result = await geocodeLocation(cityQuery);
+      setCoords(result);
       fetchClinics(result.lat, result.lon);
     } catch (err) {
       setSearchError(err.message);
@@ -140,6 +189,7 @@ export default function ClinicsNearby() {
     if (isThrottled()) return;
 
     setSearchError('');
+    setCoords({ lat: latitude, lon: longitude });
     fetchClinics(latitude, longitude);
   };
 
