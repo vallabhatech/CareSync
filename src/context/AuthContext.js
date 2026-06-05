@@ -55,7 +55,14 @@ export function AuthProvider({ children }) {
   }), [user, isAuthenticated, loading, login, logout, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
 
+// PropTypes validation
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+// Hook MUST be exported and used
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
@@ -63,7 +70,3 @@ export function useAuth() {
   }
   return context;
 }
-
-AuthProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-};}
