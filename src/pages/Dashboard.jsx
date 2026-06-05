@@ -67,6 +67,7 @@ export default function Dashboard() {
   
   const dynamicFeatures = [
     {
+      id: "today's-medicines",
       title: "Today's Medicines",
       desc: todayCount === 1
         ? "1 medicine scheduled for today."
@@ -76,6 +77,7 @@ export default function Dashboard() {
       btn: "View Medicine Tracker",
     },
     {
+      id: 'recent-symptom-checks',
       title: "Recent Symptom Checks",
       desc: "Last check: No major symptoms detected.",
       link: "/symptom-checker",
@@ -83,6 +85,7 @@ export default function Dashboard() {
       btn: "Check Symptoms",
     },
     {
+      id: 'nearby-clinics',
       title: "Nearby Clinics",
       desc: "3 clinics within 5km.",
       link: "/clinics-nearby",
@@ -90,6 +93,7 @@ export default function Dashboard() {
       btn: "Find Clinics",
     },
     {
+      id: 'profile-settings',
       title: "Profile & Settings",
       desc: "Update your preferences and profile.",
       link: "/settings",
@@ -127,8 +131,8 @@ export default function Dashboard() {
           <button className="dashboard-quote-btn" onClick={generateQuote}>New Quote</button>
         </div>
         <div className="dashboard-features">
-          {dynamicFeatures.map((feature, idx) => (
-            <div className="dashboard-card" key={idx}>
+          {dynamicFeatures.map((feature) => (
+            <div className="dashboard-card" key={feature.id}>
               <div className="dashboard-icon">{feature.icon}</div>
               <div className="dashboard-card-title">{feature.title}</div>
               <div className="dashboard-card-desc">{feature.desc}</div>

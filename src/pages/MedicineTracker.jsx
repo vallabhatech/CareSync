@@ -18,22 +18,50 @@ import React, { useState } from 'react';
  * <Route path="/medicine-tracker" element={<MedicineTracker />} />
  */
 export default function MedicineTracker() {
+  const sanitizeText = (value) =>
+    Array.from(String(value ?? ''))
+      .filter((char) => {
+        const code = char.charCodeAt(0);
+        return code >= 32 && code !== 127 && char !== '<' && char !== '>';
+      })
+      .join('')
+      .trim();
+
+  const createMedicine = (med) => {
+    const sanitizedName = sanitizeText(med?.name);
+    const sanitizedTime = sanitizeText(med?.time);
+    const sanitizedDate = sanitizeText(med?.date);
+
+    return {
+      id: med?.id && String(med.id).trim()
+        ? String(med.id).trim()
+        : Date.now().toString() + Math.random().toString(36).substring(2, 9),
+      name: sanitizedName,
+      time: sanitizedTime,
+      date: sanitizedDate
+    };
+  };
+
+  const saveMedicines = (nextMedicines) => {
+    const sanitizedMedicines = nextMedicines
+      .map(createMedicine)
+      .filter(med => med.name && med.time && med.date);
+
+    setMedicines(sanitizedMedicines);
+    localStorage.setItem('caresync_medicines', JSON.stringify(sanitizedMedicines));
+  };
+
   const [medicines, setMedicines] = useState(() => {
     const saved = localStorage.getItem('caresync_medicines');
     if (!saved) return [];
     try {
       const parsed = JSON.parse(saved);
-      // Ensure all loaded medicines have an id
-      return parsed.map(med => {
-        if (!med.id) {
-          return {
-            ...med,
-            id: Date.now().toString() + Math.random().toString(36).substring(2, 9)
-          };
-        }
-        return med;
-      });
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map(createMedicine)
+        .filter(med => med.name && med.time && med.date);
     } catch (e) {
+      console.error('Failed to load medicines from localStorage:', e);
       return [];
     }
   });
@@ -46,26 +74,29 @@ export default function MedicineTracker() {
   const today = new Date().toISOString().slice(0, 10);
 
   const addMedicine = () => {
-    if (name && time && date) {
-      const newMed = {
-        id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
-        name,
-        time,
-        date
-      };
-      const updated = [...medicines, newMed];
-      setMedicines(updated);
-      localStorage.setItem('caresync_medicines', JSON.stringify(updated));
-      setName('');
-      setTime('');
-      setDate('');
+    const sanitizedName = sanitizeText(name);
+    const sanitizedTime = sanitizeText(time);
+    const sanitizedDate = sanitizeText(date);
+
+    if (!sanitizedName || !sanitizedTime || !sanitizedDate) {
+      return;
     }
+
+    const newMed = createMedicine({
+      name: sanitizedName,
+      time: sanitizedTime,
+      date: sanitizedDate
+    });
+
+    saveMedicines([...medicines, newMed]);
+    setName('');
+    setTime('');
+    setDate('');
   };
 
   const deleteMedicine = (id) => {
     const updated = medicines.filter(med => med.id !== id);
-    setMedicines(updated);
-    localStorage.setItem('caresync_medicines', JSON.stringify(updated));
+    saveMedicines(updated);
   };
 
   // Filter medicines for today's reminders
@@ -81,8 +112,8 @@ export default function MedicineTracker() {
             <div className="medtracker-reminder-empty">No medicines scheduled for today.</div>
           ) : (
             <ul className="medtracker-reminder-list">
-              {todaysReminders.map((med, idx) => (
-                <li key={med.id || idx} className="medtracker-reminder-item">
+              {todaysReminders.map((med) => (
+                <li key={med.id} className="medtracker-reminder-item">
                   <span className="medtracker-pill">{med.name}</span>
                   <span className="medtracker-time">{med.time}</span>
                   <button 
@@ -123,8 +154,8 @@ export default function MedicineTracker() {
           {medicines.length === 0 && (
             <li className="medtracker-list-empty">No medicines scheduled yet.</li>
           )}
-          {medicines.map((med, idx) => (
-            <li key={med.id || idx} className="medtracker-list-item">
+          {medicines.map((med) => (
+            <li key={med.id} className="medtracker-list-item">
               <span className="medtracker-pill">{med.name}</span>
               <span className="medtracker-date">{med.date}</span>
               <span className="medtracker-time">{med.time}</span>
