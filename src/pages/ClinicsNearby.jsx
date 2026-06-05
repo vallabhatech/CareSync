@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -14,26 +14,6 @@ import {
   Typography,
 } from '@mui/material';
 
-
-/**
- * ClinicsNearby — find nearby clinics using the browser's geolocation.
- *
- * Requests the user's location via the Geolocation API, then queries the
- * OpenStreetMap Nominatim search endpoint for clinics within a bounding box
- * around those coordinates, rendering the results with links to Google Maps.
- * Handles loading, geolocation-permission errors, and empty results.
- *
- * Rendered as a route; takes no props and manages its own state
- * (`clinics`, `loading`, `locationError`, `coords`) internally.
- * (The Nominatim API integration — endpoint, parameters, response shape, and
- * rate limits — is documented separately; see issue #12, Task 2's API task.)
- *
- * @component
- * @returns {JSX.Element} The nearby-clinics page.
- *
- * @example
- * <Route path="/clinics-nearby" element={<ClinicsNearby />} />
- */
 export default function ClinicsNearby() {
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -43,6 +23,7 @@ export default function ClinicsNearby() {
   const [cityQuery, setCityQuery] = useState('');
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
+  const [coords, setCoords] = useState(null);
   const lastSearchAtRef = useRef(0);
 
   const isThrottled = () => {
@@ -51,6 +32,7 @@ export default function ClinicsNearby() {
       setSearchError('Please wait a moment before searching again.');
       return true;
     }
+
     lastSearchAtRef.current = now;
     return false;
   };
@@ -60,40 +42,7 @@ export default function ClinicsNearby() {
       query
     )}`;
     const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-    if (!res.ok) {
-      throw new Error('Unable to search that location right now.');
-    }
 
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error('No matching location found. Try a different city or postal code.');
-    }
-
-    return {
-      lat: Number.parseFloat(data[0].lat),
-      lon: Number.parseFloat(data[0].lon),
-    };
-  };
-  const [coords, setCoords] = useState(null);
-
-  // Rate-limit helper: prevent rapid repeated API calls
-  const lastCallRef = React.useRef(0);
-  const isThrottled = () => {
-    const now = Date.now();
-    if (now - lastCallRef.current < 1000) {
-      setSearchError('Please wait a moment before searching again.');
-      return true;
-    }
-    lastCallRef.current = now;
-    setSearchError('');
-    return false;
-  };
-
-  // Geocode a city name or postal code via Nominatim
-    const geocodeLocation = async (query) => {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-    
     if (!res.ok) {
       throw new Error(
         res.status === 429
@@ -101,48 +50,53 @@ export default function ClinicsNearby() {
           : 'Failed to resolve that location. Please try again later.'
       );
     }
-    
+
     const data = await res.json();
-    
     if (!Array.isArray(data) || data.length === 0) {
       throw new Error('Location not found. Please check your spelling or try a different query.');
     }
-    
+
     const latitude = Number.parseFloat(data[0].lat);
     const longitude = Number.parseFloat(data[0].lon);
-    
+
     if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
       throw new Error('Failed to resolve that location. Please try again later.');
     }
-    
+
     return { lat: latitude, lon: longitude };
   };
 
-  const fetchClinics = async (lat, lon) => {
+  const fetchClinics = async (latitude, longitude) => {
     setLoading(true);
     setLocationError('');
     setSearchError('');
 
     try {
       const delta = 0.1;
-      const left = lon - delta;
-      const right = lon + delta;
-      const top = lat + delta;
-      const bottom = lat - delta;
+      const left = longitude - delta;
+      const right = longitude + delta;
+      const top = latitude + delta;
+      const bottom = latitude - delta;
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=clinic&limit=10&addressdetails=1&extratags=1&bounded=1&viewbox=${left},${top},${right},${bottom}`;
       const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-      const data = await res.json();
-      if (data.length === 0) {
-        setLocationError('No clinics found nearby. Try increasing your search area.');
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch clinics. Try again later.');
       }
 
-      setClinics(data);
+      const data = await res.json();
+      setClinics(Array.isArray(data) ? data : []);
       setShowFallback(false);
+
+      if (!Array.isArray(data) || data.length === 0) {
+        setLocationError('No clinics found nearby. Try increasing your search area.');
+      }
     } catch (err) {
       console.error('Failed to fetch clinics:', err);
       setLocationError('Failed to fetch clinics. Try again later.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleFindClinics = () => {
@@ -166,7 +120,8 @@ export default function ClinicsNearby() {
         setCoords({ lat: latitude, lon: longitude });
         fetchClinics(latitude, longitude);
       },
-      () => {
+      (error) => {
+        console.error('Geolocation failed:', error);
         setLocationError(
           'Location access is unavailable. You can search using a city name, postal code, manually enter coordinates, or retry location access.'
         );
@@ -197,25 +152,29 @@ export default function ClinicsNearby() {
   };
 
   const handleCoordSearch = () => {
-    const latitude = parseFloat(lat);
-    const longitude = parseFloat(lon);
+    const latitude = Number.parseFloat(lat);
+    const longitude = Number.parseFloat(lon);
 
     if (!lat.trim() || !lon.trim()) {
       setSearchError('Please enter both latitude and longitude.');
       return;
     }
+
     if (Number.isNaN(latitude)) {
       setSearchError('Latitude must be a valid number.');
       return;
     }
+
     if (Number.isNaN(longitude)) {
       setSearchError('Longitude must be a valid number.');
       return;
     }
+
     if (latitude < -90 || latitude > 90) {
       setSearchError('Latitude must be between -90 and 90.');
       return;
     }
+
     if (longitude < -180 || longitude > 180) {
       setSearchError('Longitude must be between -180 and 180.');
       return;
@@ -267,6 +226,7 @@ export default function ClinicsNearby() {
             {locationError}
           </Alert>
         )}
+
         {searchError && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {searchError}
@@ -398,6 +358,12 @@ export default function ClinicsNearby() {
         {!loading && clinics.length === 0 && !locationError && (
           <Typography variant="body2" color="text.secondary" mt={2} align="center">
             Click &quot;Find Clinics Near Me&quot; to see nearby clinics and hospitals.
+          </Typography>
+        )}
+
+        {coords && (
+          <Typography variant="caption" color="text.secondary" display="block" mt={2} align="center">
+            Last searched coordinates: {coords.lat}, {coords.lon}
           </Typography>
         )}
       </div>
