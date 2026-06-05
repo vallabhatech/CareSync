@@ -1,6 +1,6 @@
 # Auto Review Request Workflow
-# This workflow automatically requests a review from vallabhatech for new pull requests.
-# This ensures that all code changes are reviewed by the maintainer.
+# This workflow requests a review from vallabhatech for new pull requests.
+# It does not assign issues; issue automation is handled separately.
 
 name: Auto Review Request
 
@@ -23,6 +23,18 @@ jobs:
           script: |
             const pullRequest = context.payload.pull_request;
             const reviewer = 'vallabhatech';
+
+            // Skip self-review requests and duplicate review requests.
+            if (pullRequest.user.login === reviewer) {
+              console.log(`Skipping review request for PR #${pullRequest.number} because the author is ${reviewer}.`);
+              return;
+            }
+
+            const requestedReviewers = pullRequest.requested_reviewers?.map(reviewer => reviewer.login) ?? [];
+            if (requestedReviewers.includes(reviewer)) {
+              console.log(`Review from ${reviewer} was already requested for PR #${pullRequest.number}.`);
+              return;
+            }
             
             // Request review from the maintainer
             await github.rest.pulls.requestReviewers({

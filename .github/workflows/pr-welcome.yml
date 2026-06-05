@@ -1,6 +1,6 @@
 # Pull Request Welcome Workflow
-# This workflow automatically posts a welcome comment when a new pull request is opened.
-# It thanks the contributor for their code and mentions the review process.
+# This workflow posts a professional welcome comment when a new pull request is opened.
+# A hidden marker is used so the workflow can stay idempotent without depending on the visible text.
 
 name: Pull Request Welcome
 
@@ -22,8 +22,9 @@ jobs:
         with:
           script: |
             const pullRequest = context.payload.pull_request;
+            const welcomeMarker = '<!-- caresync-pr-welcome -->';
             
-            // Check if the PR already has a welcome comment to avoid duplicates
+            // Check if the PR already has a welcome comment to avoid duplicates.
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -31,8 +32,7 @@ jobs:
             });
             
             const hasWelcomeComment = comments.data.some(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes('Thanks for your contribution')
+              comment.body.includes(welcomeMarker)
             );
             
             if (hasWelcomeComment) {
@@ -40,14 +40,26 @@ jobs:
               return;
             }
             
-            // Post the welcome comment
+            // Post the welcome comment.
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pullRequest.number,
-              body: `Thanks for your contribution! 🎉 Your pull request has been received and will be reviewed soon.
+              body: `🎉 Thank you for submitting a Pull Request to CareSync!
 
-Automated checks are currently running on your changes. Once they pass, a maintainer will review the code changes. Please respond to any review comments and make necessary updates.
+We appreciate your contribution.
 
-If you haven't already, please ensure your PR follows our [contributing guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md).`
+Before review, please ensure:
+
+✅ Your branch is up to date with the latest main branch
+✅ Code follows project conventions
+✅ Changes are focused and relevant
+✅ Documentation is updated if necessary
+✅ The application builds successfully
+
+A maintainer will review your contribution soon.
+
+Thank you for helping make CareSync better! 🚀
+
+${welcomeMarker}`
             });

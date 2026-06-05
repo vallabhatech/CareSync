@@ -1,6 +1,6 @@
 # Issue Welcome Workflow
-# This workflow automatically posts a friendly welcome comment when a new issue is opened.
-# It thanks the contributor, mentions maintainers will review it, and encourages providing details.
+# This workflow posts a professional welcome comment when a new issue is opened.
+# A hidden marker is used so the workflow can stay idempotent without depending on the visible text.
 
 name: Issue Welcome
 
@@ -22,9 +22,9 @@ jobs:
         with:
           script: |
             const issue = context.payload.issue;
-            const repository = context.payload.repository;
+            const welcomeMarker = '<!-- caresync-issue-welcome -->';
             
-            // Check if the issue already has a welcome comment to avoid duplicates
+            // Check if the issue already has a welcome comment to avoid duplicates.
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -32,8 +32,7 @@ jobs:
             });
             
             const hasWelcomeComment = comments.data.some(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes('Thanks for opening this issue')
+              comment.body.includes(welcomeMarker)
             );
             
             if (hasWelcomeComment) {
@@ -41,18 +40,25 @@ jobs:
               return;
             }
             
-            // Post the welcome comment
+            // Post the welcome comment.
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body: `Thanks for opening this issue! 🚀 We appreciate your contribution to CareSync. A maintainer will review it shortly.
+              body: `👋 Thank you for opening an issue in CareSync!
 
-To help us address your issue effectively, please consider providing:
-- Screenshots or screen recordings if applicable
-- Relevant logs or error messages
-- Steps to reproduce the issue
-- Your environment details (OS, browser, app version, etc.)
+We appreciate your effort in helping improve the project.
 
-If you haven't already, please take a moment to review our [contributing guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md).`
+Before a maintainer reviews this issue, please ensure:
+
+✅ The issue description is clear and detailed
+✅ Steps to reproduce are included (for bugs)
+✅ Expected behavior is explained
+✅ Screenshots are attached when helpful
+
+A maintainer will review this issue as soon as possible.
+
+Thank you for contributing to CareSync! 🚀
+
+${welcomeMarker}`
             });

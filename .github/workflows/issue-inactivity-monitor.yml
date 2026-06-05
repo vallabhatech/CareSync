@@ -1,0 +1,194 @@
+# Issue Inactivity Monitor
+# This workflow checks assigned issues on a schedule and enforces the 20-hour warning / 24-hour unassignment policy.
+# Activity tracking treats assignee comments, linked pull requests, commit references, and maintainer-approved progress updates as active work.
+
+name: Issue Inactivity Monitor
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+# The workflow only needs to read issues and write issue comments / assignee changes.
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  monitor-assigned-issues:
+    name: Monitor Assigned Issues
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for inactivity
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const WARNING_MARKER = '<!-- caresync-issue-inactivity-warning -->';
+            const UNASSIGNED_MARKER = '<!-- caresync-issue-unassigned -->';
+            const WARNING_HOURS = 20;
+            const UNASSIGN_HOURS = 24;
+            const warningWindowMs = WARNING_HOURS * 60 * 60 * 1000;
+            const unassignWindowMs = UNASSIGN_HOURS * 60 * 60 * 1000;
+            const maintainerAssociations = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+            const maintainerProgressPattern = /\b(progress|update|approved|working on it)\b/i;
+
+            function toTimestamp(value) {
+              const timestamp = new Date(value).getTime();
+              return Number.isNaN(timestamp) ? 0 : timestamp;
+            }
+
+            function latestTimestamp(events, predicate) {
+              return events.reduce((latest, event) => {
+                if (!predicate(event)) {
+                  return latest;
+                }
+
+                return Math.max(latest, toTimestamp(event.created_at));
+              }, 0);
+            }
+
+            function isReferenceActivity(event) {
+              if (!['cross-referenced', 'referenced', 'connected'].includes(event.event)) {
+                return false;
+              }
+
+              const source = event.source ?? {};
+              const sourceType = String(source.type ?? source.subject?.type ?? '').toLowerCase();
+              const hasPullRequestSource = Boolean(source.pull_request || source.issue?.pull_request);
+              const hasCommitSource = Boolean(source.commit_id || source.commit_url);
+
+              return sourceType === 'pull_request' || sourceType === 'commit' || hasPullRequestSource || hasCommitSource;
+            }
+
+            function isMaintainerProgressComment(comment, assigneeLogins) {
+              const authorLogin = comment.user?.login;
+              const authorAssociation = comment.author_association;
+
+              if (!authorLogin || comment.user?.type === 'Bot') {
+                return false;
+              }
+
+              if (assigneeLogins.includes(authorLogin)) {
+                return true;
+              }
+
+              return maintainerAssociations.has(authorAssociation) && maintainerProgressPattern.test(comment.body ?? '');
+            }
+
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              assignee: '*',
+              per_page: 100,
+            });
+
+            const assignedIssues = issues.filter(issue => !issue.pull_request && (issue.assignees?.length ?? 0) > 0);
+            console.log(`Found ${assignedIssues.length} open assigned issues to evaluate.`);
+
+            for (const issue of assignedIssues) {
+              const assignees = issue.assignees ?? [];
+              const assigneeLogins = assignees.map(assignee => assignee.login);
+
+              const issueEvents = await github.paginate(github.rest.issues.listEvents, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+
+              const latestAssignmentAt = latestTimestamp(
+                issueEvents,
+                event => event.event === 'assigned' && assigneeLogins.includes(event.assignee?.login)
+              );
+
+              if (!latestAssignmentAt) {
+                console.log(`Skipping issue #${issue.number} because no assignment timestamp was found.`);
+                continue;
+              }
+
+              const ageMs = Date.now() - latestAssignmentAt;
+              const issueComments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+
+              const timelineEvents = await github.paginate(github.rest.issues.listTimelineEvents, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+
+              const hasTrackedActivity = issueComments.some(comment => {
+                return toTimestamp(comment.created_at) >= latestAssignmentAt && isMaintainerProgressComment(comment, assigneeLogins);
+              }) || timelineEvents.some(event => {
+                return toTimestamp(event.created_at) >= latestAssignmentAt && isReferenceActivity(event);
+              });
+
+              if (hasTrackedActivity) {
+                console.log(`Issue #${issue.number} has recent activity, so no inactivity action is needed.`);
+                continue;
+              }
+
+              const hasWarningComment = issueComments.some(comment => {
+                return toTimestamp(comment.created_at) >= latestAssignmentAt && comment.body?.includes(WARNING_MARKER);
+              });
+              const hasUnassignedComment = issueComments.some(comment => {
+                return toTimestamp(comment.created_at) >= latestAssignmentAt && comment.body?.includes(UNASSIGNED_MARKER);
+              });
+
+              if (ageMs >= unassignWindowMs) {
+                if (!hasUnassignedComment) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    body: `🔄 Issue Unassigned
+
+No activity was detected within 24 hours of assignment.
+
+To keep contributions moving, this issue has been automatically unassigned and is now available for other contributors.
+
+If you were working on this issue and need it reassigned, feel free to comment with an update.
+
+Thank you for your interest in contributing to CareSync. 🚀
+
+${UNASSIGNED_MARKER}`,
+                  });
+                }
+
+                await github.rest.issues.removeAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  assignees: assigneeLogins,
+                });
+
+                console.log(`Unassigned issue #${issue.number} after ${Math.floor(ageMs / (60 * 60 * 1000))} hours of inactivity.`);
+                continue;
+              }
+
+              if (ageMs >= warningWindowMs && !hasWarningComment) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `👋 Friendly Reminder
+
+This issue has been assigned for nearly a day and no activity has been detected yet.
+
+If you are actively working on it, please share a quick progress update so the issue can remain assigned to you.
+
+If you are unable to continue, no worries — the issue will automatically become available for other contributors in approximately 4 hours.
+
+Thank you for helping improve CareSync! 🚀
+
+${WARNING_MARKER}`,
+                });
+
+                console.log(`Posted a reminder on issue #${issue.number} after ${Math.floor(ageMs / (60 * 60 * 1000))} hours of inactivity.`);
+              }
+            }
