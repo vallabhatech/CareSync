@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import {
   AppBar,
   Toolbar,
@@ -15,7 +16,9 @@ import {
   Slide,
   Card,
   CardContent,
-  useScrollTrigger
+  useScrollTrigger,
+  Avatar,
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -25,11 +28,25 @@ import {
 import { Link, Routes, Route } from 'react-router-dom';
 import '@fontsource/roboto/900.css'; // For bold title
 import '@fontsource/fira-mono';      // For hackathon badge
+import {
+  Medication as MedicationIcon,
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  Place as PlaceIcon,
+  VolunteerActivism as VolunteerActivismIcon,
+  Logout as LogoutIcon,
+} from '@mui/icons-material';
+import { useNavigate, Link, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import '@fontsource/roboto/900.css';
+import '@fontsource/fira-mono';
 import Dashboard from './pages/Dashboard';
 import MedicineTracker from './pages/MedicineTracker';
 import SymptomChecker from './pages/SymptomChecker';
 import ClinicsNearby from './pages/ClinicsNearby';
 import Settings from './pages/Settings';
+import Login from './pages/Login';
+import Profile from './pages/Profile';
 import Footer from './components/Footer';
 
 const NAV_LINKS = [
@@ -106,9 +123,9 @@ FeatureCard.defaultProps = {
 };
 
 function ScrollToTopButton() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = React.useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 300);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
@@ -145,8 +162,24 @@ function ScrollToTopButton() {
 }
 
 function Navbar() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
   const trigger = useScrollTrigger({ threshold: 80 });
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getInitials = (name) => {
+    return name
+      ?.split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'U';
+  };
 
   return (
     <AppBar
@@ -166,7 +199,7 @@ function Navbar() {
             CareSync
           </Link>
         </Typography>
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2 }}>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, alignItems: 'center' }}>
           {NAV_LINKS.map(link => (
             <Button
               key={link.label}
@@ -185,6 +218,43 @@ function Navbar() {
               {link.label}
             </Button>
           ))}
+          {isAuthenticated && user ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Tooltip title="View Profile">
+                <IconButton
+                  component={Link}
+                  to="/profile"
+                  sx={{ color: 'inherit' }}
+                >
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main', fontSize: '0.9rem', fontWeight: 700 }}>
+                    {getInitials(user.name)}
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Log Out">
+                <IconButton onClick={handleLogout} sx={{ color: 'inherit' }}>
+                  <LogoutIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          ) : (
+            <Button
+              component={Link}
+              to="/login"
+              variant="outlined"
+              sx={{
+                color: 'inherit',
+                borderColor: 'inherit',
+                fontWeight: 600,
+                '&:hover': {
+                  bgcolor: 'primary.light',
+                  color: 'primary.main',
+                },
+              }}
+            >
+              Log In
+            </Button>
+          )}
         </Box>
         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
           <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
@@ -206,6 +276,20 @@ function Navbar() {
                 <ListItemText primary={link.label} />
               </ListItem>
             ))}
+            {isAuthenticated && user ? (
+              <>
+                <ListItem button component={Link} to="/profile" onClick={() => setDrawerOpen(false)}>
+                  <ListItemText primary="Profile" />
+                </ListItem>
+                <ListItem button onClick={() => { handleLogout(); setDrawerOpen(false); }}>
+                  <ListItemText primary="Log Out" />
+                </ListItem>
+              </>
+            ) : (
+              <ListItem button component={Link} to="/login" onClick={() => setDrawerOpen(false)}>
+                <ListItemText primary="Log In" />
+              </ListItem>
+            )}
           </List>
         </Box>
       </Drawer>
@@ -215,7 +299,7 @@ function Navbar() {
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <Navbar />
       <div style={{ paddingTop: 80, minHeight: '100vh' }}>
         <Routes>
@@ -225,11 +309,13 @@ function App() {
           <Route path="/symptom-checker" element={<SymptomChecker />} />
           <Route path="/clinics-nearby" element={<ClinicsNearby />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
       <ScrollToTopButton />
       <Footer />
-    </>
+    </AuthProvider>
   );
 }
 
