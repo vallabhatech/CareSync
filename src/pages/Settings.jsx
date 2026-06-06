@@ -90,7 +90,9 @@ export default function Settings() {
         if (saved) {
           scheduleNotifications(JSON.parse(saved));
         }
-      } catch { /* empty */ }
+      } catch (err) {
+        console.warn('Failed to parse saved medicines:', err);
+      }
 
       setSnackbar({
         open: true,

@@ -18,6 +18,23 @@ let activeTimers = [];
 /** localStorage key used by Settings to persist the user's opt-in choice. */
 export const PUSH_ENABLED_KEY = 'caresync_push_enabled';
 
+/**
+ * Return today's date as a local YYYY-MM-DD string.
+ *
+ * `<input type="date">` values use the user's local calendar day, so we must
+ * compare against the same local day — **not** `toISOString()` which is UTC
+ * and can differ around midnight in non-UTC timezones.
+ *
+ * @param {Date} [d=new Date()] - The date to format.
+ * @returns {string} e.g. `"2026-06-06"`
+ */
+export function getLocalDateString(d = new Date()) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Permission                                                         */
 /* ------------------------------------------------------------------ */
@@ -31,7 +48,7 @@ export const PUSH_ENABLED_KEY = 'caresync_push_enabled';
  * @returns {Promise<NotificationPermission>}
  */
 export async function requestNotificationPermission() {
-  if (!('Notification' in window)) {
+  if (!('Notification' in globalThis)) {
     console.warn('This browser does not support notifications.');
     return 'denied';
   }
@@ -86,10 +103,10 @@ export function scheduleNotifications(medicines) {
   if (pushEnabled !== 'true') return;
 
   // Gate: browser support + granted permission.
-  if (!('Notification' in window)) return;
+  if (!('Notification' in globalThis)) return;
   if (Notification.permission !== 'granted') return;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateString();
   const now = Date.now();
 
   medicines
@@ -136,8 +153,9 @@ async function fireNotification(med) {
       await registration.showNotification(title, options);
       return;
     }
-  } catch {
+  } catch (err) {
     // Service worker unavailable — fall through to basic API.
+    console.warn('Service worker notification failed, falling back:', err);
   }
 
   // Fallback: plain Notification constructor (only works while tab is focused).
