@@ -18,16 +18,28 @@ function sanitizeText(value) {
     .trim();
 }
 
+function createMedicineId() {
+  if (typeof window !== 'undefined' && window.crypto) {
+    if (typeof window.crypto.randomUUID === 'function') {
+      return window.crypto.randomUUID();
+    }
+
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 function createMedicine(med) {
   const name = sanitizeText(med?.name);
   const time = sanitizeText(med?.time);
   const date = sanitizeText(med?.date);
 
   return {
-    id:
-      med?.id && String(med.id).trim()
-        ? String(med.id).trim()
-        : `${Date.now()}${Math.random().toString(36).slice(2, 9)}`,
+    id: med?.id && String(med.id).trim() ? String(med.id).trim() : createMedicineId(),
     name,
     time,
     date,
