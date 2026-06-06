@@ -48,7 +48,7 @@ export function getLocalDateString(d = new Date()) {
  * @returns {Promise<NotificationPermission>}
  */
 export async function requestNotificationPermission() {
-  if (!('Notification' in globalThis)) {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
     console.warn('This browser does not support notifications.');
     return 'denied';
   }
@@ -103,7 +103,7 @@ export function scheduleNotifications(medicines) {
   if (pushEnabled !== 'true') return;
 
   // Gate: browser support + granted permission.
-  if (!('Notification' in globalThis)) return;
+  if (typeof window === 'undefined' || !('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
 
   const today = getLocalDateString();

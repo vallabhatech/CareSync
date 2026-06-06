@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Box,
@@ -23,17 +23,16 @@ export default function ClinicsNearby() {
   const [cityQuery, setCityQuery] = useState('');
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
-  const [coords, setCoords] = useState(null);
-  const lastSearchAtRef = useRef(0);
+  const [lastSearchAt, setLastSearchAt] = useState(0);
 
   const isThrottled = () => {
     const now = Date.now();
-    if (now - lastSearchAtRef.current < 1500) {
+    if (now - lastSearchAt < 1500) {
       setSearchError('Please wait a moment before searching again.');
       return true;
     }
 
-    lastSearchAtRef.current = now;
+    setLastSearchAt(now);
     return false;
   };
 
@@ -117,7 +116,6 @@ export default function ClinicsNearby() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        setCoords({ lat: latitude, lon: longitude });
         fetchClinics(latitude, longitude);
       },
       (error) => {
@@ -144,7 +142,6 @@ export default function ClinicsNearby() {
 
     try {
       const result = await geocodeLocation(cityQuery);
-      setCoords(result);
       fetchClinics(result.lat, result.lon);
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : 'Unable to search that location.');
@@ -183,7 +180,6 @@ export default function ClinicsNearby() {
     if (isThrottled()) return;
 
     setSearchError('');
-    setCoords({ lat: latitude, lon: longitude });
     fetchClinics(latitude, longitude);
   };
 
@@ -361,11 +357,6 @@ export default function ClinicsNearby() {
           </Typography>
         )}
 
-        {coords && (
-          <Typography variant="caption" color="text.secondary" display="block" mt={2} align="center">
-            Last searched coordinates: {coords.lat}, {coords.lon}
-          </Typography>
-        )}
       </div>
 
       <style>{`

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Chip, Stack, Paper, LinearProgress } from '@mui/material';
+import { Button, Chip, Stack, LinearProgress } from '@mui/material';
 /**
  * COMMON_SYMPTOMS
  * ---------------
@@ -398,6 +398,18 @@ export default function SymptomChecker() {
   const [results, setResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
 
+  const getRiskColor = (risk) => {
+    if (risk === 'high') {
+      return '#d32f2f';
+    }
+
+    if (risk === 'medium') {
+      return '#fbc02d';
+    }
+
+    return '#43a047';
+  };
+
   // Suggest symptoms as user types
   const handleInputChange = (e) => {
     const val = e.target.value;
@@ -497,9 +509,9 @@ export default function SymptomChecker() {
         </div>
         {suggestions.length > 0 && (
           <div className="symptom-suggestions">
-            {suggestions.map((sym, idx) => (
+            {suggestions.map((sym) => (
               <Chip
-                key={idx}
+                key={sym}
                 label={sym}
                 onClick={() => handleAddSymptom(sym)}
                 color="primary"
@@ -512,9 +524,9 @@ export default function SymptomChecker() {
         <div className="symptom-your-list">
           <span className="symptom-your-label">Your Symptoms:</span>
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
-            {symptoms.map((sym, idx) => (
+            {symptoms.map((sym) => (
               <Chip
-                key={idx}
+                key={sym}
                 label={sym}
                 onDelete={() => handleRemoveSymptom(sym)}
                 color="secondary"
@@ -534,9 +546,9 @@ export default function SymptomChecker() {
         {results.length > 0 && (
           <div className="symptom-results">
             <h3 className="symptom-results-title">Assessment Results:</h3>
-            {results.map((res, idx) => (
+            {results.map((res) => (
               <div
-                key={idx}
+                key={`${res.condition}-${res.risk}`}
                 className={`symptom-result-card symptom-result-${res.risk}`}
               >
                 <div className="symptom-result-header">
@@ -552,7 +564,7 @@ export default function SymptomChecker() {
                         mr: 1,
                         background: "#eee",
                         '& .MuiLinearProgress-bar': {
-                          background: res.risk === "high" ? "#d32f2f" : res.risk === "medium" ? "#fbc02d" : "#43a047"
+                          background: getRiskColor(res.risk)
                         }
                       }}
                     />
@@ -560,7 +572,7 @@ export default function SymptomChecker() {
                   </span>
                 </div>
                 <div className="symptom-result-risk-label" style={{
-                  color: res.risk === "high" ? "#d32f2f" : res.risk === "medium" ? "#fbc02d" : "#43a047",
+                  color: getRiskColor(res.risk),
                   fontWeight: 700,
                   marginBottom: 6
                 }}>
@@ -575,8 +587,8 @@ export default function SymptomChecker() {
                   <div className="symptom-result-solutions">
                     <b>Possible Solutions:</b>
                     <ul>
-                      {res.solutions.map((act, i) => (
-                        <li key={i}>{act}</li>
+                      {res.solutions.map((act) => (
+                        <li key={`${res.condition}-${act}`}>{act}</li>
                       ))}
                     </ul>
                   </div>
