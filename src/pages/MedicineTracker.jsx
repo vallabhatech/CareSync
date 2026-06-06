@@ -1,4 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  scheduleNotifications,
+  requestNotificationPermission,
+  getLocalDateString,
+  PUSH_ENABLED_KEY,
+} from '../utils/notifications';
 
 /**
  * MedicineTracker — add, view, and delete scheduled medicines.
@@ -42,11 +48,22 @@ export default function MedicineTracker() {
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().slice(0, 10);
+  // Get today's date in YYYY-MM-DD format (local, not UTC).
+  const today = getLocalDateString();
 
-  const addMedicine = () => {
+  // Schedule notifications whenever the medicine list changes.
+  useEffect(() => {
+    scheduleNotifications(medicines);
+  }, [medicines]);
+
+  const addMedicine = async () => {
     if (name && time && date) {
+      // If push is enabled but permission hasn't been granted yet, ask now.
+      const pushEnabled = localStorage.getItem(PUSH_ENABLED_KEY) === 'true';
+      if (pushEnabled && 'Notification' in globalThis && Notification.permission === 'default') {
+        await requestNotificationPermission();
+      }
+
       const newMed = {
         id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
         name,

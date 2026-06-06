@@ -47,19 +47,19 @@ jobs:
               issue_number: pullRequest.number,
               body: `🎉 Thank you for submitting a Pull Request to CareSync!
 
-We appreciate your contribution.
+            We appreciate your contribution.
 
-Before review, please ensure:
+            Before review, please ensure:
 
-✅ Your branch is up to date with the latest main branch
-✅ Code follows project conventions
-✅ Changes are focused and relevant
-✅ Documentation is updated if necessary
-✅ The application builds successfully
+            ✅ Your branch is up to date with the latest main branch
+            ✅ Code follows project conventions
+            ✅ Changes are focused and relevant
+            ✅ Documentation is updated if necessary
+            ✅ The application builds successfully
 
-A maintainer will review your contribution soon.
+            A maintainer will review your contribution soon.
 
-Thank you for helping make CareSync better! 🚀
+            Thank you for helping make CareSync better! 🚀
 
-${welcomeMarker}`
+            ${welcomeMarker}`
             });
