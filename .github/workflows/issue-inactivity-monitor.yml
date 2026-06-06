@@ -148,15 +148,15 @@ jobs:
                     issue_number: issue.number,
                     body: `🔄 Issue Unassigned
 
-No activity was detected within 24 hours of assignment.
+            No activity was detected within 24 hours of assignment.
 
-To keep contributions moving, this issue has been automatically unassigned and is now available for other contributors.
+            To keep contributions moving, this issue has been automatically unassigned and is now available for other contributors.
 
-If you were working on this issue and need it reassigned, feel free to comment with an update.
+            If you were working on this issue and need it reassigned, feel free to comment with an update.
 
-Thank you for your interest in contributing to CareSync. 🚀
+            Thank you for your interest in contributing to CareSync. 🚀
 
-${UNASSIGNED_MARKER}`,
+            ${UNASSIGNED_MARKER}`,
                   });
                 }
 
@@ -178,15 +178,15 @@ ${UNASSIGNED_MARKER}`,
                   issue_number: issue.number,
                   body: `👋 Friendly Reminder
 
-This issue has been assigned for nearly a day and no activity has been detected yet.
+            This issue has been assigned for nearly a day and no activity has been detected yet.
 
-If you are actively working on it, please share a quick progress update so the issue can remain assigned to you.
+            If you are actively working on it, please share a quick progress update so the issue can remain assigned to you.
 
-If you are unable to continue, no worries — the issue will automatically become available for other contributors in approximately 4 hours.
+            If you are unable to continue, no worries — the issue will automatically become available for other contributors in approximately 4 hours.
 
-Thank you for helping improve CareSync! 🚀
+            Thank you for helping improve CareSync! 🚀
 
-${WARNING_MARKER}`,
+            ${WARNING_MARKER}`,
                 });
 
                 console.log(`Posted a reminder on issue #${issue.number} after ${Math.floor(ageMs / (60 * 60 * 1000))} hours of inactivity.`);

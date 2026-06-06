@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 const AuthContext = createContext(null);
@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
+  const login = useCallback((userData) => {
     const userWithTimestamp = {
       ...userData,
       loggedInAt: new Date().toISOString(),
@@ -31,21 +31,27 @@ export function AuthProvider({ children }) {
     setUser(userWithTimestamp);
     setIsAuthenticated(true);
     localStorage.setItem('caresync_user', JSON.stringify(userWithTimestamp));
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('caresync_user');
-  };
+  }, []);
 
-  const updateProfile = (updates) => {
-    const updatedUser = { ...user, ...updates, updatedAt: new Date().toISOString() };
-    setUser(updatedUser);
-    localStorage.setItem('caresync_user', JSON.stringify(updatedUser));
-  };
+  const updateProfile = useCallback((updates) => {
+    setUser((currentUser) => {
+      const updatedUser = {
+        ...currentUser,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('caresync_user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  }, []);
 
-  const value = React.useMemo(() => ({
+  const value = useMemo(() => ({
     user,
     isAuthenticated,
     loading,

@@ -47,18 +47,18 @@ jobs:
               issue_number: issue.number,
               body: `👋 Thank you for opening an issue in CareSync!
 
-We appreciate your effort in helping improve the project.
+            We appreciate your effort in helping improve the project.
 
-Before a maintainer reviews this issue, please ensure:
+            Before a maintainer reviews this issue, please ensure:
 
-✅ The issue description is clear and detailed
-✅ Steps to reproduce are included (for bugs)
-✅ Expected behavior is explained
-✅ Screenshots are attached when helpful
+            ✅ The issue description is clear and detailed
+            ✅ Steps to reproduce are included (for bugs)
+            ✅ Expected behavior is explained
+            ✅ Screenshots are attached when helpful
 
-A maintainer will review this issue as soon as possible.
+            A maintainer will review this issue as soon as possible.
 
-Thank you for contributing to CareSync! 🚀
+            Thank you for contributing to CareSync! 🚀
 
-${welcomeMarker}`
+            ${welcomeMarker}`
             });

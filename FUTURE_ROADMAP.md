@@ -104,7 +104,7 @@ External APIs:
 **Goal**: Add advanced features and improve user experience
 
 #### Features
-- [ ] Real-time push notifications for medicine reminders
+- [x] Real-time push notifications for medicine reminders
 - [ ] Integration with device calendars
 - [ ] Advanced symptom checker with AI/ML
 - [ ] Medicine interaction checker

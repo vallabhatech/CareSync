@@ -14,3 +14,17 @@ root.render(
     </ThemeProvider>
   </BrowserRouter>
 );
+
+// Register the service worker for push notification support.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        console.log('CareSync SW registered:', registration.scope);
+      })
+      .catch((err) => {
+        console.warn('CareSync SW registration failed:', err);
+      });
+  });
+}

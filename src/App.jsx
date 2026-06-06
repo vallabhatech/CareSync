@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   AppBar,
   Toolbar,
@@ -25,21 +24,13 @@ import {
   LocalHospital as LocalHospitalIcon,
   ArrowUpward as ArrowUpwardIcon,
 } from '@mui/icons-material';
-import { Link, Routes, Route } from 'react-router-dom';
-import '@fontsource/roboto/900.css'; // For bold title
-import '@fontsource/fira-mono';      // For hackathon badge
-import {
-  Medication as MedicationIcon,
-  Search as SearchIcon,
-  Settings as SettingsIcon,
-  Place as PlaceIcon,
-  VolunteerActivism as VolunteerActivismIcon,
-  Logout as LogoutIcon,
-} from '@mui/icons-material';
-import { useNavigate, Link, Routes, Route } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { Link, Routes, Route, useNavigate } from 'react-router-dom';
 import '@fontsource/roboto/900.css';
 import '@fontsource/fira-mono';
+import {
+  Logout as LogoutIcon,
+} from '@mui/icons-material';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import MedicineTracker from './pages/MedicineTracker';
 import SymptomChecker from './pages/SymptomChecker';

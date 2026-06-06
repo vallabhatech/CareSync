@@ -1,79 +1,71 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import {
+  scheduleNotifications,
+  requestNotificationPermission,
+  getLocalDateString,
+  PUSH_ENABLED_KEY,
+} from '../utils/notifications';
 
-/**
- * MedicineTracker — add, view, and delete scheduled medicines.
- *
- * Persists the medicine list in localStorage under `caresync_medicines`
- * (each entry: `{ id, name, time, date }`). Backfills a generated `id` for
- * any legacy entries missing one. Provides a form to add a medicine (name +
- * time + date) and surfaces today's entries as reminders.
- *
- * Rendered as a route; takes no props and manages its own state
- * (`medicines`, `name`, `time`, `date`) internally.
- *
- * @component
- * @returns {JSX.Element} The medicine tracker page.
- *
- * @example
- * <Route path="/medicine-tracker" element={<MedicineTracker />} />
- */
-export default function MedicineTracker() {
-  const sanitizeText = (value) =>
-    Array.from(String(value ?? ''))
-      .filter((char) => {
-        const code = char.charCodeAt(0);
-        return code >= 32 && code !== 127 && char !== '<' && char !== '>';
-      })
-      .join('')
-      .trim();
+const STORAGE_KEY = 'caresync_medicines';
 
-  const createMedicine = (med) => {
-    const sanitizedName = sanitizeText(med?.name);
-    const sanitizedTime = sanitizeText(med?.time);
-    const sanitizedDate = sanitizeText(med?.date);
+function sanitizeText(value) {
+  return Array.from(String(value ?? ''))
+    .filter((char) => {
+      const code = char.charCodeAt(0);
+      return code >= 32 && code !== 127 && char !== '<' && char !== '>';
+    })
+    .join('')
+    .trim();
+}
 
-    return {
-      id: med?.id && String(med.id).trim()
+function createMedicine(med) {
+  const name = sanitizeText(med?.name);
+  const time = sanitizeText(med?.time);
+  const date = sanitizeText(med?.date);
+
+  return {
+    id:
+      med?.id && String(med.id).trim()
         ? String(med.id).trim()
-        : Date.now().toString() + Math.random().toString(36).substring(2, 9),
-      name: sanitizedName,
-      time: sanitizedTime,
-      date: sanitizedDate
-    };
+        : `${Date.now()}${Math.random().toString(36).slice(2, 9)}`,
+    name,
+    time,
+    date,
   };
+}
 
-  const saveMedicines = (nextMedicines) => {
-    const sanitizedMedicines = nextMedicines
-      .map(createMedicine)
-      .filter(med => med.name && med.time && med.date);
+function loadMedicines() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return [];
 
-    setMedicines(sanitizedMedicines);
-    localStorage.setItem('caresync_medicines', JSON.stringify(sanitizedMedicines));
-  };
+  try {
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return [];
 
-  const [medicines, setMedicines] = useState(() => {
-    const saved = localStorage.getItem('caresync_medicines');
-    if (!saved) return [];
-    try {
-      const parsed = JSON.parse(saved);
-      if (!Array.isArray(parsed)) return [];
-      return parsed
-        .map(createMedicine)
-        .filter(med => med.name && med.time && med.date);
-    } catch (e) {
-      console.error('Failed to load medicines from localStorage:', e);
-      return [];
-    }
-  });
+    return parsed.map(createMedicine).filter((med) => med.name && med.time && med.date);
+  } catch (error) {
+    console.error('Failed to load medicines from localStorage:', error);
+    return [];
+  }
+}
 
+export default function MedicineTracker() {
+  const [medicines, setMedicines] = useState(loadMedicines);
   const [name, setName] = useState('');
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
+  const today = getLocalDateString();
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().slice(0, 10);
+  useEffect(() => {
+    scheduleNotifications(medicines);
+  }, [medicines]);
 
-  const addMedicine = () => {
+  const saveMedicines = (nextMedicines) => {
+    setMedicines(nextMedicines);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextMedicines));
+  };
+
+  const addMedicine = async () => {
     const sanitizedName = sanitizeText(name);
     const sanitizedTime = sanitizeText(time);
     const sanitizedDate = sanitizeText(date);
@@ -82,30 +74,35 @@ export default function MedicineTracker() {
       return;
     }
 
-    const newMed = createMedicine({
+    const pushEnabled = localStorage.getItem(PUSH_ENABLED_KEY) === 'true';
+    if (pushEnabled && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      await requestNotificationPermission();
+    }
+
+    const newMedicine = createMedicine({
       name: sanitizedName,
       time: sanitizedTime,
-      date: sanitizedDate
+      date: sanitizedDate,
     });
 
-    saveMedicines([...medicines, newMed]);
+    saveMedicines([...medicines, newMedicine]);
     setName('');
     setTime('');
     setDate('');
   };
 
   const deleteMedicine = (id) => {
-    const updated = medicines.filter(med => med.id !== id);
+    const updated = medicines.filter((med) => med.id !== id);
     saveMedicines(updated);
   };
 
-  // Filter medicines for today's reminders
-  const todaysReminders = medicines.filter(med => med.date === today);
+  const todaysReminders = medicines.filter((med) => med.date === today);
 
   return (
     <div className="medtracker-bg">
       <div className="medtracker-container">
-        <h2 className="medtracker-title">💊 Medicine Tracker</h2>
+        <h2 className="medtracker-title">Medicine Tracker</h2>
+
         <div className="medtracker-reminder-section">
           <h3>Today's Reminders</h3>
           {todaysReminders.length === 0 ? (
@@ -116,39 +113,44 @@ export default function MedicineTracker() {
                 <li key={med.id} className="medtracker-reminder-item">
                   <span className="medtracker-pill">{med.name}</span>
                   <span className="medtracker-time">{med.time}</span>
-                  <button 
-                    className="medtracker-delete-btn" 
+                  <button
+                    className="medtracker-delete-btn"
                     onClick={() => deleteMedicine(med.id)}
                     title="Delete reminder"
+                    type="button"
                   >
-                    🗑️
+                    Delete
                   </button>
                 </li>
               ))}
             </ul>
           )}
         </div>
+
         <div className="medtracker-form-row">
           <input
             className="medtracker-input"
             placeholder="Medicine Name"
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
           />
           <input
             className="medtracker-input"
             type="time"
             value={time}
-            onChange={e => setTime(e.target.value)}
+            onChange={(e) => setTime(e.target.value)}
           />
           <input
             className="medtracker-input"
             type="date"
             value={date}
-            onChange={e => setDate(e.target.value)}
+            onChange={(e) => setDate(e.target.value)}
           />
-          <button className="medtracker-btn" onClick={addMedicine}>Add</button>
+          <button className="medtracker-btn" onClick={addMedicine} type="button">
+            Add
+          </button>
         </div>
+
         <h3 className="medtracker-list-title">All Scheduled Medicines</h3>
         <ul className="medtracker-list">
           {medicines.length === 0 && (
@@ -159,17 +161,19 @@ export default function MedicineTracker() {
               <span className="medtracker-pill">{med.name}</span>
               <span className="medtracker-date">{med.date}</span>
               <span className="medtracker-time">{med.time}</span>
-              <button 
-                className="medtracker-delete-btn" 
+              <button
+                className="medtracker-delete-btn"
                 onClick={() => deleteMedicine(med.id)}
                 title="Delete medicine"
+                type="button"
               >
-                🗑️
+                Delete
               </button>
             </li>
           ))}
         </ul>
       </div>
+
       <style>{`
         .medtracker-bg {
           min-height: 100vh;
@@ -183,7 +187,7 @@ export default function MedicineTracker() {
           background: #fff;
           border-radius: 18px;
           box-shadow: 0 4px 32px 0 rgba(25, 118, 210, 0.08);
-          padding: 36px 22px 28px 22px;
+          padding: 36px 22px 28px;
         }
         .medtracker-title {
           color: #1976d2;
@@ -195,12 +199,12 @@ export default function MedicineTracker() {
         .medtracker-reminder-section {
           background: #e3fcec;
           border-radius: 12px;
-          padding: 18px 16px 12px 16px;
+          padding: 18px 16px 12px;
           margin-bottom: 28px;
           box-shadow: 0 2px 12px #43e97b22;
         }
         .medtracker-reminder-section h3 {
-          margin: 0 0 8px 0;
+          margin: 0 0 8px;
           color: #43a047;
           font-size: 1.15rem;
         }
@@ -208,17 +212,28 @@ export default function MedicineTracker() {
           color: #888;
           font-size: 1rem;
         }
-        .medtracker-reminder-list {
+        .medtracker-reminder-list,
+        .medtracker-list {
           list-style: none;
           padding: 0;
           margin: 0;
         }
-        .medtracker-reminder-item {
+        .medtracker-reminder-item,
+        .medtracker-list-item {
           display: flex;
           align-items: center;
-          gap: 18px;
-          padding: 7px 0;
-          font-size: 1.08rem;
+          gap: 12px;
+          background: #f4f8fb;
+          margin-bottom: 10px;
+          padding: 10px 14px;
+          border-radius: 8px;
+          font-size: 1rem;
+        }
+        .medtracker-reminder-item {
+          padding-left: 0;
+          padding-right: 0;
+          background: transparent;
+          margin-bottom: 0;
         }
         .medtracker-pill {
           background: #1976d2;
@@ -269,25 +284,10 @@ export default function MedicineTracker() {
           color: #1976d2;
           font-size: 1.1rem;
         }
-        .medtracker-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
         .medtracker-list-empty {
           color: #888;
           font-size: 1rem;
           padding: 8px 0;
-        }
-        .medtracker-list-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          background: #f4f8fb;
-          margin-bottom: 10px;
-          padding: 10px 14px;
-          border-radius: 8px;
-          font-size: 1rem;
         }
         .medtracker-date {
           color: #1976d2;
@@ -297,22 +297,23 @@ export default function MedicineTracker() {
           background: transparent;
           border: none;
           cursor: pointer;
-          font-size: 1.1rem;
-          padding: 4px;
+          font-size: 0.95rem;
+          padding: 4px 8px;
           margin-left: auto;
           transition: transform 0.2s, opacity 0.2s;
-          opacity: 0.6;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          opacity: 0.7;
         }
         .medtracker-delete-btn:hover {
-          transform: scale(1.2);
+          transform: scale(1.05);
           opacity: 1;
         }
         @media (max-width: 700px) {
-          .medtracker-container { padding: 16px 4px; }
-          .medtracker-form-row { gap: 6px; }
+          .medtracker-container {
+            padding: 16px 4px;
+          }
+          .medtracker-form-row {
+            gap: 6px;
+          }
         }
       `}</style>
     </div>
