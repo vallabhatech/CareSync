@@ -7,6 +7,7 @@ import {
 } from '../utils/notifications';
 
 const STORAGE_KEY = 'caresync_medicines';
+let fallbackIdCounter = 0;
 
 function sanitizeText(value) {
   return Array.from(String(value ?? ''))
@@ -30,7 +31,8 @@ function createMedicineId() {
     return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  fallbackIdCounter += 1;
+  return `${Date.now()}-${fallbackIdCounter}`;
 }
 
 function createMedicine(med) {
