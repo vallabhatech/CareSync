@@ -94,6 +94,45 @@ a {
   font-size: 0.95rem;
 }
 
+.not-found{
+  color: #1976d2;
+  text-align: center;
+  margin-top: 20vh;
+}
+.not-found a{
+  font-weight: bold;
+  border-radius: 10px;
+  padding: 10px;
+
+}
+.not-found a:hover{
+  color: #7699d2;
+  background: #1976d2;
+}
+
+.not-found h1 span{
+  display: inline-block;
+  transition: 0.4s;
+  font-size:xx-large;
+}
+
+.not-found h1 span:hover{
+  font-size: 50px;
+  color: #7699d2;
+  transform: translateY(-10px);
+}
+
+.not-found h2 span{
+  display: inline-block;
+  transition: 0.4s;
+}
+
+.not-found h2 span:hover{
+  font-size: 30px;
+  color: #7699d2;
+  transform: translateY(-10px);
+}
+
 @media (max-width: 768px) {
   .footer {
     padding: 24px 16px;
