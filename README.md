@@ -28,7 +28,7 @@ Whether you are managing a chronic condition or just need a quick check-up on sy
 
 ### 💊 Medicine Tracker
 
-* Add and manage daily prescriptions
+* Add, edit, and manage daily prescriptions
 * Set custom reminders so you never miss a dose
 
 ### 🔍 AI-Powered Symptom Checker
