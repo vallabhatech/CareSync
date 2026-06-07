@@ -39,6 +39,7 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Footer from './components/Footer';
+import NotFound from './pages/NotFound';
 
 const NAV_LINKS = [
   { label: 'Dashboard', to: '/dashboard' },
@@ -302,6 +303,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
       <ScrollToTopButton />
