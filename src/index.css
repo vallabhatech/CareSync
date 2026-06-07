@@ -106,8 +106,8 @@ a {
 
 }
 .not-found a:hover{
-  color: #7699d2;
-  background: #1976d2;
+ background-color: rgb(71, 149, 219);
+ color: #1976d2;
 }
 
 .not-found h1 span{
