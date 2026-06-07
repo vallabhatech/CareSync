@@ -206,12 +206,10 @@ export default function Settings() {
 
         <Divider sx={{ my: 3 }} />
 
-        <Typography variant="h6" fontWeight={600} mb={1}>
-          {t('settings:language')}
-        </Typography>
         <TextField
           select
           fullWidth
+          label={t('settings:language')}
           value={i18n.language?.split('-')[0] || 'en'}
           onChange={handleLanguageChange}
           sx={{ maxWidth: 320 }}
