@@ -152,6 +152,7 @@
     "enablePushNotifications": "Enable Medicine Push Notifications",
     "pushNotificationsHint": "Receive browser notifications when a medicine reminder is due.",
     "saveChanges": "Save Changes",
+    "saveSuccess": "Settings saved.",
     "language": "Language",
     "languageHint": "Choose the language CareSync is displayed in. Your choice is saved for next time.",
     "pushPermissionDenied": "Notification permission was denied. Please enable it in your browser settings.",

@@ -15,27 +15,33 @@ import {
   MenuItem,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
 import {
   requestNotificationPermission,
   scheduleNotifications,
   clearScheduledNotifications,
   PUSH_ENABLED_KEY,
 } from '../utils/notifications';
+import {
+  getEmailNotificationsEnabled,
+  setEmailNotificationsEnabled,
+} from '../utils/settingsPreferences';
 import { SUPPORTED_LANGUAGES } from '../i18n';
 
 /**
  * Settings — user profile and preferences page.
  *
- * Provides a form to edit profile fields (name, email) and upload an avatar
- * image (previewed via `URL.createObjectURL`), toggles for email and push
- * notifications, and a language selector that switches the app locale and
- * persists the choice to localStorage (via i18next's language detector).
- * Push notification preference is persisted in localStorage under
- * `caresync_push_enabled` and triggers a browser permission prompt when
- * enabled.
+ * Reads the current profile (name, email, avatar) from AuthContext and lets
+ * the user edit it; saving routes through `updateProfile`, which persists to
+ * localStorage under `caresync_user`, so changes survive navigation and
+ * reloads and stay consistent with the Profile page.
  *
- * Rendered as a route; takes no props and manages its own state
- * (`profile`, `notifications`, `pushEnabled`, `snackbar`) internally.
+ * Preferences:
+ * - Email notifications: persisted under `caresync_email_notifications`.
+ * - Push notifications: persisted under `caresync_push_enabled` and triggers a
+ *   browser permission prompt when enabled (unchanged from the original).
+ *
+ * Rendered as a route; takes no props.
  *
  * @component
  * @returns {JSX.Element} The settings page.
@@ -45,16 +51,34 @@ import { SUPPORTED_LANGUAGES } from '../i18n';
  */
 export default function Settings() {
   const { t, i18n } = useTranslation();
+  const { user, isAuthenticated, updateProfile } = useAuth();
+
+  // Initialise the editable form from the authenticated user, mirroring the
+  // pattern used in Profile.jsx (optional-chained with sensible fallbacks).
   const [profile, setProfile] = useState({
-    name: 'Jane Doe',
-    email: 'jane.doe@email.com',
-    avatar: '',
+    name: user?.name || '',
+    email: user?.email || '',
+    avatar: user?.avatar || '',
   });
-  const [notifications, setNotifications] = useState(true);
+  const [notifications, setNotifications] = useState(() =>
+    getEmailNotificationsEnabled()
+  );
   const [pushEnabled, setPushEnabled] = useState(
     () => localStorage.getItem(PUSH_ENABLED_KEY) === 'true'
   );
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+
+  // If there is no authenticated user, there is no profile to edit — mirror
+  // the guard Profile.jsx uses rather than rendering placeholder data.
+  if (!isAuthenticated || !user) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h5" color="text.secondary">
+          {t('settings:loginPrompt')}
+        </Typography>
+      </Box>
+    );
+  }
 
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -62,17 +86,52 @@ export default function Settings() {
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setProfile({ ...profile, avatar: URL.createObjectURL(file) });
-    }
+    if (!file) return;
+
+    // Use FileReader to produce a persistent base64 data URL instead of a
+    // temporary blob: URL. Blob URLs are revoked when the page unloads, so
+    // they cannot be stored in caresync_user and don't survive a reload.
+    // A data URL is self-contained and persists correctly in localStorage.
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setProfile((prev) => ({ ...prev, avatar: event.target.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   /**
-   * Change the active UI language. i18next's language detector persists the
-   * choice to localStorage, so the app reloads in this language next time.
+   * Toggle email notifications and persist the choice so it survives reloads.
+   */
+  const handleEmailNotificationsToggle = () => {
+    const newValue = !notifications;
+    setNotifications(newValue);
+    setEmailNotificationsEnabled(newValue);
+  };
+
+  /**
+   * Change the active language. i18next's language detector persists the
+   * choice to localStorage automatically, so it survives reloads.
    */
   const handleLanguageChange = (e) => {
     i18n.changeLanguage(e.target.value);
+  };
+
+  /**
+   * Persist profile edits (name, email, avatar) through AuthContext.
+   * This updates the in-memory user, writes through to `caresync_user`, and
+   * keeps Settings consistent with the Profile page and the rest of the app.
+   */
+  const handleSave = () => {
+    updateProfile({
+      name: profile.name,
+      email: profile.email,
+      avatar: profile.avatar,
+    });
+    setSnackbar({
+      open: true,
+      message: t('settings:saveSuccess'),
+      severity: 'success',
+    });
   };
 
   /**
@@ -183,7 +242,7 @@ export default function Settings() {
           control={
             <Switch
               checked={notifications}
-              onChange={() => setNotifications(!notifications)}
+              onChange={handleEmailNotificationsToggle}
               color="primary"
             />
           }
@@ -226,13 +285,18 @@ export default function Settings() {
         </Typography>
 
         <Box sx={{ mt: 4, textAlign: 'right' }}>
-          <Button variant="contained" color="primary" sx={{ px: 4 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ px: 4 }}
+            onClick={handleSave}
+          >
             {t('settings:saveChanges')}
           </Button>
         </Box>
       </Paper>
 
-      {/* Snackbar for push notification feedback */}
+      {/* Snackbar for save + notification feedback */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={5000}
