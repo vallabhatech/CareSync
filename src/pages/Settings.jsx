@@ -82,9 +82,17 @@ export default function Settings() {
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setProfile({ ...profile, avatar: URL.createObjectURL(file) });
-    }
+    if (!file) return;
+
+    // Use FileReader to produce a persistent base64 data URL instead of a
+    // temporary blob: URL. Blob URLs are revoked when the page unloads, so
+    // they cannot be stored in caresync_user and don't survive a reload.
+    // A data URL is self-contained and persists correctly in localStorage.
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setProfile((prev) => ({ ...prev, avatar: event.target.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   /**
