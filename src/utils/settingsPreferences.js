@@ -23,8 +23,10 @@ export const EMAIL_NOTIFICATIONS_KEY = 'caresync_email_notifications';
  */
 export function getEmailNotificationsEnabled() {
   const stored = localStorage.getItem(EMAIL_NOTIFICATIONS_KEY);
-  // Only an explicit 'false' disables; absent or any other value -> enabled.
-  return stored === null ? true : stored === 'true';
+  // Default-on contract: only an explicit 'false' disables. Anything else —
+  // absent (null), 'true', or a legacy/unexpected value — resolves to enabled,
+  // so corrupt or older stored values never silently turn notifications off.
+  return stored !== 'false';
 }
 
 /**

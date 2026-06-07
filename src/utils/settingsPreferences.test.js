@@ -54,6 +54,11 @@ describe('getEmailNotificationsEnabled', () => {
     localStorage.setItem(EMAIL_NOTIFICATIONS_KEY, 'false');
     expect(getEmailNotificationsEnabled()).toBe(false);
   });
+
+  test('treats a legacy/unexpected stored value as enabled (default-on)', () => {
+    localStorage.setItem(EMAIL_NOTIFICATIONS_KEY, 'yes');
+    expect(getEmailNotificationsEnabled()).toBe(true);
+  });
 });
 
 /* ------------------------------------------------------------------ */
