@@ -13,24 +13,32 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
+import { useAuth } from '../context/AuthContext';
 import {
   requestNotificationPermission,
   scheduleNotifications,
   clearScheduledNotifications,
   PUSH_ENABLED_KEY,
 } from '../utils/notifications';
+import {
+  getEmailNotificationsEnabled,
+  setEmailNotificationsEnabled,
+} from '../utils/settingsPreferences';
 
 /**
  * Settings — user profile and preferences page.
  *
- * Provides a form to edit profile fields (name, email) and upload an avatar
- * image (previewed via `URL.createObjectURL`), toggles for email and push
- * notifications. Push notification preference is persisted in localStorage
- * under `caresync_push_enabled` and triggers a browser permission prompt
- * when enabled.
+ * Reads the current profile (name, email, avatar) from AuthContext and lets
+ * the user edit it; saving routes through `updateProfile`, which persists to
+ * localStorage under `caresync_user`, so changes survive navigation and
+ * reloads and stay consistent with the Profile page.
  *
- * Rendered as a route; takes no props and manages its own state
- * (`profile`, `notifications`, `pushEnabled`, `snackbar`) internally.
+ * Preferences:
+ * - Email notifications: persisted under `caresync_email_notifications`.
+ * - Push notifications: persisted under `caresync_push_enabled` and triggers a
+ *   browser permission prompt when enabled (unchanged from the original).
+ *
+ * Rendered as a route; takes no props.
  *
  * @component
  * @returns {JSX.Element} The settings page.
@@ -39,16 +47,34 @@ import {
  * <Route path="/settings" element={<Settings />} />
  */
 export default function Settings() {
+  const { user, isAuthenticated, updateProfile } = useAuth();
+
+  // Initialise the editable form from the authenticated user, mirroring the
+  // pattern used in Profile.jsx (optional-chained with sensible fallbacks).
   const [profile, setProfile] = useState({
-    name: 'Jane Doe',
-    email: 'jane.doe@email.com',
-    avatar: '',
+    name: user?.name || '',
+    email: user?.email || '',
+    avatar: user?.avatar || '',
   });
-  const [notifications, setNotifications] = useState(true);
+  const [notifications, setNotifications] = useState(() =>
+    getEmailNotificationsEnabled()
+  );
   const [pushEnabled, setPushEnabled] = useState(
     () => localStorage.getItem(PUSH_ENABLED_KEY) === 'true'
   );
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+
+  // If there is no authenticated user, there is no profile to edit — mirror
+  // the guard Profile.jsx uses rather than rendering placeholder data.
+  if (!isAuthenticated || !user) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h5" color="text.secondary">
+          Please log in to manage your settings.
+        </Typography>
+      </Box>
+    );
+  }
 
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -59,6 +85,33 @@ export default function Settings() {
     if (file) {
       setProfile({ ...profile, avatar: URL.createObjectURL(file) });
     }
+  };
+
+  /**
+   * Toggle email notifications and persist the choice so it survives reloads.
+   */
+  const handleEmailNotificationsToggle = () => {
+    const newValue = !notifications;
+    setNotifications(newValue);
+    setEmailNotificationsEnabled(newValue);
+  };
+
+  /**
+   * Persist profile edits (name, email, avatar) through AuthContext.
+   * This updates the in-memory user, writes through to `caresync_user`, and
+   * keeps Settings consistent with the Profile page and the rest of the app.
+   */
+  const handleSave = () => {
+    updateProfile({
+      name: profile.name,
+      email: profile.email,
+      avatar: profile.avatar,
+    });
+    setSnackbar({
+      open: true,
+      message: 'Settings saved.',
+      severity: 'success',
+    });
   };
 
   /**
@@ -169,7 +222,7 @@ export default function Settings() {
           control={
             <Switch
               checked={notifications}
-              onChange={() => setNotifications(!notifications)}
+              onChange={handleEmailNotificationsToggle}
               color="primary"
             />
           }
@@ -191,13 +244,18 @@ export default function Settings() {
         </Typography>
 
         <Box sx={{ mt: 4, textAlign: 'right' }}>
-          <Button variant="contained" color="primary" sx={{ px: 4 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ px: 4 }}
+            onClick={handleSave}
+          >
             Save Changes
           </Button>
         </Box>
       </Paper>
 
-      {/* Snackbar for push notification feedback */}
+      {/* Snackbar for save + notification feedback */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={5000}
