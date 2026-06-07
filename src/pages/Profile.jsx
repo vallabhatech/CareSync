@@ -12,8 +12,10 @@ import {
   Grid,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 function Profile() {
+  const { t } = useTranslation();
   const { user, isAuthenticated, updateProfile, logout } = useAuth();
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState('');
@@ -30,7 +32,7 @@ function Profile() {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant="h5" color="text.secondary">
-          Please log in to view your profile.
+          {t('profile:loginPrompt')}
         </Typography>
       </Box>
     );
@@ -43,7 +45,7 @@ function Profile() {
   const handleSave = () => {
     updateProfile(formData);
     setEditing(false);
-    setMessage('Profile updated successfully!');
+    setMessage(t('profile:updateSuccess'));
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -71,7 +73,7 @@ function Profile() {
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 800, mx: 'auto' }}>
       <Typography variant="h4" fontWeight={800} color="primary" mb={3}>
-        My Profile
+        {t('profile:myProfile')}
       </Typography>
 
       {message && (
@@ -103,7 +105,7 @@ function Profile() {
                 {user.email}
               </Typography>
               <Typography variant="caption" color="primary" sx={{ textTransform: 'capitalize' }}>
-                Role: {user.role || 'Patient'}
+                {t('profile:rolePrefix', { role: user.role || t('profile:defaultRole') })}
               </Typography>
             </Box>
           </Box>
@@ -114,7 +116,7 @@ function Profile() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Full Name"
+                label={t('profile:fullName')}
                 value={formData.name}
                 onChange={handleChange('name')}
                 disabled={!editing}
@@ -123,7 +125,7 @@ function Profile() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Email"
+                label={t('profile:email')}
                 value={formData.email}
                 onChange={handleChange('email')}
                 disabled={!editing}
@@ -132,17 +134,17 @@ function Profile() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Phone Number"
+                label={t('profile:phoneNumber')}
                 value={formData.phone}
                 onChange={handleChange('phone')}
                 disabled={!editing}
-                placeholder="e.g. +91 98765 43210"
+                placeholder={t('profile:phonePlaceholder')}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Age"
+                label={t('profile:age')}
                 type="number"
                 value={formData.age}
                 onChange={handleChange('age')}
@@ -152,21 +154,21 @@ function Profile() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Blood Group"
+                label={t('profile:bloodGroup')}
                 value={formData.bloodGroup}
                 onChange={handleChange('bloodGroup')}
                 disabled={!editing}
-                placeholder="e.g. O+"
+                placeholder={t('profile:bloodGroupPlaceholder')}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Allergies / Medical Notes"
+                label={t('profile:allergies')}
                 value={formData.allergies}
                 onChange={handleChange('allergies')}
                 disabled={!editing}
-                placeholder="e.g. Penicillin allergy"
+                placeholder={t('profile:allergiesPlaceholder')}
               />
             </Grid>
           </Grid>
@@ -175,15 +177,15 @@ function Profile() {
             {editing ? (
               <>
                 <Button variant="contained" onClick={handleSave}>
-                  Save Changes
+                  {t('profile:saveChanges')}
                 </Button>
                 <Button variant="outlined" onClick={handleCancel}>
-                  Cancel
+                  {t('profile:cancel')}
                 </Button>
               </>
             ) : (
               <Button variant="contained" onClick={() => setEditing(true)}>
-                Edit Profile
+                {t('profile:editProfile')}
               </Button>
             )}
           </Box>
@@ -192,10 +194,10 @@ function Profile() {
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              Member since: {user.loggedInAt ? new Date(user.loggedInAt).toLocaleDateString() : 'N/A'}
+              {t('profile:memberSince', { date: user.loggedInAt ? new Date(user.loggedInAt).toLocaleDateString() : t('profile:notAvailable') })}
             </Typography>
             <Button variant="outlined" color="error" onClick={logout}>
-              Log Out
+              {t('profile:logOut')}
             </Button>
           </Box>
         </CardContent>
