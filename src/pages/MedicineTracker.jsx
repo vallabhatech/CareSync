@@ -107,8 +107,13 @@ export default function MedicineTracker() {
   };
 
   const deleteMedicine = async (id) => {
+    const cleanId = String(id).trim();
+    if (!/^[a-zA-Z0-9]+$/.test(cleanId)) {
+      console.error('Invalid medicine ID format');
+      return;
+    }
     try {
-      await API.delete(`/api/medicines/${id}`);
+      await API.delete(`/api/medicines/${cleanId}`);
       setMedicines(medicines.filter((med) => med.id !== id));
     } catch (err) {
       console.error('Failed to delete medicine alert:', err);

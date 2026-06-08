@@ -29,9 +29,9 @@ router.get('/', authMiddleware, async (req, res) => {
 // @desc    Add a new medicine reminder
 // @access  Private
 router.post('/', authMiddleware, async (req, res) => {
-  const name = req.body.name !== undefined ? String(req.body.name).trim() : '';
-  const time = req.body.time !== undefined ? String(req.body.time).trim() : '';
-  const date = req.body.date !== undefined ? String(req.body.date).trim() : '';
+  const name = req.body.name === undefined ? '' : String(req.body.name).trim();
+  const time = req.body.time === undefined ? '' : String(req.body.time).trim();
+  const date = req.body.date === undefined ? '' : String(req.body.date).trim();
 
   try {
     if (!name || !time || !date) {

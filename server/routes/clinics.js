@@ -20,11 +20,11 @@ router.get('/favorites', authMiddleware, async (req, res) => {
 // @desc    Add a clinic to favorites
 // @access  Private
 router.post('/favorites', authMiddleware, async (req, res) => {
-  const name = req.body.name !== undefined ? String(req.body.name).trim() : '';
-  const address = req.body.address !== undefined ? String(req.body.address).trim() : '';
-  const lat = req.body.lat !== undefined ? String(req.body.lat).trim() : '';
-  const lon = req.body.lon !== undefined ? String(req.body.lon).trim() : '';
-  const place_id = req.body.place_id !== undefined ? String(req.body.place_id).trim() : '';
+  const name = req.body.name === undefined ? '' : String(req.body.name).trim();
+  const address = req.body.address === undefined ? '' : String(req.body.address).trim();
+  const lat = req.body.lat === undefined ? '' : String(req.body.lat).trim();
+  const lon = req.body.lon === undefined ? '' : String(req.body.lon).trim();
+  const place_id = req.body.place_id === undefined ? '' : String(req.body.place_id).trim();
 
   try {
     if (!name || !lat || !lon || !place_id) {
@@ -101,10 +101,10 @@ router.get('/searches', authMiddleware, async (req, res) => {
 // @desc    Save a clinic search to history
 // @access  Private
 router.post('/searches', authMiddleware, async (req, res) => {
-  const query = req.body.query !== undefined ? String(req.body.query).trim() : '';
-  const searchType = req.body.searchType !== undefined ? String(req.body.searchType).trim() : '';
-  const lat = req.body.lat !== undefined ? String(req.body.lat).trim() : '';
-  const lon = req.body.lon !== undefined ? String(req.body.lon).trim() : '';
+  const query = req.body.query === undefined ? '' : String(req.body.query).trim();
+  const searchType = req.body.searchType === undefined ? '' : String(req.body.searchType).trim();
+  const lat = req.body.lat === undefined ? '' : String(req.body.lat).trim();
+  const lon = req.body.lon === undefined ? '' : String(req.body.lon).trim();
 
   try {
     if (!query || !searchType) {

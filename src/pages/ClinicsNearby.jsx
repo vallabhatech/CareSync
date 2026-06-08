@@ -74,18 +74,23 @@ export default function ClinicsNearby() {
 
   const handleToggleFavorite = async (clinic) => {
     if (!isAuthenticated) return;
-    const isFav = favorites.some((fav) => fav.place_id === String(clinic.place_id));
+    const placeId = String(clinic.place_id).trim();
+    if (!/^[a-zA-Z0-9\-_]+$/.test(placeId)) {
+      console.error('Invalid clinic place ID format');
+      return;
+    }
+    const isFav = favorites.some((fav) => fav.place_id === placeId);
     try {
       if (isFav) {
-        await API.delete(`/api/clinics/favorites/${clinic.place_id}`);
-        setFavorites(favorites.filter((fav) => fav.place_id !== String(clinic.place_id)));
+        await API.delete(`/api/clinics/favorites/${placeId}`);
+        setFavorites(favorites.filter((fav) => fav.place_id !== placeId));
       } else {
         const res = await API.post('/api/clinics/favorites', {
           name: clinic.display_name?.split(',')[0] || 'Clinic',
           address: clinic.display_name || '',
           lat: String(clinic.lat),
           lon: String(clinic.lon),
-          place_id: String(clinic.place_id),
+          place_id: placeId,
         });
         setFavorites([res.data, ...favorites]);
       }

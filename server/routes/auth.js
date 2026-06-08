@@ -29,7 +29,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       return res.status(400).json({ message: 'Invalid email address' });
     }
 
@@ -83,7 +83,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       return res.status(400).json({ message: 'Invalid email address' });
     }
 
@@ -149,13 +149,13 @@ router.get('/me', authMiddleware, async (req, res) => {
 // @desc    Update user profile details
 // @access  Private
 router.put('/profile', authMiddleware, async (req, res) => {
-  const name = req.body.name !== undefined ? String(req.body.name).trim() : undefined;
-  const email = req.body.email !== undefined ? String(req.body.email).trim().toLowerCase() : undefined;
-  const phone = req.body.phone !== undefined ? String(req.body.phone).trim() : undefined;
-  const age = req.body.age !== undefined ? String(req.body.age).trim() : undefined;
-  const bloodGroup = req.body.bloodGroup !== undefined ? String(req.body.bloodGroup).trim() : undefined;
-  const allergies = req.body.allergies !== undefined ? String(req.body.allergies).trim() : undefined;
-  const avatar = req.body.avatar !== undefined ? (req.body.avatar ? String(req.body.avatar) : null) : undefined;
+  const name = req.body.name === undefined ? undefined : String(req.body.name).trim();
+  const email = req.body.email === undefined ? undefined : String(req.body.email).trim().toLowerCase();
+  const phone = req.body.phone === undefined ? undefined : String(req.body.phone).trim();
+  const age = req.body.age === undefined ? undefined : String(req.body.age).trim();
+  const bloodGroup = req.body.bloodGroup === undefined ? undefined : String(req.body.bloodGroup).trim();
+  const allergies = req.body.allergies === undefined ? undefined : String(req.body.allergies).trim();
+  const avatar = req.body.avatar === undefined ? undefined : (req.body.avatar ? String(req.body.avatar) : null);
 
   try {
     const user = await User.findOne({ _id: { $eq: req.user._id } });
@@ -165,7 +165,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
     // Check if updating email to one already in use
     if (email !== undefined && email !== user.email) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
         return res.status(400).json({ message: 'Invalid email address' });
       }
       const emailExists = await User.findOne({ email: { $eq: email } });
