@@ -20,7 +20,11 @@ router.get('/favorites', authMiddleware, async (req, res) => {
 // @desc    Add a clinic to favorites
 // @access  Private
 router.post('/favorites', authMiddleware, async (req, res) => {
-  const { name, address, lat, lon, place_id } = req.body;
+  const name = req.body.name !== undefined ? String(req.body.name).trim() : '';
+  const address = req.body.address !== undefined ? String(req.body.address).trim() : '';
+  const lat = req.body.lat !== undefined ? String(req.body.lat).trim() : '';
+  const lon = req.body.lon !== undefined ? String(req.body.lon).trim() : '';
+  const place_id = req.body.place_id !== undefined ? String(req.body.place_id).trim() : '';
 
   try {
     if (!name || !lat || !lon || !place_id) {
@@ -28,7 +32,7 @@ router.post('/favorites', authMiddleware, async (req, res) => {
     }
 
     // Check if already favorited
-    const existingFav = await FavoriteClinic.findOne({ user: req.user._id, place_id });
+    const existingFav = await FavoriteClinic.findOne({ user: req.user._id, place_id: String(place_id) });
     if (existingFav) {
       return res.status(400).json({ message: 'Clinic already favorited' });
     }
@@ -54,11 +58,12 @@ router.post('/favorites', authMiddleware, async (req, res) => {
 // @desc    Remove a clinic from favorites (id can be favorite's MongoDB _id OR clinic's place_id)
 // @access  Private
 router.delete('/favorites/:id', authMiddleware, async (req, res) => {
+  const cleanId = String(req.params.id);
   try {
     // Look up by MongoDB ObjectId or place_id
     const query = {
       user: req.user._id,
-      $or: [{ _id: req.params.id.match(/^[0-9a-fA-F]{24}$/) ? req.params.id : null }, { place_id: req.params.id }],
+      $or: [{ _id: cleanId.match(/^[0-9a-fA-F]{24}$/) ? cleanId : null }, { place_id: cleanId }],
     };
 
     // Filter out null _id if match fails
@@ -99,7 +104,10 @@ router.get('/searches', authMiddleware, async (req, res) => {
 // @desc    Save a clinic search to history
 // @access  Private
 router.post('/searches', authMiddleware, async (req, res) => {
-  const { query, searchType, lat, lon } = req.body;
+  const query = req.body.query !== undefined ? String(req.body.query).trim() : '';
+  const searchType = req.body.searchType !== undefined ? String(req.body.searchType).trim() : '';
+  const lat = req.body.lat !== undefined ? String(req.body.lat).trim() : '';
+  const lon = req.body.lon !== undefined ? String(req.body.lon).trim() : '';
 
   try {
     if (!query || !searchType) {
@@ -109,15 +117,15 @@ router.post('/searches', authMiddleware, async (req, res) => {
     // Limit same queries within a short timeframe by deleting duplicates
     await RecentSearch.deleteMany({
       user: req.user._id,
-      query: query.trim(),
+      query: String(query),
     });
 
     const recentSearch = new RecentSearch({
       user: req.user._id,
-      query: query.trim(),
-      searchType,
-      lat: lat || '',
-      lon: lon || '',
+      query: String(query),
+      searchType: String(searchType),
+      lat: String(lat),
+      lon: String(lon),
     });
 
     await recentSearch.save();

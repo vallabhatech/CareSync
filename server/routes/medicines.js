@@ -29,7 +29,9 @@ router.get('/', authMiddleware, async (req, res) => {
 // @desc    Add a new medicine reminder
 // @access  Private
 router.post('/', authMiddleware, async (req, res) => {
-  const { name, time, date } = req.body;
+  const name = req.body.name !== undefined ? String(req.body.name).trim() : '';
+  const time = req.body.time !== undefined ? String(req.body.time).trim() : '';
+  const date = req.body.date !== undefined ? String(req.body.date).trim() : '';
 
   try {
     if (!name || !time || !date) {
@@ -61,8 +63,9 @@ router.post('/', authMiddleware, async (req, res) => {
 // @desc    Delete a medicine reminder
 // @access  Private
 router.delete('/:id', authMiddleware, async (req, res) => {
+  const cleanId = String(req.params.id);
   try {
-    const medicine = await Medicine.findOne({ _id: req.params.id, user: req.user._id });
+    const medicine = await Medicine.findOne({ _id: cleanId, user: req.user._id });
     
     if (!medicine) {
       return res.status(404).json({ message: 'Medicine reminder not found or unauthorized' });
