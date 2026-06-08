@@ -62,7 +62,7 @@ router.delete('/favorites/:id', authMiddleware, async (req, res) => {
   try {
     // Look up by MongoDB ObjectId or place_id safely
     const query = { user: { $eq: req.user._id } };
-    if (cleanId.match(/^[0-9a-fA-F]{24}$/)) {
+    if (/^[0-9a-fA-F]{24}$/.test(cleanId)) {
       query.$or = [{ _id: { $eq: cleanId } }, { place_id: { $eq: cleanId } }];
     } else {
       query.place_id = { $eq: cleanId };
