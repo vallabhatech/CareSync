@@ -13,7 +13,7 @@ if (!apiBaseURL) {
 const API = axios.create({
   baseURL: apiBaseURL || 'http://localhost:5000',
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json',     
   },
 });
 
