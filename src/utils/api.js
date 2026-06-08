@@ -1,11 +1,15 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || '',
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000',
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+if (!process.env.REACT_APP_API_BASE_URL) {
+  console.warn('REACT_APP_API_BASE_URL not set, defaulting to http://localhost:5000');
+}
 
 // Request interceptor to attach JWT token
 API.interceptors.request.use(

@@ -8,8 +8,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['https://care-sync-iota.vercel.app'];
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'https://care-sync-iota.vercel.app'];
 
 const corsOptions = {
   origin: allowedOrigins,
