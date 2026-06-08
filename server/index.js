@@ -7,25 +7,15 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://care-sync-iota.vercel.app'
-];
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: ['http://localhost:3000', 'https://care-sync-iota.vercel.app'],
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
-// Set body parser size limit to 10MB to accommodate base64 profile avatar images
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// Set body parser size limit to 5MB to accommodate base64 profile avatar images
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // DB Connection
 const dbUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/caresync';

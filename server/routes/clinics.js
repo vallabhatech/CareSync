@@ -58,17 +58,14 @@ router.post('/favorites', authMiddleware, async (req, res) => {
 // @desc    Remove a clinic from favorites (id can be favorite's MongoDB _id OR clinic's place_id)
 // @access  Private
 router.delete('/favorites/:id', authMiddleware, async (req, res) => {
-  const cleanId = String(req.params.id);
+  const cleanId = String(req.params.id).trim();
   try {
-    // Look up by MongoDB ObjectId or place_id
-    const query = {
-      user: req.user._id,
-      $or: [{ _id: cleanId.match(/^[0-9a-fA-F]{24}$/) ? cleanId : null }, { place_id: cleanId }],
-    };
-
-    // Filter out null _id if match fails
-    if (!query.$or[0]._id) {
-      query.$or.shift();
+    // Look up by MongoDB ObjectId or place_id safely
+    const query = { user: req.user._id };
+    if (cleanId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ _id: cleanId }, { place_id: cleanId }];
+    } else {
+      query.place_id = cleanId;
     }
 
     const favClinic = await FavoriteClinic.findOne(query);

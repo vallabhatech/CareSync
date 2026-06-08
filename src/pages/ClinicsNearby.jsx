@@ -455,7 +455,7 @@ export default function ClinicsNearby() {
                       <Button
                         variant="outlined"
                         color="primary"
-                        href={`https://www.google.com/maps/search/?api=1&query=${clinic.lat},${clinic.lon}`}
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.lat)},${encodeURIComponent(clinic.lon)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         sx={{
@@ -515,7 +515,7 @@ export default function ClinicsNearby() {
                           <Button
                             size="small"
                             variant="outlined"
-                            href={`https://www.google.com/maps/search/?api=1&query=${fav.lat},${fav.lon}`}
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fav.lat)},${encodeURIComponent(fav.lon)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{ py: 0.25, fontSize: '0.75rem' }}
