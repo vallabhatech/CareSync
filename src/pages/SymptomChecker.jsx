@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Chip, Stack, LinearProgress } from '@mui/material';
 /**
  * COMMON_SYMPTOMS
@@ -393,6 +394,7 @@ const RISK_RULES = [
  * <Route path="/symptom-checker" element={<SymptomChecker />} />
  */
 export default function SymptomChecker() {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const [symptoms, setSymptoms] = useState([]);
   const [results, setResults] = useState([]);
@@ -485,12 +487,12 @@ export default function SymptomChecker() {
   return (
     <div className="symptom-bg">
       <div className="symptom-container">
-        <h2 className="symptom-title">🤖 Symptom Checker</h2>
-        <p className="symptom-desc">Start typing a symptom and select from suggestions:</p>
+        <h2 className="symptom-title">{t('symptom:title')}</h2>
+        <p className="symptom-desc">{t('symptom:description')}</p>
         <div className="symptom-form-row">
           <input
             className="symptom-input"
-            placeholder="Enter symptom (e.g. Fever)"
+            placeholder={t('symptom:inputPlaceholder')}
             value={input}
             onChange={handleInputChange}
             onKeyDown={e => {
@@ -504,7 +506,7 @@ export default function SymptomChecker() {
             disabled={!input.trim() || !COMMON_SYMPTOMS.includes(input.trim()) || symptoms.includes(input.trim())}
             sx={{ minWidth: 110, fontWeight: 700, background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}
           >
-            Add Symptom
+            {t('symptom:addSymptom')}
           </Button>
         </div>
         {suggestions.length > 0 && (
@@ -522,7 +524,7 @@ export default function SymptomChecker() {
           </div>
         )}
         <div className="symptom-your-list">
-          <span className="symptom-your-label">Your Symptoms:</span>
+          <span className="symptom-your-label">{t('symptom:yourSymptoms')}</span>
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
             {symptoms.map((sym) => (
               <Chip
@@ -541,11 +543,11 @@ export default function SymptomChecker() {
           disabled={symptoms.length === 0}
           sx={{ mt: 1, fontWeight: 700, borderColor: '#1976d2', color: '#1976d2' }}
         >
-          Check
+          {t('symptom:check')}
         </Button>
         {results.length > 0 && (
           <div className="symptom-results">
-            <h3 className="symptom-results-title">Assessment Results:</h3>
+            <h3 className="symptom-results-title">{t('symptom:assessmentResults')}</h3>
             {results.map((res) => (
               <div
                 key={`${res.condition}-${res.risk}`}
@@ -576,16 +578,16 @@ export default function SymptomChecker() {
                   fontWeight: 700,
                   marginBottom: 6
                 }}>
-                  {res.risk.charAt(0).toUpperCase() + res.risk.slice(1)} Risk
+                  {t('symptom:riskLabel', { level: res.risk.charAt(0).toUpperCase() + res.risk.slice(1) })}
                 </div>
                 {res.causes && (
                   <div className="symptom-result-causes">
-                    <b>Possible Causes:</b> {res.causes}
+                    <b>{t('symptom:possibleCauses')}</b> {res.causes}
                   </div>
                 )}
                 {res.solutions && res.solutions.length > 0 && (
                   <div className="symptom-result-solutions">
-                    <b>Possible Solutions:</b>
+                    <b>{t('symptom:possibleSolutions')}</b>
                     <ul>
                       {res.solutions.map((act) => (
                         <li key={`${res.condition}-${act}`}>{act}</li>

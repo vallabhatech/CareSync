@@ -12,7 +12,9 @@ import {
   FormControlLabel,
   Snackbar,
   Alert,
+  MenuItem,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import {
   requestNotificationPermission,
@@ -24,6 +26,7 @@ import {
   getEmailNotificationsEnabled,
   setEmailNotificationsEnabled,
 } from '../utils/settingsPreferences';
+import { SUPPORTED_LANGUAGES } from '../i18n';
 
 /**
  * Settings — user profile and preferences page.
@@ -47,6 +50,7 @@ import {
  * <Route path="/settings" element={<Settings />} />
  */
 export default function Settings() {
+  const { t, i18n } = useTranslation();
   const { user, isAuthenticated, updateProfile } = useAuth();
 
   // Initialise the editable form from the authenticated user, mirroring the
@@ -70,7 +74,7 @@ export default function Settings() {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant="h5" color="text.secondary">
-          Please log in to manage your settings.
+          {t('settings:loginPrompt')}
         </Typography>
       </Box>
     );
@@ -105,6 +109,14 @@ export default function Settings() {
   };
 
   /**
+   * Change the active language. i18next's language detector persists the
+   * choice to localStorage automatically, so it survives reloads.
+   */
+  const handleLanguageChange = (e) => {
+    i18n.changeLanguage(e.target.value);
+  };
+
+  /**
    * Persist profile edits (name, email, avatar) through AuthContext.
    * This updates the in-memory user, writes through to `caresync_user`, and
    * keeps Settings consistent with the Profile page and the rest of the app.
@@ -117,7 +129,7 @@ export default function Settings() {
     });
     setSnackbar({
       open: true,
-      message: 'Settings saved.',
+      message: t('settings:saveSuccess'),
       severity: 'success',
     });
   };
@@ -135,7 +147,7 @@ export default function Settings() {
       if (permission !== 'granted') {
         setSnackbar({
           open: true,
-          message: 'Notification permission was denied. Please enable it in your browser settings.',
+          message: t('settings:pushPermissionDenied'),
           severity: 'warning',
         });
         return; // Don't flip the toggle if permission denied.
@@ -157,7 +169,7 @@ export default function Settings() {
 
       setSnackbar({
         open: true,
-        message: 'Push notifications enabled! You will be reminded when your medicines are due.',
+        message: t('settings:pushEnabledMsg'),
         severity: 'success',
       });
     } else {
@@ -166,7 +178,7 @@ export default function Settings() {
       clearScheduledNotifications();
       setSnackbar({
         open: true,
-        message: 'Push notifications disabled.',
+        message: t('settings:pushDisabledMsg'),
         severity: 'info',
       });
     }
@@ -176,7 +188,7 @@ export default function Settings() {
     <Box sx={{ maxWidth: 600, mx: 'auto', mt: 6, p: 2 }}>
       <Paper elevation={4} sx={{ p: 4, borderRadius: 4 }}>
         <Typography variant="h4" fontWeight={700} mb={2} color="primary">
-          Profile Settings
+          {t('settings:profileSettings')}
         </Typography>
         <Divider sx={{ mb: 3 }} />
 
@@ -192,7 +204,7 @@ export default function Settings() {
               size="small"
               sx={{ mt: 1 }}
             >
-              Change Avatar
+              {t('settings:changeAvatar')}
               <input
                 type="file"
                 accept="image/*"
@@ -203,7 +215,7 @@ export default function Settings() {
           </Grid>
           <Grid item xs={12} sm={8}>
             <TextField
-              label="Name"
+              label={t('settings:name')}
               name="name"
               value={profile.name}
               onChange={handleChange}
@@ -211,7 +223,7 @@ export default function Settings() {
               sx={{ mb: 2 }}
             />
             <TextField
-              label="Email"
+              label={t('settings:email')}
               name="email"
               value={profile.email}
               onChange={handleChange}
@@ -224,7 +236,7 @@ export default function Settings() {
         <Divider sx={{ my: 3 }} />
 
         <Typography variant="h6" fontWeight={600} mb={1}>
-          Preferences
+          {t('settings:preferences')}
         </Typography>
         <FormControlLabel
           control={
@@ -234,7 +246,7 @@ export default function Settings() {
               color="primary"
             />
           }
-          label="Enable Email Notifications"
+          label={t('settings:enableEmailNotifications')}
         />
         <FormControlLabel
           control={
@@ -245,10 +257,31 @@ export default function Settings() {
               id="push-notification-toggle"
             />
           }
-          label="Enable Medicine Push Notifications"
+          label={t('settings:enablePushNotifications')}
         />
         <Typography variant="body2" color="text.secondary" sx={{ ml: 4, mt: -0.5, mb: 1 }}>
-          Receive browser notifications when a medicine reminder is due.
+          {t('settings:pushNotificationsHint')}
+        </Typography>
+
+        <Divider sx={{ my: 3 }} />
+
+        <TextField
+          select
+          fullWidth
+          label={t('settings:language')}
+          value={i18n.language?.split('-')[0] || 'en'}
+          onChange={handleLanguageChange}
+          sx={{ maxWidth: 320 }}
+          id="language-selector"
+        >
+          {SUPPORTED_LANGUAGES.map((lang) => (
+            <MenuItem key={lang.code} value={lang.code}>
+              {lang.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+          {t('settings:languageHint')}
         </Typography>
 
         <Box sx={{ mt: 4, textAlign: 'right' }}>
@@ -258,7 +291,7 @@ export default function Settings() {
             sx={{ px: 4 }}
             onClick={handleSave}
           >
-            Save Changes
+            {t('settings:saveChanges')}
           </Button>
         </Box>
       </Paper>

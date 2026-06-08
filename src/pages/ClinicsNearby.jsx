@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -15,6 +16,7 @@ import {
 } from '@mui/material';
 
 export default function ClinicsNearby() {
+  const { t } = useTranslation();
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
@@ -28,7 +30,7 @@ export default function ClinicsNearby() {
   const isThrottled = () => {
     const now = Date.now();
     if (now - lastSearchAt < 1500) {
-      setSearchError('Please wait a moment before searching again.');
+      setSearchError(t('clinics:errorThrottled'));
       return true;
     }
 
@@ -45,21 +47,21 @@ export default function ClinicsNearby() {
     if (!res.ok) {
       throw new Error(
         res.status === 429
-          ? 'Location search is temporarily rate-limited. Please try again in a moment.'
-          : 'Failed to resolve that location. Please try again later.'
+          ? t('clinics:errorRateLimited')
+          : t('clinics:errorResolveLocation')
       );
     }
 
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) {
-      throw new Error('Location not found. Please check your spelling or try a different query.');
+      throw new Error(t('clinics:errorLocationNotFound'));
     }
 
     const latitude = Number.parseFloat(data[0].lat);
     const longitude = Number.parseFloat(data[0].lon);
 
     if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-      throw new Error('Failed to resolve that location. Please try again later.');
+      throw new Error(t('clinics:errorResolveLocation'));
     }
 
     return { lat: latitude, lon: longitude };
@@ -80,7 +82,7 @@ export default function ClinicsNearby() {
       const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
 
       if (!res.ok) {
-        throw new Error('Failed to fetch clinics. Try again later.');
+        throw new Error(t('clinics:errorFetchClinics'));
       }
 
       const data = await res.json();
@@ -88,11 +90,11 @@ export default function ClinicsNearby() {
       setShowFallback(false);
 
       if (!Array.isArray(data) || data.length === 0) {
-        setLocationError('No clinics found nearby. Try increasing your search area.');
+        setLocationError(t('clinics:errorNoClinicsNearby'));
       }
     } catch (err) {
       console.error('Failed to fetch clinics:', err);
-      setLocationError('Failed to fetch clinics. Try again later.');
+      setLocationError(t('clinics:errorFetchClinics'));
     } finally {
       setLoading(false);
     }
@@ -106,7 +108,7 @@ export default function ClinicsNearby() {
 
     if (!navigator.geolocation) {
       setLocationError(
-        'Location access is unavailable. You can search using a city name, postal code, manually enter coordinates, or retry location access.'
+        t('clinics:errorLocationUnavailable')
       );
       setShowFallback(true);
       return;
@@ -121,7 +123,7 @@ export default function ClinicsNearby() {
       (error) => {
         console.error('Geolocation failed:', error);
         setLocationError(
-          'Location access is unavailable. You can search using a city name, postal code, manually enter coordinates, or retry location access.'
+          t('clinics:errorLocationUnavailable')
         );
         setShowFallback(true);
         setLoading(false);
@@ -134,7 +136,7 @@ export default function ClinicsNearby() {
     setSearchError('');
 
     if (!cityQuery.trim()) {
-      setSearchError('Please enter a city name or postal code.');
+      setSearchError(t('clinics:errorEnterCity'));
       return;
     }
 
@@ -153,27 +155,27 @@ export default function ClinicsNearby() {
     const longitude = Number.parseFloat(lon);
 
     if (!lat.trim() || !lon.trim()) {
-      setSearchError('Please enter both latitude and longitude.');
+      setSearchError(t('clinics:errorEnterCoords'));
       return;
     }
 
     if (Number.isNaN(latitude)) {
-      setSearchError('Latitude must be a valid number.');
+      setSearchError(t('clinics:errorLatNumber'));
       return;
     }
 
     if (Number.isNaN(longitude)) {
-      setSearchError('Longitude must be a valid number.');
+      setSearchError(t('clinics:errorLonNumber'));
       return;
     }
 
     if (latitude < -90 || latitude > 90) {
-      setSearchError('Latitude must be between -90 and 90.');
+      setSearchError(t('clinics:errorLatRange'));
       return;
     }
 
     if (longitude < -180 || longitude > 180) {
-      setSearchError('Longitude must be between -180 and 180.');
+      setSearchError(t('clinics:errorLonRange'));
       return;
     }
 
@@ -193,10 +195,10 @@ export default function ClinicsNearby() {
     <div className="clinics-bg">
       <div className="clinics-container">
         <Typography variant="h4" fontWeight={800} mb={2} align="center" className="clinics-title">
-          Clinics Nearby
+          {t('clinics:title')}
         </Typography>
         <Typography variant="body1" align="center" mb={3} className="clinics-desc">
-          Find clinics and hospitals close to your current location.
+          {t('clinics:description')}
         </Typography>
 
         <Box display="flex" justifyContent="center" mb={3}>
@@ -213,7 +215,7 @@ export default function ClinicsNearby() {
               boxShadow: '0 2px 12px #1976d244',
             }}
           >
-            {loading ? 'Locating...' : 'Find Clinics Near Me'}
+            {loading ? t('clinics:locating') : t('clinics:findNearMe')}
           </Button>
         </Box>
 
@@ -233,23 +235,23 @@ export default function ClinicsNearby() {
           <Card sx={{ mb: 3, borderRadius: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" fontWeight={600} mb={2} color="#1976d2">
-                Alternative Search Methods
+                {t('clinics:alternativeSearch')}
               </Typography>
 
               <Box mb={3}>
                 <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                  Search by City or Postal Code
+                  {t('clinics:searchByCity')}
                 </Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
                   <TextField
-                    placeholder="Enter city or postal code"
+                    placeholder={t('clinics:cityPlaceholder')}
                     value={cityQuery}
                     onChange={(e) => setCityQuery(e.target.value)}
                     size="small"
                     sx={{ flexGrow: 1, minWidth: 200 }}
                   />
                   <Button variant="contained" onClick={handleCitySearch} disabled={loading}>
-                    Search
+                    {t('clinics:search')}
                   </Button>
                 </Box>
               </Box>
@@ -258,25 +260,25 @@ export default function ClinicsNearby() {
 
               <Box mb={3}>
                 <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                  Manual Coordinates
+                  {t('clinics:manualCoordinates')}
                 </Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
                   <TextField
-                    placeholder="Latitude"
+                    placeholder={t('clinics:latitude')}
                     value={lat}
                     onChange={(e) => setLat(e.target.value)}
                     size="small"
                     sx={{ width: 120 }}
                   />
                   <TextField
-                    placeholder="Longitude"
+                    placeholder={t('clinics:longitude')}
                     value={lon}
                     onChange={(e) => setLon(e.target.value)}
                     size="small"
                     sx={{ width: 120 }}
                   />
                   <Button variant="contained" onClick={handleCoordSearch} disabled={loading}>
-                    Search
+                    {t('clinics:search')}
                   </Button>
                 </Box>
               </Box>
@@ -285,10 +287,10 @@ export default function ClinicsNearby() {
 
               <Box>
                 <Typography variant="body2" color="text.secondary" mb={1}>
-                  Location access provides more accurate results for nearby clinics.
+                  {t('clinics:locationAccuracyNote')}
                 </Typography>
                 <Button variant="outlined" onClick={handleRetryLocation} disabled={loading}>
-                  Retry Location Access
+                  {t('clinics:retryLocation')}
                 </Button>
               </Box>
             </CardContent>
@@ -324,10 +326,10 @@ export default function ClinicsNearby() {
                   }}
                 >
                   <Typography variant="h6" fontWeight={700} color="#1976d2" mb={0.5}>
-                    {clinic.display_name?.split(',')[0] || 'Unnamed clinic'}
+                    {clinic.display_name?.split(',')[0] || t('clinics:unnamedClinic')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" mb={1}>
-                    {clinic.display_name || 'Address unavailable'}
+                    {clinic.display_name || t('clinics:addressUnavailable')}
                   </Typography>
                   <Button
                     variant="outlined"
@@ -343,7 +345,7 @@ export default function ClinicsNearby() {
                       '&:hover': { background: '#e3eafc' },
                     }}
                   >
-                    View on Map
+                    {t('clinics:viewOnMap')}
                   </Button>
                 </ListItem>
               </Paper>
@@ -353,7 +355,7 @@ export default function ClinicsNearby() {
 
         {!loading && clinics.length === 0 && !locationError && (
           <Typography variant="body2" color="text.secondary" mt={2} align="center">
-            Click &quot;Find Clinics Near Me&quot; to see nearby clinics and hospitals.
+            {t('clinics:emptyHint')}
           </Typography>
         )}
 
