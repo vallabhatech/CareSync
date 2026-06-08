@@ -145,17 +145,22 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+const validateAndGetEmailUpdate = async (email, currentUser) => {
+  if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    throw new Error('Invalid email address');
+  }
+  const emailExists = await User.findOne({ email: { $eq: email } });
+  if (emailExists) {
+    throw new Error('Email already in use');
+  }
+  return email;
+};
+
 // @route   PUT /api/auth/profile
 // @desc    Update user profile details
 // @access  Private
 router.put('/profile', authMiddleware, async (req, res) => {
-  const name = req.body.name === undefined ? undefined : String(req.body.name).trim();
-  const email = req.body.email === undefined ? undefined : String(req.body.email).trim().toLowerCase();
-  const phone = req.body.phone === undefined ? undefined : String(req.body.phone).trim();
-  const age = req.body.age === undefined ? undefined : String(req.body.age).trim();
-  const bloodGroup = req.body.bloodGroup === undefined ? undefined : String(req.body.bloodGroup).trim();
-  const allergies = req.body.allergies === undefined ? undefined : String(req.body.allergies).trim();
-  const avatar = req.body.avatar === undefined ? undefined : (req.body.avatar ? String(req.body.avatar) : null);
+  const emailInput = req.body.email === undefined ? undefined : String(req.body.email).trim().toLowerCase();
 
   try {
     const user = await User.findOne({ _id: { $eq: req.user._id } });
@@ -164,23 +169,27 @@ router.put('/profile', authMiddleware, async (req, res) => {
     }
 
     // Check if updating email to one already in use
-    if (email !== undefined && email !== user.email) {
-      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-        return res.status(400).json({ message: 'Invalid email address' });
-      }
-      const emailExists = await User.findOne({ email: { $eq: email } });
-      if (emailExists) {
-        return res.status(400).json({ message: 'Email already in use' });
-      }
-      user.email = email;
+    if (emailInput !== undefined && emailInput !== user.email) {
+      user.email = await validateAndGetEmailUpdate(emailInput, user);
     }
 
-    if (name) user.name = name;
-    if (phone !== undefined) user.phone = phone;
-    if (age !== undefined) user.age = age;
-    if (bloodGroup !== undefined) user.bloodGroup = bloodGroup;
-    if (allergies !== undefined) user.allergies = allergies;
-    if (avatar !== undefined) user.avatar = avatar;
+    // Update simple fields
+    ['phone', 'age', 'bloodGroup', 'allergies'].forEach((field) => {
+      if (req.body[field] !== undefined) {
+        user[field] = String(req.body[field]).trim();
+      }
+    });
+
+    if (req.body.name !== undefined) {
+      const cleanName = String(req.body.name).trim();
+      if (cleanName) {
+        user.name = cleanName;
+      }
+    }
+
+    if (req.body.avatar !== undefined) {
+      user.avatar = req.body.avatar ? String(req.body.avatar) : null;
+    }
 
     await user.save();
 
@@ -199,7 +208,8 @@ router.put('/profile', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Update profile error:', err.message);
-    res.status(500).json({ message: 'Server error updating user profile' });
+    const isValidationError = err.message === 'Invalid email address' || err.message === 'Email already in use';
+    res.status(isValidationError ? 400 : 500).json({ message: err.message || 'Server error updating user profile' });
   }
 });
 

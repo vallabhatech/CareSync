@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const res = await API.post('/api/auth/login', { email, password });
     const { token, user: loggedUser } = res.data;
-    const cleanToken = typeof token === 'string' ? token.replace(/[^\w\.\-\_]/g, '') : '';
+    const cleanToken = typeof token === 'string' ? token.replace(/[^\w.-]/g, '') : '';
     if (cleanToken && /^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(cleanToken)) {
       localStorage.setItem('caresync_token', cleanToken);
     }
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
   const signup = useCallback(async (name, email, password) => {
     const res = await API.post('/api/auth/register', { name, email, password });
     const { token, user: loggedUser } = res.data;
-    const cleanToken = typeof token === 'string' ? token.replace(/[^\w\.\-\_]/g, '') : '';
+    const cleanToken = typeof token === 'string' ? token.replace(/[^\w.-]/g, '') : '';
     if (cleanToken && /^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(cleanToken)) {
       localStorage.setItem('caresync_token', cleanToken);
     }
