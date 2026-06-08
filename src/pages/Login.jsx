@@ -11,10 +11,12 @@ import {
   Tab,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 
 function Login() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [tab, setTab] = useState(0);
   const [error, setError] = useState('');
@@ -35,7 +37,7 @@ function Login() {
     setError('');
 
     if (!loginEmail.trim() || !loginPassword.trim()) {
-      setError('Please enter both email and password.');
+      setError(t('login:errorEnterBoth'));
       return;
     }
 
@@ -64,15 +66,15 @@ function Login() {
     setError('');
 
     if (!signupName.trim() || !signupEmail.trim() || !signupPassword.trim()) {
-      setError('Please fill in all fields.');
+      setError(t('login:errorFillAll'));
       return;
     }
     if (signupPassword.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError(t('login:errorPasswordLength'));
       return;
     }
     if (signupPassword !== signupConfirm) {
-      setError('Passwords do not match.');
+      setError(t('login:errorPasswordMatch'));
       return;
     }
 
@@ -107,10 +109,10 @@ function Login() {
       <Card sx={{ maxWidth: 420, width: '100%', borderRadius: 4, boxShadow: '0 8px 32px rgba(25,118,210,0.15)' }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h4" fontWeight={800} align="center" color="primary" mb={1}>
-            CareSync
+            {t('common:appName')}
           </Typography>
           <Typography variant="body2" color="text.secondary" align="center" mb={3}>
-            {tab === 0 ? 'Welcome back! Please log in.' : 'Create your account to get started.'}
+            {tab === 0 ? t('login:welcomeBack') : t('login:createAccount')}
           </Typography>
 
           <Tabs
@@ -119,8 +121,8 @@ function Login() {
             variant="fullWidth"
             sx={{ mb: 3 }}
           >
-            <Tab label="Login" />
-            <Tab label="Sign Up" />
+            <Tab label={t('login:loginTab')} />
+            <Tab label={t('login:signupTab')} />
           </Tabs>
 
           {error && (
@@ -133,7 +135,7 @@ function Login() {
             <form onSubmit={handleLogin}>
               <TextField
                 fullWidth
-                label="Email"
+                label={t('login:email')}
                 type="email"
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
@@ -142,7 +144,7 @@ function Login() {
               />
               <TextField
                 fullWidth
-                label="Password"
+                label={t('login:password')}
                 type="password"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
@@ -161,14 +163,14 @@ function Login() {
                   background: 'linear-gradient(90deg, #1976d2 60%, #7b1fa2 100%)',
                 }}
               >
-                {loading ? 'Logging in...' : 'Log In'}
+                {loading ? t('login:loggingIn') : t('login:logIn')}
               </Button>
             </form>
           ) : (
             <form onSubmit={handleSignup}>
               <TextField
                 fullWidth
-                label="Full Name"
+                label={t('login:fullName')}
                 value={signupName}
                 onChange={(e) => setSignupName(e.target.value)}
                 margin="normal"
@@ -176,7 +178,7 @@ function Login() {
               />
               <TextField
                 fullWidth
-                label="Email"
+                label={t('login:email')}
                 type="email"
                 value={signupEmail}
                 onChange={(e) => setSignupEmail(e.target.value)}
@@ -185,17 +187,17 @@ function Login() {
               />
               <TextField
                 fullWidth
-                label="Password"
+                label={t('login:password')}
                 type="password"
                 value={signupPassword}
                 onChange={(e) => setSignupPassword(e.target.value)}
                 margin="normal"
                 required
-                helperText="At least 6 characters"
+                helperText={t('login:passwordHelper')}
               />
               <TextField
                 fullWidth
-                label="Confirm Password"
+                label={t('login:confirmPassword')}
                 type="password"
                 value={signupConfirm}
                 onChange={(e) => setSignupConfirm(e.target.value)}
@@ -214,7 +216,7 @@ function Login() {
                   background: 'linear-gradient(90deg, #1976d2 60%, #7b1fa2 100%)',
                 }}
               >
-                {loading ? 'Creating account...' : 'Sign Up'}
+                {loading ? t('login:creatingAccount') : t('login:signUp')}
               </Button>
             </form>
           )}

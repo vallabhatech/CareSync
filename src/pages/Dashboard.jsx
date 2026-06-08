@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import MedicationIcon from '@mui/icons-material/Medication';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
@@ -36,6 +37,7 @@ const healthQuotes = [
  * <Route path="/dashboard" element={<Dashboard />} />
  */
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [quote, setQuote] = useState(healthQuotes[0]);
   const [todayCount, setTodayCount] = useState(0);
 
@@ -60,45 +62,43 @@ export default function Dashboard() {
   const getGreeting = () => {
   const hour = new Date().getHours();
 
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
+  if (hour < 12) return t('dashboard:greetingMorning');
+  if (hour < 17) return t('dashboard:greetingAfternoon');
+  return t('dashboard:greetingEvening');
   };
   
   const dynamicFeatures = [
     {
       id: "today's-medicines",
-      title: "Today's Medicines",
-      desc: todayCount === 1
-        ? "1 medicine scheduled for today."
-        : `${todayCount} medicines scheduled for today.`,
+      title: t('dashboard:todaysMedicinesTitle'),
+      desc: t('dashboard:todaysMedicines', { count: todayCount }),
       link: "/medicine-tracker",
       icon: <MedicationIcon fontSize="large" color="primary" />,
-      btn: "View Medicine Tracker",
+      btn: t('dashboard:viewMedicineTracker'),
     },
     {
       id: 'recent-symptom-checks',
-      title: "Recent Symptom Checks",
-      desc: "Last check: No major symptoms detected.",
+      title: t('dashboard:recentSymptomChecksTitle'),
+      desc: t('dashboard:recentSymptomChecksDesc'),
       link: "/symptom-checker",
       icon: <SearchIcon fontSize="large" color="primary" />,
-      btn: "Check Symptoms",
+      btn: t('dashboard:checkSymptoms'),
     },
     {
       id: 'nearby-clinics',
-      title: "Nearby Clinics",
-      desc: "3 clinics within 5km.",
+      title: t('dashboard:nearbyClinicsTitle'),
+      desc: t('dashboard:nearbyClinicsDesc'),
       link: "/clinics-nearby",
       icon: <PlaceIcon fontSize="large" color="primary" />,
-      btn: "Find Clinics",
+      btn: t('dashboard:findClinics'),
     },
     {
       id: 'profile-settings',
-      title: "Profile & Settings",
-      desc: "Update your preferences and profile.",
+      title: t('dashboard:profileSettingsTitle'),
+      desc: t('dashboard:profileSettingsDesc'),
       link: "/settings",
       icon: <SettingsIcon fontSize="large" color="primary" />,
-      btn: "Go to Settings",
+      btn: t('dashboard:goToSettings'),
     }
   ];
   
@@ -108,27 +108,27 @@ export default function Dashboard() {
       <div className="dashboard-container">
         <div className="dashboard-header">
           <h1 className="dashboard-title">{getGreeting()} 👋</h1>
-          <p className="dashboard-subtitle"> Here's your health overview for today.  </p>
+          <p className="dashboard-subtitle"> {t('dashboard:subtitle')}  </p>
         </div>
         <div className="dashboard-stats">
           <div className="stat-card">
             <h2>{todayCount}</h2>
-            <p>Medicines Today</p>
+            <p>{t('dashboard:statMedicinesToday')}</p>
           </div>
 
           <div className="stat-card">
             <h2>3</h2>
-            <p>Clinics Nearby</p>
+            <p>{t('dashboard:statClinicsNearby')}</p>
           </div>
 
           <div className="stat-card">
             <h2>✓</h2>
-            <p>Health Status</p>
+            <p>{t('dashboard:statHealthStatus')}</p>
           </div>
         </div>
         <div className="dashboard-quote-section">
           <div className="dashboard-quote">{quote}</div>
-          <button className="dashboard-quote-btn" onClick={generateQuote}>New Quote</button>
+          <button className="dashboard-quote-btn" onClick={generateQuote}>{t('dashboard:newQuote')}</button>
         </div>
         <div className="dashboard-features">
           {dynamicFeatures.map((feature) => (

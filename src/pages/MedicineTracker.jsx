@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
+import { useTranslation } from 'react-i18next';
 import {
   scheduleNotifications,
   requestNotificationPermission,
@@ -66,6 +67,7 @@ function loadMedicines() {
 }
 
 export default function MedicineTracker() {
+  const { t } = useTranslation();
   const [medicines, setMedicines] = useState(loadMedicines);
   const [name, setName] = useState('');
   const [time, setTime] = useState('');
@@ -147,12 +149,12 @@ export default function MedicineTracker() {
   return (
     <div className="medtracker-bg">
       <div className="medtracker-container">
-        <h2 className="medtracker-title">Medicine Tracker</h2>
+        <h2 className="medtracker-title">{t('medicine:title')}</h2>
 
         <div className="medtracker-reminder-section">
-          <h3>Today's Reminders</h3>
+          <h3>{t('medicine:todaysReminders')}</h3>
           {todaysReminders.length === 0 ? (
-            <div className="medtracker-reminder-empty">No medicines scheduled for today.</div>
+            <div className="medtracker-reminder-empty">{t('medicine:noRemindersToday')}</div>
           ) : (
             <ul className="medtracker-reminder-list">
               {todaysReminders.map((med) => (
@@ -170,10 +172,10 @@ export default function MedicineTracker() {
                   <button
                     className="medtracker-delete-btn"
                     onClick={() => deleteMedicine(med.id)}
-                    title="Delete reminder"
+                    title={t('medicine:deleteReminder')}
                     type="button"
                   >
-                    Delete
+                    {t('medicine:delete')}
                   </button>
                 </li>
               ))}
@@ -184,7 +186,7 @@ export default function MedicineTracker() {
         <div className="medtracker-form-row">
           <input
             className="medtracker-input"
-            placeholder="Medicine Name"
+            placeholder={t('medicine:namePlaceholder')}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -202,6 +204,7 @@ export default function MedicineTracker() {
           />
           <button className="medtracker-btn" onClick={addMedicine} type="button">
             {isEditing ? 'Update' : 'Add'}
+            {t('medicine:add')}
           </button>
           {isEditing && (
             <button className="medtracker-cancel-btn" onClick={cancelEdit} type="button">
@@ -210,10 +213,10 @@ export default function MedicineTracker() {
           )}
         </div>
 
-        <h3 className="medtracker-list-title">All Scheduled Medicines</h3>
+        <h3 className="medtracker-list-title">{t('medicine:allScheduledTitle')}</h3>
         <ul className="medtracker-list">
           {medicines.length === 0 && (
-            <li className="medtracker-list-empty">No medicines scheduled yet.</li>
+            <li className="medtracker-list-empty">{t('medicine:noMedicinesYet')}</li>
           )}
           {medicines.map((med) => (
             <li key={med.id} className="medtracker-list-item">
@@ -231,10 +234,10 @@ export default function MedicineTracker() {
               <button
                 className="medtracker-delete-btn"
                 onClick={() => deleteMedicine(med.id)}
-                title="Delete medicine"
+                title={t('medicine:deleteMedicine')}
                 type="button"
               >
-                Delete
+                {t('medicine:delete')}
               </button>
             </li>
           ))}
