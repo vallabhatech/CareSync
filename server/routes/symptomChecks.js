@@ -8,7 +8,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 // @access  Private
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const history = await SymptomCheck.find({ user: req.user._id }).sort({ checkedAt: -1 });
+    const history = await SymptomCheck.find({ user: { $eq: req.user._id } }).sort({ checkedAt: -1 });
     res.json(history);
   } catch (err) {
     console.error('Fetch symptom checks error:', err.message);

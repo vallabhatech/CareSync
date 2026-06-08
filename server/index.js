@@ -7,8 +7,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['https://care-sync-iota.vercel.app'];
+
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://care-sync-iota.vercel.app'],
+  origin: allowedOrigins,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
@@ -18,7 +22,11 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // DB Connection
-const dbUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/caresync';
+const dbUri = process.env.MONGODB_URI;
+if (!dbUri) {
+  console.error('Error: MONGODB_URI environment variable is not defined.');
+  process.exit(1);
+}
 mongoose.connect(dbUri)
   .then(() => console.log('MongoDB connected successfully'))
   .catch((err) => {

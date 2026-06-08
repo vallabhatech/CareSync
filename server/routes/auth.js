@@ -34,7 +34,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: { $eq: email } });
     if (existingUser) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
@@ -88,7 +88,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Check user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: { $eq: email } });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -158,7 +158,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
   const avatar = req.body.avatar !== undefined ? (req.body.avatar ? String(req.body.avatar) : null) : undefined;
 
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findOne({ _id: { $eq: req.user._id } });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -168,7 +168,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({ message: 'Invalid email address' });
       }
-      const emailExists = await User.findOne({ email });
+      const emailExists = await User.findOne({ email: { $eq: email } });
       if (emailExists) {
         return res.status(400).json({ message: 'Email already in use' });
       }

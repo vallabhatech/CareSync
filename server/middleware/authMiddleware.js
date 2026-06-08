@@ -17,7 +17,7 @@ const authMiddleware = async (req, res, next) => {
     const token = authHeader.replace('Bearer ', '');
     const decoded = jwt.verify(token, jwtSecret);
     
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findOne({ _id: { $eq: decoded.id } }).select('-password');
     if (!user) {
       return res.status(401).json({ message: 'User not found, authorization failed' });
     }

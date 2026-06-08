@@ -8,7 +8,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 // @access  Private
 router.get('/favorites', authMiddleware, async (req, res) => {
   try {
-    const favorites = await FavoriteClinic.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const favorites = await FavoriteClinic.find({ user: { $eq: req.user._id } }).sort({ createdAt: -1 });
     res.json(favorites);
   } catch (err) {
     console.error('Fetch favorite clinics error:', err.message);
@@ -32,7 +32,7 @@ router.post('/favorites', authMiddleware, async (req, res) => {
     }
 
     // Check if already favorited
-    const existingFav = await FavoriteClinic.findOne({ user: req.user._id, place_id: String(place_id) });
+    const existingFav = await FavoriteClinic.findOne({ user: { $eq: req.user._id }, place_id: { $eq: String(place_id) } });
     if (existingFav) {
       return res.status(400).json({ message: 'Clinic already favorited' });
     }
@@ -61,11 +61,11 @@ router.delete('/favorites/:id', authMiddleware, async (req, res) => {
   const cleanId = String(req.params.id).trim();
   try {
     // Look up by MongoDB ObjectId or place_id safely
-    const query = { user: req.user._id };
+    const query = { user: { $eq: req.user._id } };
     if (cleanId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ _id: cleanId }, { place_id: cleanId }];
+      query.$or = [{ _id: { $eq: cleanId } }, { place_id: { $eq: cleanId } }];
     } else {
-      query.place_id = cleanId;
+      query.place_id = { $eq: cleanId };
     }
 
     const favClinic = await FavoriteClinic.findOne(query);
@@ -87,7 +87,7 @@ router.delete('/favorites/:id', authMiddleware, async (req, res) => {
 // @access  Private
 router.get('/searches', authMiddleware, async (req, res) => {
   try {
-    const searches = await RecentSearch.find({ user: req.user._id })
+    const searches = await RecentSearch.find({ user: { $eq: req.user._id } })
       .sort({ searchedAt: -1 })
       .limit(10); // Return last 10 searches
     res.json(searches);
@@ -113,8 +113,8 @@ router.post('/searches', authMiddleware, async (req, res) => {
 
     // Limit same queries within a short timeframe by deleting duplicates
     await RecentSearch.deleteMany({
-      user: req.user._id,
-      query: String(query),
+      user: { $eq: req.user._id },
+      query: { $eq: String(query) },
     });
 
     const recentSearch = new RecentSearch({

@@ -8,7 +8,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 // @access  Private
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const medicines = await Medicine.find({ user: req.user._id }).sort({ createdAt: 1 });
+    const medicines = await Medicine.find({ user: { $eq: req.user._id } }).sort({ createdAt: 1 });
     
     // Format medicines to match the frontend expectations: { id, name, time, date }
     const formatted = medicines.map(med => ({
@@ -65,7 +65,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, async (req, res) => {
   const cleanId = String(req.params.id);
   try {
-    const medicine = await Medicine.findOne({ _id: cleanId, user: req.user._id });
+    const medicine = await Medicine.findOne({ _id: { $eq: cleanId }, user: { $eq: req.user._id } });
     
     if (!medicine) {
       return res.status(404).json({ message: 'Medicine reminder not found or unauthorized' });
