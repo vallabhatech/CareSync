@@ -8,8 +8,14 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: 'No authorization token, access denied' });
     }
 
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('JWT_SECRET is not configured in the environment variables');
+      return res.status(500).json({ message: 'Internal server configuration error' });
+    }
+
     const token = authHeader.replace('Bearer ', '');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'caresync_jwt_secret_key_123456_super_secret_key_change_me');
+    const decoded = jwt.verify(token, jwtSecret);
     
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {

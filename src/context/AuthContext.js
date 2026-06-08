@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const res = await API.post('/api/auth/login', { email, password });
     const { token, user: loggedUser } = res.data;
-    localStorage.setItem('caresync_token', token);
+    localStorage.setItem('caresync_token', String(token).replace(/[^\w\.\-\_]/g, ''));
     setUser(loggedUser);
     setIsAuthenticated(true);
     return loggedUser;
@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
   const signup = useCallback(async (name, email, password) => {
     const res = await API.post('/api/auth/register', { name, email, password });
     const { token, user: loggedUser } = res.data;
-    localStorage.setItem('caresync_token', token);
+    localStorage.setItem('caresync_token', String(token).replace(/[^\w\.\-\_]/g, ''));
     setUser(loggedUser);
     setIsAuthenticated(true);
     return loggedUser;

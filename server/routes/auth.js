@@ -5,9 +5,13 @@ const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const generateToken = (userId) => {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET is not configured in the environment variables');
+  }
   return jwt.sign(
     { id: userId },
-    process.env.JWT_SECRET || 'caresync_jwt_secret_key_123456_super_secret_key_change_me',
+    jwtSecret,
     { expiresIn: '30d' }
   );
 };
@@ -16,11 +20,17 @@ const generateToken = (userId) => {
 // @desc    Register a new user
 // @access  Public
 router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
+  const name = String(req.body.name || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
 
   try {
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please enter all fields' });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'Invalid email address' });
     }
 
     // Check if user already exists
@@ -65,11 +75,16 @@ router.post('/register', async (req, res) => {
 // @desc    Authenticate user & get token
 // @access  Public
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
 
   try {
     if (!email || !password) {
       return res.status(400).json({ message: 'Please enter all fields' });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'Invalid email address' });
     }
 
     // Check user
@@ -134,7 +149,13 @@ router.get('/me', authMiddleware, async (req, res) => {
 // @desc    Update user profile details
 // @access  Private
 router.put('/profile', authMiddleware, async (req, res) => {
-  const { name, email, phone, age, bloodGroup, allergies, avatar } = req.body;
+  const name = req.body.name !== undefined ? String(req.body.name).trim() : undefined;
+  const email = req.body.email !== undefined ? String(req.body.email).trim().toLowerCase() : undefined;
+  const phone = req.body.phone !== undefined ? String(req.body.phone).trim() : undefined;
+  const age = req.body.age !== undefined ? String(req.body.age).trim() : undefined;
+  const bloodGroup = req.body.bloodGroup !== undefined ? String(req.body.bloodGroup).trim() : undefined;
+  const allergies = req.body.allergies !== undefined ? String(req.body.allergies).trim() : undefined;
+  const avatar = req.body.avatar !== undefined ? (req.body.avatar ? String(req.body.avatar) : null) : undefined;
 
   try {
     const user = await User.findById(req.user._id);
@@ -143,7 +164,10 @@ router.put('/profile', authMiddleware, async (req, res) => {
     }
 
     // Check if updating email to one already in use
-    if (email && email.toLowerCase() !== user.email.toLowerCase()) {
+    if (email !== undefined && email !== user.email) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: 'Invalid email address' });
+      }
       const emailExists = await User.findOne({ email });
       if (emailExists) {
         return res.status(400).json({ message: 'Email already in use' });
