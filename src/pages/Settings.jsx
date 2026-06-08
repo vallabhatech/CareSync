@@ -121,17 +121,26 @@ export default function Settings() {
    * This updates the in-memory user, writes through to `caresync_user`, and
    * keeps Settings consistent with the Profile page and the rest of the app.
    */
-  const handleSave = () => {
-    updateProfile({
-      name: profile.name,
-      email: profile.email,
-      avatar: profile.avatar,
-    });
-    setSnackbar({
-      open: true,
-      message: t('settings:saveSuccess'),
-      severity: 'success',
-    });
+  const handleSave = async () => {
+    try {
+      await updateProfile({
+        name: profile.name,
+        email: profile.email,
+        avatar: profile.avatar,
+      });
+      setSnackbar({
+        open: true,
+        message: t('settings:saveSuccess'),
+        severity: 'success',
+      });
+    } catch (err) {
+      console.error('Save settings error:', err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || 'Failed to save changes.',
+        severity: 'error',
+      });
+    }
   };
 
   /**

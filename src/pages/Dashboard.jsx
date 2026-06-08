@@ -5,6 +5,8 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
 import SettingsIcon from '@mui/icons-material/Settings';
+import API from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const healthQuotes = [
   "Health is the greatest wealth.",
@@ -38,8 +40,10 @@ const healthQuotes = [
  */
 export default function Dashboard() {
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
   const [quote, setQuote] = useState(healthQuotes[0]);
   const [todayCount, setTodayCount] = useState(0);
+  const [favCount, setFavCount] = useState(0);
 
   useEffect(() => {
     setQuote(healthQuotes[Math.floor(Math.random() * healthQuotes.length)]);
@@ -47,12 +51,30 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem('caresync_medicines');
-    const medicines = saved ? JSON.parse(saved) : [];
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const todays = medicines.filter(med => med.date === todayStr);
-    setTodayCount(todays.length);
-  }, []);
+    const fetchDashboardStats = async () => {
+      if (!isAuthenticated) {
+        setTodayCount(0);
+        setFavCount(0);
+        return;
+      }
+      try {
+        const [medRes, favRes] = await Promise.all([
+          API.get('/api/medicines'),
+          API.get('/api/clinics/favorites')
+        ]);
+        
+        // Count today's reminders (using local date string comparison)
+        const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+        const todays = medRes.data.filter(med => med.date === todayStr);
+        setTodayCount(todays.length);
+        setFavCount(favRes.data.length);
+      } catch (err) {
+        console.error('Failed to load dashboard statistics:', err);
+      }
+    };
+
+    fetchDashboardStats();
+  }, [isAuthenticated]);
 
   const generateQuote = () => {
     let idx = Math.floor(Math.random() * healthQuotes.length);
@@ -60,11 +82,11 @@ export default function Dashboard() {
   };
 
   const getGreeting = () => {
-  const hour = new Date().getHours();
+    const hour = new Date().getHours();
 
-  if (hour < 12) return t('dashboard:greetingMorning');
-  if (hour < 17) return t('dashboard:greetingAfternoon');
-  return t('dashboard:greetingEvening');
+    if (hour < 12) return t('dashboard:greetingMorning');
+    if (hour < 17) return t('dashboard:greetingAfternoon');
+    return t('dashboard:greetingEvening');
   };
   
   const dynamicFeatures = [
@@ -117,7 +139,7 @@ export default function Dashboard() {
           </div>
 
           <div className="stat-card">
-            <h2>3</h2>
+            <h2>{favCount}</h2>
             <p>{t('dashboard:statClinicsNearby')}</p>
           </div>
 

@@ -6,6 +6,8 @@ import {
   getLocalDateString,
   PUSH_ENABLED_KEY,
 } from '../utils/notifications';
+import API from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const STORAGE_KEY = 'caresync_medicines';
 let fallbackIdCounter = 0;
@@ -49,37 +51,31 @@ function createMedicine(med) {
   };
 }
 
-function loadMedicines() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return [];
-
-  try {
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed.map(createMedicine).filter((med) => med.name && med.time && med.date);
-  } catch (error) {
-    console.error('Failed to load medicines from localStorage:', error);
-    return [];
-  }
-}
-
 export default function MedicineTracker() {
   const { t } = useTranslation();
-  const [medicines, setMedicines] = useState(loadMedicines);
+  const { isAuthenticated } = useAuth();
+  const [medicines, setMedicines] = useState([]);
   const [name, setName] = useState('');
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
   const today = getLocalDateString();
 
   useEffect(() => {
+    const fetchMedicines = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const res = await API.get('/api/medicines');
+        setMedicines(res.data);
+      } catch (err) {
+        console.error('Failed to fetch medicines:', err);
+      }
+    };
+    fetchMedicines();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
     scheduleNotifications(medicines);
   }, [medicines]);
-
-  const saveMedicines = (nextMedicines) => {
-    setMedicines(nextMedicines);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextMedicines));
-  };
 
   const addMedicine = async () => {
     const sanitizedName = sanitizeText(name);
@@ -95,21 +91,28 @@ export default function MedicineTracker() {
       await requestNotificationPermission();
     }
 
-    const newMedicine = createMedicine({
-      name: sanitizedName,
-      time: sanitizedTime,
-      date: sanitizedDate,
-    });
-
-    saveMedicines([...medicines, newMedicine]);
-    setName('');
-    setTime('');
-    setDate('');
+    try {
+      const res = await API.post('/api/medicines', {
+        name: sanitizedName,
+        time: sanitizedTime,
+        date: sanitizedDate,
+      });
+      setMedicines([...medicines, res.data]);
+      setName('');
+      setTime('');
+      setDate('');
+    } catch (err) {
+      console.error('Failed to add medicine alert:', err);
+    }
   };
 
-  const deleteMedicine = (id) => {
-    const updated = medicines.filter((med) => med.id !== id);
-    saveMedicines(updated);
+  const deleteMedicine = async (id) => {
+    try {
+      await API.delete(`/api/medicines/${id}`);
+      setMedicines(medicines.filter((med) => med.id !== id));
+    } catch (err) {
+      console.error('Failed to delete medicine alert:', err);
+    }
   };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
