@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Chip, Stack, LinearProgress } from '@mui/material';
+import API from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 /**
  * COMMON_SYMPTOMS
  * ---------------
@@ -395,10 +397,25 @@ const RISK_RULES = [
  */
 export default function SymptomChecker() {
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
   const [input, setInput] = useState('');
   const [symptoms, setSymptoms] = useState([]);
   const [results, setResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const res = await API.get('/api/symptom-checks');
+        setHistory(res.data);
+      } catch (err) {
+        console.error('Failed to fetch symptom checker history:', err);
+      }
+    };
+    fetchHistory();
+  }, [isAuthenticated]);
 
   const getRiskColor = (risk) => {
     if (risk === 'high') {
@@ -447,7 +464,7 @@ export default function SymptomChecker() {
   };
 
   // Improved: Calculate a more accurate probability based on symptom overlap
-  const handleCheckSymptoms = () => {
+  const handleCheckSymptoms = async () => {
     if (symptoms.length === 0) {
       setResults([]);
       return;
@@ -467,10 +484,11 @@ export default function SymptomChecker() {
       })
       .sort((a, b) => b.probability - a.probability);
 
+    let finalResults = [];
     if (matches.length > 0) {
-      setResults(matches);
+      finalResults = matches;
     } else {
-      setResults([{
+      finalResults = [{
         condition: "No specific conditions matched. Monitor your symptoms.",
         probability: 20,
         causes: "Symptoms are non-specific or mild.",
@@ -480,7 +498,28 @@ export default function SymptomChecker() {
           "Consult a doctor if symptoms worsen or persist"
         ],
         risk: "low"
-      }]);
+      }];
+    }
+
+    setResults(finalResults);
+
+    // Save to backend history
+    if (isAuthenticated) {
+      try {
+        const res = await API.post('/api/symptom-checks', {
+          symptoms,
+          results: finalResults.map(r => ({
+            condition: r.condition,
+            probability: r.probability,
+            causes: r.causes,
+            solutions: r.solutions,
+            risk: r.risk,
+          })),
+        });
+        setHistory(prev => [res.data, ...prev]);
+      } catch (err) {
+        console.error('Failed to save symptom check:', err);
+      }
     }
   };
 
@@ -597,6 +636,29 @@ export default function SymptomChecker() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+        
+        {isAuthenticated && history.length > 0 && (
+          <div className="symptom-history-section">
+            <h3 className="symptom-history-title">Assessment History</h3>
+            <div className="symptom-history-list">
+              {history.map((record) => (
+                <div key={record._id} className="symptom-history-item">
+                  <div className="symptom-history-item-header">
+                    <span className="symptom-history-date">
+                      {new Date(record.checkedAt).toLocaleDateString()} at {new Date(record.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className={`symptom-history-badge risk-${record.results[0]?.risk}`}>
+                      {record.results[0]?.condition || 'Unknown'} ({record.results[0]?.probability}%)
+                    </span>
+                  </div>
+                  <div className="symptom-history-symptoms">
+                    <strong>Symptoms:</strong> {record.symptoms.join(', ')}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -719,6 +781,70 @@ export default function SymptomChecker() {
         .symptom-result-solutions li {
           font-size: 1rem;
           color: #333;
+        }
+        .symptom-history-section {
+          margin-top: 40px;
+          border-top: 1.5px dashed #b0bec5;
+          padding-top: 24px;
+        }
+        .symptom-history-title {
+          color: #1976d2;
+          font-size: 1.25rem;
+          margin-bottom: 14px;
+          font-weight: 700;
+        }
+        .symptom-history-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-height: 300px;
+          overflow-y: auto;
+          padding-right: 4px;
+        }
+        .symptom-history-item {
+          background: #f8fafd;
+          border: 1px solid #e1e8ed;
+          border-radius: 10px;
+          padding: 12px 14px;
+          font-size: 0.95rem;
+          transition: background 0.2s;
+        }
+        .symptom-history-item:hover {
+          background: #f0f4f8;
+        }
+        .symptom-history-item-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 6px;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .symptom-history-date {
+          color: #666;
+          font-weight: 600;
+          font-size: 0.85rem;
+        }
+        .symptom-history-badge {
+          padding: 3px 10px;
+          border-radius: 6px;
+          font-weight: 700;
+          font-size: 0.85rem;
+          color: #fff;
+        }
+        .symptom-history-badge.risk-high {
+          background-color: #d32f2f;
+        }
+        .symptom-history-badge.risk-medium {
+          background-color: #fbc02d;
+          color: #222;
+        }
+        .symptom-history-badge.risk-low {
+          background-color: #43a047;
+        }
+        .symptom-history-symptoms {
+          color: #555;
+          font-size: 0.9rem;
         }
         @media (max-width: 700px) {
           .symptom-container { padding: 16px 4px; }
