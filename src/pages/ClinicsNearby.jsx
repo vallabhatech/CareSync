@@ -15,16 +15,138 @@ import {
   Paper,
   TextField,
   Typography,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import HistoryIcon from '@mui/icons-material/History';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+
+// Custom Map Controller to handle bounds and view changes dynamically
+function MapController({ center, clinics }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+    const validClinics = clinics.filter(c => {
+      const latitude = Number.parseFloat(c.lat);
+      const longitude = Number.parseFloat(c.lon);
+      return !Number.isNaN(latitude) && !Number.isNaN(longitude);
+    });
+
+    if (validClinics.length > 0) {
+      const bounds = validClinics.map(c => [
+        Number.parseFloat(c.lat),
+        Number.parseFloat(c.lon)
+      ]);
+      if (center && !Number.isNaN(center.lat) && !Number.isNaN(center.lon)) {
+        bounds.push([center.lat, center.lon]);
+      }
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+    } else if (center && !Number.isNaN(center.lat) && !Number.isNaN(center.lon)) {
+      map.setView([center.lat, center.lon], 14);
+    }
+  }, [center, clinics, map]);
+
+  return null;
+}
+
+// Haversine formula for distance calculation
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return null;
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(1);
+};
+
+// Premium clinic red marker icon using HTML/CSS (bypasses Webpack image loader issues)
+const clinicIcon = typeof window !== 'undefined' && L.divIcon ? L.divIcon({
+  html: `<div style="
+    background-color: #ef5350;
+    width: 24px;
+    height: 24px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    margin-top: -12px;
+    margin-left: -12px;
+  ">
+    <div style="
+      transform: rotate(45deg);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 1;
+      margin-bottom: 2px;
+    ">🏥</div>
+  </div>`,
+  className: 'custom-clinic-icon',
+  iconSize: [24, 24],
+  iconAnchor: [12, 24],
+  popupAnchor: [0, -24],
+}) : null;
+
+// Premium search center pulsing blue marker icon
+const searchCenterIcon = typeof window !== 'undefined' && L.divIcon ? L.divIcon({
+  html: `<div style="
+    position: relative;
+    width: 20px;
+    height: 20px;
+  ">
+    <div style="
+      position: absolute;
+      background-color: #1976d2;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 6px rgba(0,0,0,0.4);
+      top: 2px;
+      left: 2px;
+      z-index: 2;
+    "></div>
+    <div style="
+      position: absolute;
+      background-color: #1976d2;
+      opacity: 0.4;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      animation: pulse 2s infinite ease-out;
+      z-index: 1;
+    "></div>
+  </div>`,
+  className: 'custom-search-center-icon',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
+}) : null;
 
 export default function ClinicsNearby() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const [clinics, setClinics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
@@ -36,6 +158,8 @@ export default function ClinicsNearby() {
   const [lastSearchAt, setLastSearchAt] = useState(0);
   const [favorites, setFavorites] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [searchCenter, setSearchCenter] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
   useEffect(() => {
     const fetchClinicData = async () => {
@@ -103,6 +227,7 @@ export default function ClinicsNearby() {
     setLocationError('');
     setSearchError('');
     setClinics([]);
+    setSearchCenter(null);
 
     if (search.searchType === 'nearby') {
       handleFindClinics();
@@ -185,7 +310,23 @@ export default function ClinicsNearby() {
       }
 
       const data = await res.json();
-      setClinics(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) {
+        const enriched = data.map((clinic) => {
+          const dist = calculateDistance(
+            latitude,
+            longitude,
+            Number.parseFloat(clinic.lat),
+            Number.parseFloat(clinic.lon)
+          );
+          return { ...clinic, distance: dist };
+        });
+        // Sort by distance (ascending)
+        enriched.sort((a, b) => Number.parseFloat(a.distance || 0) - Number.parseFloat(b.distance || 0));
+        setClinics(enriched);
+      } else {
+        setClinics([]);
+      }
+      setSearchCenter({ lat: latitude, lon: longitude });
       setShowFallback(false);
 
       if (!Array.isArray(data) || data.length === 0) {
@@ -203,6 +344,7 @@ export default function ClinicsNearby() {
     setLocationError('');
     setSearchError('');
     setClinics([]);
+    setSearchCenter(null);
     setShowFallback(false);
 
     if (!navigator.geolocation) {
@@ -292,6 +434,9 @@ export default function ClinicsNearby() {
     setClinics([]);
     handleFindClinics();
   };
+
+  const showMap = !loading && searchCenter && (isMobile ? viewMode === 'map' : true);
+  const showList = !loading && clinics.length > 0 && (isMobile ? viewMode === 'list' : true);
 
   return (
     <div className="clinics-bg">
@@ -407,7 +552,110 @@ export default function ClinicsNearby() {
               </Box>
             )}
 
-            {!loading && clinics.length > 0 && (
+            {!loading && searchCenter && clinics.length > 0 && isMobile && (
+              <Box display="flex" justifyContent="center" mb={3}>
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={(e, val) => val && setViewMode(val)}
+                  size="small"
+                  color="primary"
+                  sx={{
+                    background: '#fff',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    borderRadius: 2,
+                  }}
+                >
+                  <ToggleButton value="list" sx={{ fontWeight: 600, px: 3 }}>
+                    {t('clinics:listView')}
+                  </ToggleButton>
+                  <ToggleButton value="map" sx={{ fontWeight: 600, px: 3 }}>
+                    {t('clinics:mapView')}
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+            )}
+
+            {showMap && (
+              <div
+                className="map-wrapper"
+                style={{
+                  height: '380px',
+                  width: '100%',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  marginBottom: '24px',
+                  boxShadow: '0 4px 20px rgba(25, 118, 210, 0.1)',
+                  border: '1px solid rgba(25, 118, 210, 0.15)',
+                  zIndex: 1
+                }}
+              >
+                <MapContainer
+                  center={[searchCenter.lat, searchCenter.lon]}
+                  zoom={13}
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <MapController center={searchCenter} clinics={clinics} />
+
+                  {searchCenter && (
+                    <Marker position={[searchCenter.lat, searchCenter.lon]} icon={searchCenterIcon}>
+                      <Popup>
+                        <Typography variant="subtitle2" fontWeight={700}>
+                          {t('clinics:searchCenterLabel')}
+                        </Typography>
+                      </Popup>
+                    </Marker>
+                  )}
+
+                  {clinics.map((clinic) => {
+                    const latitude = Number.parseFloat(clinic.lat);
+                    const longitude = Number.parseFloat(clinic.lon);
+                    if (Number.isNaN(latitude) || Number.isNaN(longitude)) return null;
+
+                    return (
+                      <Marker
+                        key={`marker-${clinic.place_id}`}
+                        position={[latitude, longitude]}
+                        icon={clinicIcon}
+                      >
+                        <Popup>
+                          <Box p={0.5}>
+                            <Typography variant="subtitle2" fontWeight={700} color="#1976d2" mb={0.5}>
+                              {clinic.display_name?.split(',')[0] || t('clinics:unnamedClinic')}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mb: 1 }}>
+                              {clinic.display_name || t('clinics:addressUnavailable')}
+                            </Typography>
+                            {clinic.distance && (
+                              <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ fontSize: '0.8rem', mb: 1.5 }}>
+                                📍 {clinic.distance} km {t('clinics:away')}
+                              </Typography>
+                            )}
+                            <Button
+                              size="small"
+                              variant="contained"
+                              fullWidth
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.lat)},${encodeURIComponent(clinic.lon)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', py: 0.5 }}
+                            >
+                              {t('clinics:viewOnMap')}
+                            </Button>
+                          </Box>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+                </MapContainer>
+              </div>
+            )}
+
+            {showList && (
               <List>
                 {clinics.map((clinic) => (
                   <Paper
@@ -451,8 +699,13 @@ export default function ClinicsNearby() {
                         </IconButton>
                       )}
                       
-                      <Typography variant="h6" fontWeight={700} color="#1976d2" mb={0.5} sx={{ pr: 4 }}>
-                        {clinic.display_name?.split(',')[0] || t('clinics:unnamedClinic')}
+                      <Typography variant="h6" fontWeight={700} color="#1976d2" mb={0.5} sx={{ pr: 4, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+                        <span>{clinic.display_name?.split(',')[0] || t('clinics:unnamedClinic')}</span>
+                        {clinic.distance && (
+                          <Typography component="span" variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
+                            (~{clinic.distance} km {t('clinics:away')})
+                          </Typography>
+                        )}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" mb={1}>
                         {clinic.display_name || t('clinics:addressUnavailable')}
@@ -613,6 +866,27 @@ export default function ClinicsNearby() {
           .clinics-container {
             padding: 16px 8px;
           }
+        }
+
+        @keyframes pulse {
+          0% {
+            transform: scale(0.6);
+            opacity: 0.6;
+          }
+          100% {
+            transform: scale(1.6);
+            opacity: 0;
+          }
+        }
+
+        /* Leaflet popup styling override */
+        .leaflet-popup-content-wrapper {
+          border-radius: 12px;
+          padding: 4px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .leaflet-popup-content {
+          margin: 8px 12px;
         }
       `}</style>
     </div>
