@@ -8,6 +8,8 @@ import {
   getLocalDateString,
   PUSH_ENABLED_KEY,
 } from '../utils/notifications';
+import API from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const STORAGE_KEY = 'caresync_medicines';
 let fallbackIdCounter = 0;
@@ -51,30 +53,29 @@ function createMedicine(med) {
   };
 }
 
-function loadMedicines() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return [];
-
-  try {
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed.map(createMedicine).filter((med) => med.name && med.time && med.date);
-  } catch (error) {
-    console.error('Failed to load medicines from localStorage:', error);
-    return [];
-  }
-}
-
 export default function MedicineTracker() {
   const { t } = useTranslation();
-  const [medicines, setMedicines] = useState(loadMedicines);
+  const { isAuthenticated } = useAuth();
+  const [medicines, setMedicines] = useState([]);
   const [name, setName] = useState('');
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
   const [editingMedicine, setEditingMedicine] = useState(null);
   const today = getLocalDateString();
   const isEditing = Boolean(editingMedicine);
+
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const res = await API.get('/api/medicines');
+        setMedicines(res.data);
+      } catch (err) {
+        console.error('Failed to fetch medicines:', err);
+      }
+    };
+    fetchMedicines();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     scheduleNotifications(medicines);
@@ -99,6 +100,7 @@ export default function MedicineTracker() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextMedicines));
   };
 
+
   const addMedicine = async () => {
     const sanitizedName = sanitizeText(name);
     const sanitizedTime = sanitizeText(time);
@@ -112,6 +114,7 @@ export default function MedicineTracker() {
     if (pushEnabled && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       await requestNotificationPermission();
     }
+
 
     const nextMedicine = createMedicine({
       id: editingMedicine?.id,
@@ -142,6 +145,35 @@ export default function MedicineTracker() {
 
     const updated = medicines.filter((med) => med.id !== id);
     saveMedicines(updated);
+
+    try {
+      const res = await API.post('/api/medicines', {
+        name: sanitizedName,
+        time: sanitizedTime,
+        date: sanitizedDate,
+      });
+      setMedicines([...medicines, res.data]);
+      setName('');
+      setTime('');
+      setDate('');
+    } catch (err) {
+      console.error('Failed to add medicine alert:', err);
+    }
+  };
+
+  const deleteMedicine = async (id) => {
+    const cleanId = String(id).trim();
+    if (!/^[a-zA-Z0-9]+$/.test(cleanId)) {
+      console.error('Invalid medicine ID format');
+      return;
+    }
+    try {
+      await API.delete(`/api/medicines/${cleanId}`);
+      setMedicines(medicines.filter((med) => med.id !== id));
+    } catch (err) {
+      console.error('Failed to delete medicine alert:', err);
+    }
+
   };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
