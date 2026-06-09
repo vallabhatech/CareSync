@@ -100,6 +100,38 @@ key and shape so existing users' saved medicines keep working. The Dashboard
 also reads `caresync_medicines` to count today's medicines, so any change to the
 entry shape should be reflected there too.
 
+### Symptom Checker
+
+The symptom checker lives in `src/pages/SymptomChecker.jsx` and has two main
+components:
+
+- **`COMMON_SYMPTOMS`** — the list of selectable symptom names. The input only
+  accepts values from this list, so any symptom you want users to be able to
+  select must be added here first. Keep the casing consistent with existing
+  entries (e.g. `"Sore throat"`).
+- **`RISK_RULES`** — the rules that map symptoms to possible conditions. Each
+  rule has `symptoms`, `condition`, `probability`, `causes`, `solutions`, and a
+  `risk` tier (`"low"`, `"medium"`, or `"high"`).
+
+**Assessment History:** Each completed symptom check is persisted to the browser's
+`localStorage` under the key `caresync_symptom_history`. Each entry has the shape
+`{ _id, checkedAt, symptoms, results }` where `results[0]` contains `condition`,
+`probability`, and `risk`. History is capped at 20 most recent entries. If the
+user is authenticated, checks are also synced to the backend via `/api/symptom-checks`.
+
+**To add a new condition:** append a rule to `RISK_RULES`. For a rule to match
+fully, the strings in its `symptoms` array should exist in `COMMON_SYMPTOMS`
+(users can only select symptoms from that list, so any not present there will
+only ever match partially). See the JSDoc above `RISK_RULES` for the full rule
+shape and how the matching/scoring works. This is medical-adjacent content —
+please keep conditions and suggested actions responsible and general (the app is
+not a substitute for professional medical advice).
+
+**To extend history storage:** keep reads/writes going through `localStorage`
+using `loadHistoryFromLocalStorage()` and `saveHistoryToLocalStorage()`, and
+respect the 20-entry cap (`MAX_HISTORY_ENTRIES`) so storage remains bounded. The
+`createHistoryEntry()` helper creates properly-shaped entry objects.
+
 ### Internationalization (i18n) / Translations
 
 CareSync uses [react-i18next](https://react.i18next.com/) for multi-language

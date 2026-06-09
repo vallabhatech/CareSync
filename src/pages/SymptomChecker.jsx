@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Chip, Stack, LinearProgress } from '@mui/material';
+import { Button, Chip, Stack, LinearProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+
+const STORAGE_KEY = 'caresync_symptom_history';
+const MAX_HISTORY_ENTRIES = 20;
 /**
  * COMMON_SYMPTOMS
  * ---------------
@@ -378,6 +381,54 @@ const RISK_RULES = [
 ];
 
 /**
+ * Load symptom check history from localStorage
+ * @returns {Array} Array of history entries
+ */
+function loadHistoryFromLocalStorage() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (err) {
+    console.error('Failed to load symptom history from localStorage:', err);
+    return [];
+  }
+}
+
+/**
+ * Save symptom check history to localStorage
+ * Automatically caps history at MAX_HISTORY_ENTRIES, keeping the most recent
+ * @param {Array} historyArray - Array of history entries to save
+ */
+function saveHistoryToLocalStorage(historyArray) {
+  try {
+    const capped = historyArray.slice(0, MAX_HISTORY_ENTRIES);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(capped));
+  } catch (err) {
+    console.error('Failed to save symptom history to localStorage:', err);
+  }
+}
+
+/**
+ * Create a history entry from symptom check results
+ * @param {Array} symptoms - Selected symptoms
+ * @param {Array} results - Check results
+ * @returns {Object} History entry with timestamp, symptoms, and top result info
+ */
+function createHistoryEntry(symptoms, results) {
+  const topResult = results[0] || {};
+  return {
+    _id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    checkedAt: new Date().toISOString(),
+    symptoms,
+    results: [{
+      condition: topResult.condition || 'Unknown',
+      probability: topResult.probability || 0,
+      risk: topResult.risk || 'low',
+    }],
+  };
+}
+
+/**
  * SymptomChecker — select symptoms and get a rule-based risk assessment.
  *
  * Lets the user pick symptoms from a predefined list (only names present in
@@ -403,18 +454,43 @@ export default function SymptomChecker() {
   const [results, setResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [history, setHistory] = useState([]);
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const initializeHistory = () => {
+      // Load from localStorage
+      const localHistory = loadHistoryFromLocalStorage();
+      setHistory(localHistory);
+    };
+
+    initializeHistory();
+  }, []);
+
+  useEffect(() => {
+    const fetchBackendHistory = async () => {
       if (!isAuthenticated) return;
       try {
         const res = await API.get('/api/symptom-checks');
-        setHistory(res.data);
+        // Merge backend history with localStorage history, avoiding duplicates
+        const localHistory = loadHistoryFromLocalStorage();
+        const backendIds = new Set(res.data.map(item => item._id));
+        const mergedHistory = [
+          ...res.data,
+          ...localHistory.filter(item => !backendIds.has(item._id))
+        ];
+        // Sort by date descending (most recent first)
+        mergedHistory.sort((a, b) => new Date(b.checkedAt) - new Date(a.checkedAt));
+        setHistory(mergedHistory);
+        // Keep localStorage in sync with merged history
+        saveHistoryToLocalStorage(mergedHistory);
       } catch (err) {
         console.error('Failed to fetch symptom checker history:', err);
+        // Fall back to localStorage only
+        const localHistory = loadHistoryFromLocalStorage();
+        setHistory(localHistory);
       }
     };
-    fetchHistory();
+    fetchBackendHistory();
   }, [isAuthenticated]);
 
   const getRiskColor = (risk) => {
@@ -427,6 +503,21 @@ export default function SymptomChecker() {
     }
 
     return '#43a047';
+  };
+
+  const handleClearHistoryConfirm = () => {
+    setHistory([]);
+    saveHistoryToLocalStorage([]);
+    setShowClearDialog(false);
+    // Optionally clear from backend as well, but for now just localStorage
+  };
+
+  const handleOpenClearDialog = () => {
+    setShowClearDialog(true);
+  };
+
+  const handleCloseClearDialog = () => {
+    setShowClearDialog(false);
   };
 
   // Suggest symptoms as user types
@@ -503,7 +594,13 @@ export default function SymptomChecker() {
 
     setResults(finalResults);
 
-    // Save to backend history
+    // Create and save history entry to localStorage
+    const historyEntry = createHistoryEntry(symptoms, finalResults);
+    const updatedHistory = [historyEntry, ...history];
+    saveHistoryToLocalStorage(updatedHistory);
+    setHistory(updatedHistory);
+
+    // Save to backend if authenticated
     if (isAuthenticated) {
       try {
         const res = await API.post('/api/symptom-checks', {
@@ -516,9 +613,17 @@ export default function SymptomChecker() {
             risk: r.risk,
           })),
         });
-        setHistory(prev => [res.data, ...prev]);
+        // Update history with backend response (which includes _id)
+        const backendEntry = res.data;
+        const updatedHistoryWithBackend = [
+          backendEntry,
+          ...history.filter(item => item._id !== historyEntry._id)
+        ];
+        saveHistoryToLocalStorage(updatedHistoryWithBackend);
+        setHistory(updatedHistoryWithBackend);
       } catch (err) {
-        console.error('Failed to save symptom check:', err);
+        console.error('Failed to save symptom check to backend:', err);
+        // History is already saved to localStorage, so continue gracefully
       }
     }
   };
@@ -639,9 +744,18 @@ export default function SymptomChecker() {
           </div>
         )}
         
-        {isAuthenticated && history.length > 0 && (
+        {history.length > 0 && (
           <div className="symptom-history-section">
             <h3 className="symptom-history-title">Assessment History</h3>
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={handleOpenClearDialog}
+              sx={{ mb: 2, fontWeight: 600 }}
+            >
+              Clear History
+            </Button>
             <div className="symptom-history-list">
               {history.map((record) => (
                 <div key={record._id} className="symptom-history-item">
@@ -661,6 +775,26 @@ export default function SymptomChecker() {
             </div>
           </div>
         )}
+
+        <Dialog
+          open={showClearDialog}
+          onClose={handleCloseClearDialog}
+        >
+          <DialogTitle>Clear Assessment History</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to clear all assessment history? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseClearDialog} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleClearHistoryConfirm} color="error" variant="contained">
+              Clear History
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
       <style>{`
         .symptom-bg {
