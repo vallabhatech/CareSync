@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
 import {
   scheduleNotifications,
@@ -58,7 +60,9 @@ export default function MedicineTracker() {
   const [name, setName] = useState('');
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
+  const [editingMedicine, setEditingMedicine] = useState(null);
   const today = getLocalDateString();
+  const isEditing = Boolean(editingMedicine);
 
   useEffect(() => {
     const fetchMedicines = async () => {
@@ -77,6 +81,26 @@ export default function MedicineTracker() {
     scheduleNotifications(medicines);
   }, [medicines]);
 
+  const startEdit = (medicine) => {
+    setEditingMedicine(medicine);
+    setName(medicine.name);
+    setTime(medicine.time);
+    setDate(medicine.date);
+  };
+
+  const cancelEdit = () => {
+    setEditingMedicine(null);
+    setName('');
+    setTime('');
+    setDate('');
+  };
+
+  const saveMedicines = (nextMedicines) => {
+    setMedicines(nextMedicines);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextMedicines));
+  };
+
+
   const addMedicine = async () => {
     const sanitizedName = sanitizeText(name);
     const sanitizedTime = sanitizeText(time);
@@ -90,6 +114,37 @@ export default function MedicineTracker() {
     if (pushEnabled && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       await requestNotificationPermission();
     }
+
+
+    const nextMedicine = createMedicine({
+      id: editingMedicine?.id,
+      name: sanitizedName,
+      time: sanitizedTime,
+      date: sanitizedDate,
+    });
+
+    if (editingMedicine) {
+      const updated = medicines.map((med) =>
+        med.id === editingMedicine.id ? nextMedicine : med
+      );
+      saveMedicines(updated);
+      setEditingMedicine(null);
+    } else {
+      saveMedicines([...medicines, nextMedicine]);
+    }
+
+    setName('');
+    setTime('');
+    setDate('');
+  };
+
+  const deleteMedicine = (id) => {
+    if (editingMedicine?.id === id) {
+      cancelEdit();
+    }
+
+    const updated = medicines.filter((med) => med.id !== id);
+    saveMedicines(updated);
 
     try {
       const res = await API.post('/api/medicines', {
@@ -118,6 +173,7 @@ export default function MedicineTracker() {
     } catch (err) {
       console.error('Failed to delete medicine alert:', err);
     }
+
   };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
@@ -137,6 +193,14 @@ export default function MedicineTracker() {
                 <li key={med.id} className="medtracker-reminder-item">
                   <span className="medtracker-pill">{med.name}</span>
                   <span className="medtracker-time">{med.time}</span>
+                  <IconButton
+                    aria-label={`Edit ${med.name}`}
+                    title="Edit medicine"
+                    onClick={() => startEdit(med)}
+                    size="small"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
                   <button
                     className="medtracker-delete-btn"
                     onClick={() => deleteMedicine(med.id)}
@@ -171,8 +235,14 @@ export default function MedicineTracker() {
             onChange={(e) => setDate(e.target.value)}
           />
           <button className="medtracker-btn" onClick={addMedicine} type="button">
+            {isEditing ? 'Update' : 'Add'}
             {t('medicine:add')}
           </button>
+          {isEditing && (
+            <button className="medtracker-cancel-btn" onClick={cancelEdit} type="button">
+              Cancel
+            </button>
+          )}
         </div>
 
         <h3 className="medtracker-list-title">{t('medicine:allScheduledTitle')}</h3>
@@ -185,6 +255,14 @@ export default function MedicineTracker() {
               <span className="medtracker-pill">{med.name}</span>
               <span className="medtracker-date">{med.date}</span>
               <span className="medtracker-time">{med.time}</span>
+              <IconButton
+                aria-label={`Edit ${med.name}`}
+                title="Edit medicine"
+                onClick={() => startEdit(med)}
+                size="small"
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
               <button
                 className="medtracker-delete-btn"
                 onClick={() => deleteMedicine(med.id)}
@@ -301,6 +379,18 @@ export default function MedicineTracker() {
         .medtracker-btn:hover {
           background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
           color: #18181a;
+        }
+        .medtracker-cancel-btn {
+          background: transparent;
+          color: #1976d2;
+          border: 1px solid #1976d2;
+          border-radius: 8px;
+          padding: 8px 18px;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+        }
+        .medtracker-cancel-btn:hover {
+          background: #e3f2fd;
         }
         .medtracker-list-title {
           margin-top: 18px;
