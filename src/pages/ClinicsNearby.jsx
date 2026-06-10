@@ -460,7 +460,7 @@ export default function ClinicsNearby() {
                   fontSize: '1.1rem',
                   px: 4,
                   py: 1.2,
-                  background: 'linear-gradient(90deg, #1976d2 60%, #7b1fa2 100%)',
+                  background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)',
                   boxShadow: '0 2px 12px #1976d244',
                 }}
               >
@@ -499,8 +499,9 @@ export default function ClinicsNearby() {
                         size="small"
                         sx={{ flexGrow: 1, minWidth: 200 }}
                       />
-                      <Button variant="contained" onClick={handleCitySearch} disabled={loading}>
+                      <Button variant="contained" onClick={handleCitySearch} disabled={loading} sx={{ minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}>
                         {t('clinics:search')}
+                        
                       </Button>
                     </Box>
                   </Box>
@@ -526,7 +527,7 @@ export default function ClinicsNearby() {
                         size="small"
                         sx={{ width: 120 }}
                       />
-                      <Button variant="contained" onClick={handleCoordSearch} disabled={loading}>
+                      <Button variant="contained" onClick={handleCoordSearch} disabled={loading} sx={{ minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}          >
                         {t('clinics:search')}
                       </Button>
                     </Box>
@@ -538,7 +539,7 @@ export default function ClinicsNearby() {
                     <Typography variant="body2" color="text.secondary" mb={1}>
                       {t('clinics:locationAccuracyNote')}
                     </Typography>
-                    <Button variant="outlined" onClick={handleRetryLocation} disabled={loading}>
+                    <Button variant="outlined" onClick={handleRetryLocation} disabled={loading} sx={{ minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}          >
                       {t('clinics:retryLocation')}
                     </Button>
                   </Box>

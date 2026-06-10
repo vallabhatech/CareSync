@@ -149,7 +149,7 @@ function Login() {
                   mt: 2,
                   py: 1.2,
                   fontWeight: 700,
-                  background: 'linear-gradient(90deg, #1976d2 60%, #7b1fa2 100%)',
+                  background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)',
                 }}
               >
                 {loading ? t('login:loggingIn') : t('login:logIn')}
@@ -202,7 +202,7 @@ function Login() {
                   mt: 2,
                   py: 1.2,
                   fontWeight: 700,
-                  background: 'linear-gradient(90deg, #1976d2 60%, #7b1fa2 100%)',
+                  background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)',
                 }}
               >
                 {loading ? t('login:creatingAccount') : t('login:signUp')}
