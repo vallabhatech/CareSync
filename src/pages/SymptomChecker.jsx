@@ -543,8 +543,7 @@ export default function SymptomChecker() {
             variant="contained"
             onClick={() => handleAddSymptom()}
             disabled={!input.trim() || !COMMON_SYMPTOMS.includes(input.trim()) || symptoms.includes(input.trim())}
-            sx={{ minWidth: 110, fontWeight: 700, background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}
-          >
+            sx={{ minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}          >
             {t('symptom:addSymptom')}
           </Button>
         </div>
@@ -580,8 +579,7 @@ export default function SymptomChecker() {
           variant="outlined"
           onClick={handleCheckSymptoms}
           disabled={symptoms.length === 0}
-          sx={{ mt: 1, fontWeight: 700, borderColor: '#1976d2', color: '#1976d2' }}
-        >
+          sx={{marginLeft: '250px',minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}          >
           {t('symptom:check')}
         </Button>
         {results.length > 0 && (
