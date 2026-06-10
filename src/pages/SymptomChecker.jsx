@@ -763,8 +763,8 @@ export default function SymptomChecker() {
                     <span className="symptom-history-date">
                       {new Date(record.checkedAt).toLocaleDateString()} at {new Date(record.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <span className={`symptom-history-badge risk-${record.results[0]?.risk}`}>
-                      {record.results[0]?.condition || 'Unknown'} ({record.results[0]?.probability}%)
+                    <span className={`symptom-history-badge risk-${record.results?.[0]?.risk}`}>
+                      {record.results?.[0]?.condition || 'Unknown'} ({record.results?.[0]?.probability}%)
                     </span>
                   </div>
                   <div className="symptom-history-symptoms">

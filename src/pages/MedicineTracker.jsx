@@ -137,44 +137,27 @@ export default function MedicineTracker() {
     setTime('');
     setDate('');
   };
+    const deleteMedicine = async (id) => {
+      if (editingMedicine?.id === id) {
+        cancelEdit();
+      }
 
-  const deleteMedicine = (id) => {
-    if (editingMedicine?.id === id) {
-      cancelEdit();
-    }
+      const cleanId = String(id).trim();
+      if (!/^[a-zA-Z0-9-]+$/.test(cleanId)) {
+        console.error('Invalid medicine ID format');
+        return;
+      }
 
-    const updated = medicines.filter((med) => med.id !== id);
-    saveMedicines(updated);
+      // Optimistically update local state/localStorage
+      const updated = medicines.filter((med) => med.id !== id);
+      saveMedicines(updated);
 
-    try {
-      const res = await API.post('/api/medicines', {
-        name: sanitizedName,
-        time: sanitizedTime,
-        date: sanitizedDate,
-      });
-      setMedicines([...medicines, res.data]);
-      setName('');
-      setTime('');
-      setDate('');
-    } catch (err) {
-      console.error('Failed to add medicine alert:', err);
-    }
-  };
-
-  const deleteMedicine = async (id) => {
-    const cleanId = String(id).trim();
-    if (!/^[a-zA-Z0-9]+$/.test(cleanId)) {
-      console.error('Invalid medicine ID format');
-      return;
-    }
-    try {
-      await API.delete(`/api/medicines/${cleanId}`);
-      setMedicines(medicines.filter((med) => med.id !== id));
-    } catch (err) {
-      console.error('Failed to delete medicine alert:', err);
-    }
-
-  };
+      try {
+        await API.delete(`/api/medicines/${cleanId}`);
+      } catch (err) {
+        console.error('Failed to delete medicine alert:', err);
+      }
+    };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
 
