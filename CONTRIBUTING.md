@@ -100,6 +100,40 @@ key and shape so existing users' saved medicines keep working. The Dashboard
 also reads `caresync_medicines` to count today's medicines, so any change to the
 entry shape should be reflected there too.
 
+### Internationalization (i18n) / Translations
+
+CareSync uses [react-i18next](https://react.i18next.com/) for multi-language
+support. The configuration lives in `src/i18n.js` and translation strings are
+stored as JSON resource bundles in `src/i18n/locales/` (e.g. `en.json`,
+`hi.json`). Strings are grouped into namespaces by feature (`common`, `nav`,
+`dashboard`, `medicine`, `symptom`, `clinics`, `login`, `profile`, `settings`,
+`footer`).
+
+In components, strings are read via the `useTranslation` hook and referenced as
+`t('namespace:key')`, for example `t('nav:dashboard')`. The user's chosen
+language is detected and persisted to `localStorage` under the key
+`caresync_language`, so the app reloads in the last selected language.
+
+**To add a new language:**
+
+1. Copy `src/i18n/locales/en.json` to a new file named with the language code,
+   e.g. `es.json` for Spanish or `fr.json` for French.
+2. Translate every **value** in the new file. Keep all **keys** exactly as they
+   are — only the right-hand-side strings change. Preserve interpolation
+   placeholders like `{{count}}` and `{{year}}` verbatim.
+3. Register the language in `src/i18n.js`: import the new JSON file, add it to
+   the `resources` object, and add an entry to `SUPPORTED_LANGUAGES`
+   (`{ code: 'es', label: 'Español', dir: 'ltr' }`). For right-to-left
+   languages (Arabic, Hebrew) set `dir: 'rtl'` — the document direction hook
+   will pick it up automatically (RTL-specific CSS is a separate task).
+4. That's it — the language selector in **Settings** maps over
+   `SUPPORTED_LANGUAGES`, so your new language appears automatically.
+
+**When adding new UI strings:** add the key to **every** locale file (at minimum
+`en.json`), never hardcode user-facing text in JSX. The i18n test suite
+(`src/i18n/i18n.test.js`) verifies that all locale files share the same key
+structure, so a missing translation will fail CI.
+
 ### Documentation Style
 
 When adding or changing components, please document them with JSDoc following

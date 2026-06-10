@@ -30,6 +30,7 @@ import '@fontsource/fira-mono';
 import {
   Logout as LogoutIcon,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import MedicineTracker from './pages/MedicineTracker';
@@ -39,13 +40,16 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Footer from './components/Footer';
+import NotFound from './pages/NotFound';
 
+// Navigation targets. Labels are resolved at render time via i18n keys
+// (see the `nav` namespace) so the menu localises with the rest of the app.
 const NAV_LINKS = [
-  { label: 'Dashboard', to: '/dashboard' },
-  { label: 'Medicine Tracker', to: '/medicine-tracker' },
-  { label: 'Symptom Checker', to: '/symptom-checker' },
-  { label: 'Clinics Nearby', to: '/clinics-nearby' },
-  { label: 'Settings', to: '/settings' },
+  { key: 'dashboard', to: '/dashboard' },
+  { key: 'medicineTracker', to: '/medicine-tracker' },
+  { key: 'symptomChecker', to: '/symptom-checker' },
+  { key: 'clinicsNearby', to: '/clinics-nearby' },
+  { key: 'settings', to: '/settings' },
 ];
 
 function HideOnScroll(props) {
@@ -153,6 +157,7 @@ function ScrollToTopButton() {
 }
 
 function Navbar() {
+  const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const trigger = useScrollTrigger({ threshold: 80 });
   const { isAuthenticated, user, logout } = useAuth();
@@ -187,13 +192,13 @@ function Navbar() {
         <LocalHospitalIcon sx={{ mr: 1 }} />
         <Typography variant="h6" fontWeight={700} sx={{ flexGrow: 1 }}>
           <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
-            CareSync
+            {t('common:appName')}
           </Link>
         </Typography>
         <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, alignItems: 'center' }}>
           {NAV_LINKS.map(link => (
             <Button
-              key={link.label}
+              key={link.key}
               component={Link}
               to={link.to}
               sx={{
@@ -206,12 +211,12 @@ function Navbar() {
               }}
               className="nav-button"
             >
-              {link.label}
+              {t(`nav:${link.key}`)}
             </Button>
           ))}
           {isAuthenticated && user ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Tooltip title="View Profile">
+              <Tooltip title={t('nav:viewProfile')}>
                 <IconButton
                   component={Link}
                   to="/profile"
@@ -222,7 +227,7 @@ function Navbar() {
                   </Avatar>
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Log Out">
+              <Tooltip title={t('nav:logOut')}>
                 <IconButton onClick={handleLogout} sx={{ color: 'inherit' }}>
                   <LogoutIcon />
                 </IconButton>
@@ -243,7 +248,7 @@ function Navbar() {
                 },
               }}
             >
-              Log In
+              {t('nav:logIn')}
             </Button>
           )}
         </Box>
@@ -258,27 +263,27 @@ function Navbar() {
           <List>
             {NAV_LINKS.map(link => (
               <ListItem
-                key={link.label}
+                key={link.key}
                 button
                 component={Link}
                 to={link.to}
                 onClick={() => setDrawerOpen(false)}
               >
-                <ListItemText primary={link.label} />
+                <ListItemText primary={t(`nav:${link.key}`)} />
               </ListItem>
             ))}
             {isAuthenticated && user ? (
               <>
                 <ListItem button component={Link} to="/profile" onClick={() => setDrawerOpen(false)}>
-                  <ListItemText primary="Profile" />
+                  <ListItemText primary={t('nav:profile')} />
                 </ListItem>
                 <ListItem button onClick={() => { handleLogout(); setDrawerOpen(false); }}>
-                  <ListItemText primary="Log Out" />
+                  <ListItemText primary={t('nav:logOut')} />
                 </ListItem>
               </>
             ) : (
               <ListItem button component={Link} to="/login" onClick={() => setDrawerOpen(false)}>
-                <ListItemText primary="Log In" />
+                <ListItemText primary={t('nav:logIn')} />
               </ListItem>
             )}
           </List>
@@ -302,6 +307,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
       <ScrollToTopButton />

@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Chip, Stack, LinearProgress, Alert, Box } from '@mui/material';
+import API from '../utils/api';
+import { useAuth } from '../context/AuthContext';
+
 /**
  * COMMON_SYMPTOMS
  * ---------------
@@ -393,10 +397,26 @@ const RISK_RULES = [
  * <Route path="/symptom-checker" element={<SymptomChecker />} />
  */
 export default function SymptomChecker() {
+  const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
   const [input, setInput] = useState('');
   const [symptoms, setSymptoms] = useState([]);
   const [results, setResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const res = await API.get('/api/symptom-checks');
+        setHistory(res.data);
+      } catch (err) {
+        console.error('Failed to fetch symptom checker history:', err);
+      }
+    };
+    fetchHistory();
+  }, [isAuthenticated]);
 
   const getRiskColor = (risk) => {
     if (risk === 'high') {
@@ -445,7 +465,7 @@ export default function SymptomChecker() {
   };
 
   // Improved: Calculate a more accurate probability based on symptom overlap
-  const handleCheckSymptoms = () => {
+  const handleCheckSymptoms = async () => {
     if (symptoms.length === 0) {
       setResults([]);
       return;
@@ -465,10 +485,11 @@ export default function SymptomChecker() {
       })
       .sort((a, b) => b.probability - a.probability);
 
+    let finalResults = [];
     if (matches.length > 0) {
-      setResults(matches);
+      finalResults = matches;
     } else {
-      setResults([{
+      finalResults = [{
         condition: "No specific conditions matched. Monitor your symptoms.",
         probability: 20,
         causes: "Symptoms are non-specific or mild.",
@@ -478,19 +499,40 @@ export default function SymptomChecker() {
           "Consult a doctor if symptoms worsen or persist"
         ],
         risk: "low"
-      }]);
+      }];
+    }
+
+    setResults(finalResults);
+
+    // Save to backend history
+    if (isAuthenticated) {
+      try {
+        const res = await API.post('/api/symptom-checks', {
+          symptoms,
+          results: finalResults.map(r => ({
+            condition: r.condition,
+            probability: r.probability,
+            causes: r.causes,
+            solutions: r.solutions,
+            risk: r.risk,
+          })),
+        });
+        setHistory(prev => [res.data, ...prev]);
+      } catch (err) {
+        console.error('Failed to save symptom check:', err);
+      }
     }
   };
 
   return (
     <div className="symptom-bg">
       <div className="symptom-container">
-        <h2 className="symptom-title">🤖 Symptom Checker</h2>
-        <p className="symptom-desc">Start typing a symptom and select from suggestions:</p>
+        <h2 className="symptom-title">{t('symptom:title')}</h2>
+        <p className="symptom-desc">{t('symptom:description')}</p>
         <div className="symptom-form-row">
           <input
             className="symptom-input"
-            placeholder="Enter symptom (e.g. Fever)"
+            placeholder={t('symptom:inputPlaceholder')}
             value={input}
             onChange={handleInputChange}
             onKeyDown={e => {
@@ -502,9 +544,8 @@ export default function SymptomChecker() {
             variant="contained"
             onClick={() => handleAddSymptom()}
             disabled={!input.trim() || !COMMON_SYMPTOMS.includes(input.trim()) || symptoms.includes(input.trim())}
-            sx={{ minWidth: 110, fontWeight: 700, background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}
-          >
-            Add Symptom
+            sx={{ minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}          >
+            {t('symptom:addSymptom')}
           </Button>
         </div>
         {suggestions.length > 0 && (
@@ -522,7 +563,7 @@ export default function SymptomChecker() {
           </div>
         )}
         <div className="symptom-your-list">
-          <span className="symptom-your-label">Your Symptoms:</span>
+          <span className="symptom-your-label">{t('symptom:yourSymptoms')}</span>
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
             {symptoms.map((sym) => (
               <Chip
@@ -539,30 +580,28 @@ export default function SymptomChecker() {
           variant="outlined"
           onClick={handleCheckSymptoms}
           disabled={symptoms.length === 0}
-          sx={{ mt: 1, fontWeight: 700, borderColor: '#1976d2', color: '#1976d2' }}
-        >
-          Check
+          sx={{marginLeft: '250px',minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}          >
+          {t('symptom:check')}
         </Button>
         {results.length > 0 && (
           <div className="symptom-results">
-            <h3 className="symptom-results-title">Assessment Results:</h3>
 
-            {/* 🚨 ADDED FOR ISSUE #35: REQUIRED NON-DISMISSIBLE MEDICAL DISCLAIMER */}
-            <Box sx={{ width: '100%', mb: 3 }}>
-              <Alert 
+           <h3 className="symptom-results-title">{t('symptom:assessmentResults')}</h3>
+
+           <Box sx={{ width: '100%', mb: 3 }}>
+             <Alert 
                 severity="warning" 
                 sx={{ 
-                  borderRadius: '12px',
-                  fontWeight: 500,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                  '& .MuiAlert-message': { width: '100%' }
+                   borderRadius: '12px',
+                   fontWeight: 500,
+                   boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                   '& .MuiAlert-message': { width: '100%' }
                 }}
-              >
-                This tool is for informational purposes only and does not constitute medical advice. 
-                Please consult a qualified healthcare provider for diagnosis and treatment.
-              </Alert>
-            </Box>
-
+             >
+               This tool is for informational purposes only and does not constitute medical advice. 
+               Please consult a qualified healthcare provider for diagnosis and treatment.
+             </Alert>
+           </Box>
             {results.map((res) => (
               <div
                 key={`${res.condition}-${res.risk}`}
@@ -593,16 +632,16 @@ export default function SymptomChecker() {
                   fontWeight: 700,
                   marginBottom: 6
                 }}>
-                  {res.risk.charAt(0).toUpperCase() + res.risk.slice(1)} Risk
+                  {t('symptom:riskLabel', { level: res.risk.charAt(0).toUpperCase() + res.risk.slice(1) })}
                 </div>
                 {res.causes && (
                   <div className="symptom-result-causes">
-                    <b>Possible Causes:</b> {res.causes}
+                    <b>{t('symptom:possibleCauses')}</b> {res.causes}
                   </div>
                 )}
                 {res.solutions && res.solutions.length > 0 && (
                   <div className="symptom-result-solutions">
-                    <b>Possible Solutions:</b>
+                    <b>{t('symptom:possibleSolutions')}</b>
                     <ul>
                       {res.solutions.map((act) => (
                         <li key={`${res.condition}-${act}`}>{act}</li>
@@ -612,6 +651,29 @@ export default function SymptomChecker() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+        
+        {isAuthenticated && history.length > 0 && (
+          <div className="symptom-history-section">
+            <h3 className="symptom-history-title">Assessment History</h3>
+            <div className="symptom-history-list">
+              {history.map((record) => (
+                <div key={record._id} className="symptom-history-item">
+                  <div className="symptom-history-item-header">
+                    <span className="symptom-history-date">
+                      {new Date(record.checkedAt).toLocaleDateString()} at {new Date(record.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className={`symptom-history-badge risk-${record.results[0]?.risk}`}>
+                      {record.results[0]?.condition || 'Unknown'} ({record.results[0]?.probability}%)
+                    </span>
+                  </div>
+                  <div className="symptom-history-symptoms">
+                    <strong>Symptoms:</strong> {record.symptoms.join(', ')}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -734,6 +796,70 @@ export default function SymptomChecker() {
         .symptom-result-solutions li {
           font-size: 1rem;
           color: #333;
+        }
+        .symptom-history-section {
+          margin-top: 40px;
+          border-top: 1.5px dashed #b0bec5;
+          padding-top: 24px;
+        }
+        .symptom-history-title {
+          color: #1976d2;
+          font-size: 1.25rem;
+          margin-bottom: 14px;
+          font-weight: 700;
+        }
+        .symptom-history-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-height: 300px;
+          overflow-y: auto;
+          padding-right: 4px;
+        }
+        .symptom-history-item {
+          background: #f8fafd;
+          border: 1px solid #e1e8ed;
+          border-radius: 10px;
+          padding: 12px 14px;
+          font-size: 0.95rem;
+          transition: background 0.2s;
+        }
+        .symptom-history-item:hover {
+          background: #f0f4f8;
+        }
+        .symptom-history-item-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 6px;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .symptom-history-date {
+          color: #666;
+          font-weight: 600;
+          font-size: 0.85rem;
+        }
+        .symptom-history-badge {
+          padding: 3px 10px;
+          border-radius: 6px;
+          font-weight: 700;
+          font-size: 0.85rem;
+          color: #fff;
+        }
+        .symptom-history-badge.risk-high {
+          background-color: #d32f2f;
+        }
+        .symptom-history-badge.risk-medium {
+          background-color: #fbc02d;
+          color: #222;
+        }
+        .symptom-history-badge.risk-low {
+          background-color: #43a047;
+        }
+        .symptom-history-symptoms {
+          color: #555;
+          font-size: 0.9rem;
         }
         @media (max-width: 700px) {
           .symptom-container { padding: 16px 4px; }

@@ -1,34 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import IconButton from "@mui/material/IconButton";
+import EditIcon from "@mui/icons-material/Edit";
+import { useTranslation } from "react-i18next";
 import {
   scheduleNotifications,
   requestNotificationPermission,
   getLocalDateString,
   PUSH_ENABLED_KEY,
-} from '../utils/notifications';
+} from "../utils/notifications";
+import API from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
-const STORAGE_KEY = 'caresync_medicines';
+const STORAGE_KEY = "caresync_medicines";
 let fallbackIdCounter = 0;
 
 function sanitizeText(value) {
-  return Array.from(String(value ?? ''))
+  return Array.from(String(value ?? ""))
     .filter((char) => {
       const code = char.charCodeAt(0);
-      return code >= 32 && code !== 127 && char !== '<' && char !== '>';
+      return code >= 32 && code !== 127 && char !== "<" && char !== ">";
     })
-    .join('')
+    .join("")
     .trim();
 }
 
 function createMedicineId() {
-  if (typeof window !== 'undefined' && window.crypto) {
-    if (typeof window.crypto.randomUUID === 'function') {
+  if (typeof window !== "undefined" && window.crypto) {
+    if (typeof window.crypto.randomUUID === "function") {
       return window.crypto.randomUUID();
     }
 
     const bytes = new Uint8Array(16);
     window.crypto.getRandomValues(bytes);
 
-    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+      "",
+    );
   }
 
   fallbackIdCounter += 1;
@@ -41,38 +48,57 @@ function createMedicine(med) {
   const date = sanitizeText(med?.date);
 
   return {
-    id: med?.id && String(med.id).trim() ? String(med.id).trim() : createMedicineId(),
+    id:
+      med?.id && String(med.id).trim()
+        ? String(med.id).trim()
+        : createMedicineId(),
     name,
     time,
     date,
   };
 }
 
-function loadMedicines() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return [];
-
-  try {
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed.map(createMedicine).filter((med) => med.name && med.time && med.date);
-  } catch (error) {
-    console.error('Failed to load medicines from localStorage:', error);
-    return [];
-  }
-}
-
 export default function MedicineTracker() {
-  const [medicines, setMedicines] = useState(loadMedicines);
-  const [name, setName] = useState('');
-  const [time, setTime] = useState('');
-  const [date, setDate] = useState('');
+  const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
+  const [medicines, setMedicines] = useState([]);
+  const [name, setName] = useState("");
+  const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
+  const [editingMedicine, setEditingMedicine] = useState(null);
   const today = getLocalDateString();
+  const isEditing = Boolean(editingMedicine);
+
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const res = await API.get("/api/medicines");
+        setMedicines(res.data);
+      } catch (err) {
+        console.error("Failed to fetch medicines:", err);
+      }
+    };
+    fetchMedicines();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     scheduleNotifications(medicines);
   }, [medicines]);
+
+  const startEdit = (medicine) => {
+    setEditingMedicine(medicine);
+    setName(medicine.name);
+    setTime(medicine.time);
+    setDate(medicine.date);
+  };
+
+  const cancelEdit = () => {
+    setEditingMedicine(null);
+    setName("");
+    setTime("");
+    setDate("");
+  };
 
   const saveMedicines = (nextMedicines) => {
     setMedicines(nextMedicines);
@@ -88,26 +114,73 @@ export default function MedicineTracker() {
       return;
     }
 
-    const pushEnabled = localStorage.getItem(PUSH_ENABLED_KEY) === 'true';
-    if (pushEnabled && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+    const pushEnabled = localStorage.getItem(PUSH_ENABLED_KEY) === "true";
+    if (
+      pushEnabled &&
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "default"
+    ) {
       await requestNotificationPermission();
     }
 
-    const newMedicine = createMedicine({
+    const nextMedicine = createMedicine({
+      id: editingMedicine?.id,
       name: sanitizedName,
       time: sanitizedTime,
       date: sanitizedDate,
     });
 
-    saveMedicines([...medicines, newMedicine]);
-    setName('');
-    setTime('');
-    setDate('');
+    if (editingMedicine) {
+      const updated = medicines.map((med) =>
+        med.id === editingMedicine.id ? nextMedicine : med,
+      );
+      saveMedicines(updated);
+      setEditingMedicine(null);
+    } else {
+      saveMedicines([...medicines, nextMedicine]);
+    }
+
+    setName("");
+    setTime("");
+    setDate("");
   };
 
-  const deleteMedicine = (id) => {
+  const deleteMedicine =  (id) => {
+    if (editingMedicine?.id === id) {
+      cancelEdit();
+    }
+
     const updated = medicines.filter((med) => med.id !== id);
     saveMedicines(updated);
+
+    try {
+      const res = await API.post('/api/medicines', {
+        name: sanitizedName,
+        time: sanitizedTime,
+        date: sanitizedDate,
+      });
+      setMedicines([...medicines, res.data]);
+      setName('');
+      setTime('');
+      setDate('');
+    } catch (err) {
+      console.error('Failed to add medicine alert:', err);
+    }
+  };
+
+  const deleteMedicine = async (id) => {
+    const cleanId = String(id).trim();
+    if (!/^[a-zA-Z0-9]+$/.test(cleanId)) {
+      console.error("Invalid medicine ID format");
+      return;
+    }
+    try {
+      await API.delete(`/api/medicines/${cleanId}`);
+      setMedicines(medicines.filter((med) => med.id !== id));
+    } catch (err) {
+      console.error("Failed to delete medicine alert:", err);
+    }
   };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
@@ -115,25 +188,35 @@ export default function MedicineTracker() {
   return (
     <div className="medtracker-bg">
       <div className="medtracker-container">
-        <h2 className="medtracker-title">Medicine Tracker</h2>
+        <h2 className="medtracker-title">{t("medicine:title")}</h2>
 
         <div className="medtracker-reminder-section">
-          <h3>Today's Reminders</h3>
+          <h3>{t("medicine:todaysReminders")}</h3>
           {todaysReminders.length === 0 ? (
-            <div className="medtracker-reminder-empty">No medicines scheduled for today.</div>
+            <div className="medtracker-reminder-empty">
+              {t("medicine:noRemindersToday")}
+            </div>
           ) : (
             <ul className="medtracker-reminder-list">
               {todaysReminders.map((med) => (
                 <li key={med.id} className="medtracker-reminder-item">
                   <span className="medtracker-pill">{med.name}</span>
                   <span className="medtracker-time">{med.time}</span>
+                  <IconButton
+                    aria-label={`Edit ${med.name}`}
+                    title="Edit medicine"
+                    onClick={() => startEdit(med)}
+                    size="small"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
                   <button
                     className="medtracker-delete-btn"
                     onClick={() => deleteMedicine(med.id)}
-                    title="Delete reminder"
+                    title={t("medicine:deleteReminder")}
                     type="button"
                   >
-                    Delete
+                    {t("medicine:delete")}
                   </button>
                 </li>
               ))}
@@ -144,7 +227,7 @@ export default function MedicineTracker() {
         <div className="medtracker-form-row">
           <input
             className="medtracker-input"
-            placeholder="Medicine Name"
+            placeholder={t("medicine:namePlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -160,28 +243,53 @@ export default function MedicineTracker() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
-          <button className="medtracker-btn" onClick={addMedicine} type="button">
-            Add
+          <button
+            className="medtracker-btn"
+            onClick={addMedicine}
+            type="button"
+          >
+            {isEditing ? t("medicine:update") : t("medicine:add")}
           </button>
+          {isEditing && (
+            <button
+              className="medtracker-cancel-btn"
+              onClick={cancelEdit}
+              type="button"
+            >
+              Cancel
+            </button>
+          )}
         </div>
 
-        <h3 className="medtracker-list-title">All Scheduled Medicines</h3>
+        <h3 className="medtracker-list-title">
+          {t("medicine:allScheduledTitle")}
+        </h3>
         <ul className="medtracker-list">
           {medicines.length === 0 && (
-            <li className="medtracker-list-empty">No medicines scheduled yet.</li>
+            <li className="medtracker-list-empty">
+              {t("medicine:noMedicinesYet")}
+            </li>
           )}
           {medicines.map((med) => (
             <li key={med.id} className="medtracker-list-item">
               <span className="medtracker-pill">{med.name}</span>
               <span className="medtracker-date">{med.date}</span>
               <span className="medtracker-time">{med.time}</span>
+              <IconButton
+                aria-label={`Edit ${med.name}`}
+                title="Edit medicine"
+                onClick={() => startEdit(med)}
+                size="small"
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
               <button
                 className="medtracker-delete-btn"
                 onClick={() => deleteMedicine(med.id)}
-                title="Delete medicine"
+                title={t("medicine:deleteMedicine")}
                 type="button"
               >
-                Delete
+                {t("medicine:delete")}
               </button>
             </li>
           ))}
@@ -250,7 +358,7 @@ export default function MedicineTracker() {
           margin-bottom: 0;
         }
         .medtracker-pill {
-          background: #1976d2;
+          background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
           color: #fff;
           padding: 4px 12px;
           border-radius: 8px;
@@ -263,35 +371,55 @@ export default function MedicineTracker() {
           font-size: 1.05rem;
         }
         .medtracker-form-row {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 24px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
         .medtracker-input {
-          background: #f4f8fb;
-          color: #222;
-          border: 1px solid #b0bec5;
-          border-radius: 8px;
-          padding: 8px 12px;
-          font-size: 1rem;
-          min-width: 120px;
-        }
-        .medtracker-btn {
-          background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
-          color: #fff;
-          border: none;
-          border-radius: 8px;
-          padding: 8px 18px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  box-sizing: border-box;
+  background: #f4f8fb;
+  color: #222;
+  border: 1px solid #b0bec5;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 1rem;
+}
+       .medtracker-btn {
+  flex: 0 0 80px;
+  height: 40px;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
         .medtracker-btn:hover {
-          background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
-          color: #18181a;
-        }
+  background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
+}
+.medtracker-cancel-btn {
+  flex: 0 0 80px;
+  height: 40px;
+  box-sizing: border-box;
+  background: transparent;
+  color: #1976d2;
+  border: 1px solid #1976d2;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+.medtracker-cancel-btn:hover {
+  background: #e3f2fd;
+}
         .medtracker-list-title {
           margin-top: 18px;
           margin-bottom: 10px;
@@ -308,27 +436,29 @@ export default function MedicineTracker() {
           font-weight: 600;
         }
         .medtracker-delete-btn {
-          background: transparent;
+          background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
+          color: #fff;
           border: none;
+          border-radius: 8px;
           cursor: pointer;
-          font-size: 0.95rem;
+          font-weight: 700;
           padding: 4px 8px;
           margin-left: auto;
-          transition: transform 0.2s, opacity 0.2s;
-          opacity: 0.7;
+          height: 2rem;    
         }
         .medtracker-delete-btn:hover {
+          background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
           transform: scale(1.05);
           opacity: 1;
         }
-        @media (max-width: 700px) {
-          .medtracker-container {
-            padding: 16px 4px;
-          }
-          .medtracker-form-row {
-            gap: 6px;
-          }
-        }
+        @media (max-width: 600px) {
+  .medtracker-form-row {
+    flex-wrap: wrap;
+  }
+  .medtracker-input {
+    flex: 1 1 calc(50% - 5px);
+  }
+}
       `}</style>
     </div>
   );

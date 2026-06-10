@@ -12,25 +12,36 @@ import {
   FormControlLabel,
   Snackbar,
   Alert,
+  MenuItem,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
 import {
   requestNotificationPermission,
   scheduleNotifications,
   clearScheduledNotifications,
   PUSH_ENABLED_KEY,
 } from '../utils/notifications';
+import {
+  getEmailNotificationsEnabled,
+  setEmailNotificationsEnabled,
+} from '../utils/settingsPreferences';
+import { SUPPORTED_LANGUAGES } from '../i18n';
 
 /**
  * Settings — user profile and preferences page.
  *
- * Provides a form to edit profile fields (name, email) and upload an avatar
- * image (previewed via `URL.createObjectURL`), toggles for email and push
- * notifications. Push notification preference is persisted in localStorage
- * under `caresync_push_enabled` and triggers a browser permission prompt
- * when enabled.
+ * Reads the current profile (name, email, avatar) from AuthContext and lets
+ * the user edit it; saving routes through `updateProfile`, which persists to
+ * localStorage under `caresync_user`, so changes survive navigation and
+ * reloads and stay consistent with the Profile page.
  *
- * Rendered as a route; takes no props and manages its own state
- * (`profile`, `notifications`, `pushEnabled`, `snackbar`) internally.
+ * Preferences:
+ * - Email notifications: persisted under `caresync_email_notifications`.
+ * - Push notifications: persisted under `caresync_push_enabled` and triggers a
+ *   browser permission prompt when enabled (unchanged from the original).
+ *
+ * Rendered as a route; takes no props.
  *
  * @component
  * @returns {JSX.Element} The settings page.
@@ -39,16 +50,35 @@ import {
  * <Route path="/settings" element={<Settings />} />
  */
 export default function Settings() {
+  const { t, i18n } = useTranslation();
+  const { user, isAuthenticated, updateProfile } = useAuth();
+
+  // Initialise the editable form from the authenticated user, mirroring the
+  // pattern used in Profile.jsx (optional-chained with sensible fallbacks).
   const [profile, setProfile] = useState({
-    name: 'Jane Doe',
-    email: 'jane.doe@email.com',
-    avatar: '',
+    name: user?.name || '',
+    email: user?.email || '',
+    avatar: user?.avatar || '',
   });
-  const [notifications, setNotifications] = useState(true);
+  const [notifications, setNotifications] = useState(() =>
+    getEmailNotificationsEnabled()
+  );
   const [pushEnabled, setPushEnabled] = useState(
     () => localStorage.getItem(PUSH_ENABLED_KEY) === 'true'
   );
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+
+  // If there is no authenticated user, there is no profile to edit — mirror
+  // the guard Profile.jsx uses rather than rendering placeholder data.
+  if (!isAuthenticated || !user) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h5" color="text.secondary">
+          {t('settings:loginPrompt')}
+        </Typography>
+      </Box>
+    );
+  }
 
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -56,8 +86,60 @@ export default function Settings() {
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setProfile({ ...profile, avatar: URL.createObjectURL(file) });
+    if (!file) return;
+
+    // Use FileReader to produce a persistent base64 data URL instead of a
+    // temporary blob: URL. Blob URLs are revoked when the page unloads, so
+    // they cannot be stored in caresync_user and don't survive a reload.
+    // A data URL is self-contained and persists correctly in localStorage.
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setProfile((prev) => ({ ...prev, avatar: event.target.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  /**
+   * Toggle email notifications and persist the choice so it survives reloads.
+   */
+  const handleEmailNotificationsToggle = () => {
+    const newValue = !notifications;
+    setNotifications(newValue);
+    setEmailNotificationsEnabled(newValue);
+  };
+
+  /**
+   * Change the active language. i18next's language detector persists the
+   * choice to localStorage automatically, so it survives reloads.
+   */
+  const handleLanguageChange = (e) => {
+    i18n.changeLanguage(e.target.value);
+  };
+
+  /**
+   * Persist profile edits (name, email, avatar) through AuthContext.
+   * This updates the in-memory user, writes through to `caresync_user`, and
+   * keeps Settings consistent with the Profile page and the rest of the app.
+   */
+  const handleSave = async () => {
+    try {
+      await updateProfile({
+        name: profile.name,
+        email: profile.email,
+        avatar: profile.avatar,
+      });
+      setSnackbar({
+        open: true,
+        message: t('settings:saveSuccess'),
+        severity: 'success',
+      });
+    } catch (err) {
+      console.error('Save settings error:', err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || 'Failed to save changes.',
+        severity: 'error',
+      });
     }
   };
 
@@ -74,7 +156,7 @@ export default function Settings() {
       if (permission !== 'granted') {
         setSnackbar({
           open: true,
-          message: 'Notification permission was denied. Please enable it in your browser settings.',
+          message: t('settings:pushPermissionDenied'),
           severity: 'warning',
         });
         return; // Don't flip the toggle if permission denied.
@@ -96,7 +178,7 @@ export default function Settings() {
 
       setSnackbar({
         open: true,
-        message: 'Push notifications enabled! You will be reminded when your medicines are due.',
+        message: t('settings:pushEnabledMsg'),
         severity: 'success',
       });
     } else {
@@ -105,7 +187,7 @@ export default function Settings() {
       clearScheduledNotifications();
       setSnackbar({
         open: true,
-        message: 'Push notifications disabled.',
+        message: t('settings:pushDisabledMsg'),
         severity: 'info',
       });
     }
@@ -115,7 +197,7 @@ export default function Settings() {
     <Box sx={{ maxWidth: 600, mx: 'auto', mt: 6, p: 2 }}>
       <Paper elevation={4} sx={{ p: 4, borderRadius: 4 }}>
         <Typography variant="h4" fontWeight={700} mb={2} color="primary">
-          Profile Settings
+          {t('settings:profileSettings')}
         </Typography>
         <Divider sx={{ mb: 3 }} />
 
@@ -131,7 +213,7 @@ export default function Settings() {
               size="small"
               sx={{ mt: 1 }}
             >
-              Change Avatar
+              {t('settings:changeAvatar')}
               <input
                 type="file"
                 accept="image/*"
@@ -142,7 +224,7 @@ export default function Settings() {
           </Grid>
           <Grid item xs={12} sm={8}>
             <TextField
-              label="Name"
+              label={t('settings:name')}
               name="name"
               value={profile.name}
               onChange={handleChange}
@@ -150,7 +232,7 @@ export default function Settings() {
               sx={{ mb: 2 }}
             />
             <TextField
-              label="Email"
+              label={t('settings:email')}
               name="email"
               value={profile.email}
               onChange={handleChange}
@@ -163,17 +245,17 @@ export default function Settings() {
         <Divider sx={{ my: 3 }} />
 
         <Typography variant="h6" fontWeight={600} mb={1}>
-          Preferences
+          {t('settings:preferences')}
         </Typography>
         <FormControlLabel
           control={
             <Switch
               checked={notifications}
-              onChange={() => setNotifications(!notifications)}
+              onChange={handleEmailNotificationsToggle}
               color="primary"
             />
           }
-          label="Enable Email Notifications"
+          label={t('settings:enableEmailNotifications')}
         />
         <FormControlLabel
           control={
@@ -184,20 +266,46 @@ export default function Settings() {
               id="push-notification-toggle"
             />
           }
-          label="Enable Medicine Push Notifications"
+          label={t('settings:enablePushNotifications')}
         />
         <Typography variant="body2" color="text.secondary" sx={{ ml: 4, mt: -0.5, mb: 1 }}>
-          Receive browser notifications when a medicine reminder is due.
+          {t('settings:pushNotificationsHint')}
+        </Typography>
+
+        <Divider sx={{ my: 3 }} />
+
+        <TextField
+          select
+          fullWidth
+          label={t('settings:language')}
+          value={i18n.language?.split('-')[0] || 'en'}
+          onChange={handleLanguageChange}
+          sx={{ maxWidth: 320 }}
+          id="language-selector"
+        >
+          {SUPPORTED_LANGUAGES.map((lang) => (
+            <MenuItem key={lang.code} value={lang.code}>
+              {lang.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+          {t('settings:languageHint')}
         </Typography>
 
         <Box sx={{ mt: 4, textAlign: 'right' }}>
-          <Button variant="contained" color="primary" sx={{ px: 4 }}>
-            Save Changes
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ px: 4 }}
+            onClick={handleSave}
+          >
+            {t('settings:saveChanges')}
           </Button>
         </Box>
       </Paper>
 
-      {/* Snackbar for push notification feedback */}
+      {/* Snackbar for save + notification feedback */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={5000}
