@@ -34,7 +34,7 @@
     "todaysMedicinesTitle": "Today's Medicines",
     "todaysMedicines_one": "1 medicine scheduled for today.",
     "todaysMedicines_other": "{{count}} medicines scheduled for today.",
-    "viewMedicineTracker": "View Medicine Tracker",
+    "medicineTracker": "Medicine Tracker",
     "recentSymptomChecksTitle": "Recent Symptom Checks",
     "recentSymptomChecksDesc": "Last check: No major symptoms detected.",
     "checkSymptoms": "Check Symptoms",

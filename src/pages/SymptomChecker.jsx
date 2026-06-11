@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Chip, Stack, LinearProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Button, Chip, Stack, LinearProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Box } from '@mui/material';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -417,7 +417,7 @@ function saveHistoryToLocalStorage(historyArray) {
 function createHistoryEntry(symptoms, results) {
   const topResult = results[0] || {};
   return {
-    _id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    _id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
     checkedAt: new Date().toISOString(),
     symptoms,
     results: [{
@@ -594,11 +594,13 @@ export default function SymptomChecker() {
 
     setResults(finalResults);
 
-    // Create and save history entry to localStorage
+    // Create and save history entry to localStorage using functional update
     const historyEntry = createHistoryEntry(symptoms, finalResults);
-    const updatedHistory = [historyEntry, ...history];
-    saveHistoryToLocalStorage(updatedHistory);
-    setHistory(updatedHistory);
+    setHistory((prev) => {
+      const updated = [historyEntry, ...prev];
+      saveHistoryToLocalStorage(updated);
+      return updated;
+    });
 
     // Save to backend if authenticated
     if (isAuthenticated) {
@@ -613,14 +615,14 @@ export default function SymptomChecker() {
             risk: r.risk,
           })),
         });
-        // Update history with backend response (which includes _id)
+        // Replace the temporary local entry with backend response using latest state
         const backendEntry = res.data;
-        const updatedHistoryWithBackend = [
-          backendEntry,
-          ...history.filter(item => item._id !== historyEntry._id)
-        ];
-        saveHistoryToLocalStorage(updatedHistoryWithBackend);
-        setHistory(updatedHistoryWithBackend);
+        setHistory((prev) => {
+          const withoutLocal = prev.filter(item => item._id !== historyEntry._id);
+          const newHist = [backendEntry, ...withoutLocal];
+          saveHistoryToLocalStorage(newHist);
+          return newHist;
+        });
       } catch (err) {
         console.error('Failed to save symptom check to backend:', err);
         // History is already saved to localStorage, so continue gracefully
@@ -648,8 +650,7 @@ export default function SymptomChecker() {
             variant="contained"
             onClick={() => handleAddSymptom()}
             disabled={!input.trim() || !COMMON_SYMPTOMS.includes(input.trim()) || symptoms.includes(input.trim())}
-            sx={{ minWidth: 110, fontWeight: 700, background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}
-          >
+            sx={{ minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}          >
             {t('symptom:addSymptom')}
           </Button>
         </div>
@@ -685,13 +686,28 @@ export default function SymptomChecker() {
           variant="outlined"
           onClick={handleCheckSymptoms}
           disabled={symptoms.length === 0}
-          sx={{ mt: 1, fontWeight: 700, borderColor: '#1976d2', color: '#1976d2' }}
-        >
+          sx={{marginLeft: '250px',minWidth: 110, fontWeight: 700, color: '#fff !important', background: 'linear-gradient(90deg,#1976d2 60%,#43e97b 100%)' }}          >
           {t('symptom:check')}
         </Button>
         {results.length > 0 && (
           <div className="symptom-results">
-            <h3 className="symptom-results-title">{t('symptom:assessmentResults')}</h3>
+
+           <h3 className="symptom-results-title">{t('symptom:assessmentResults')}</h3>
+
+           <Box sx={{ width: '100%', mb: 3 }}>
+             <Alert 
+                severity="warning" 
+                sx={{ 
+                   borderRadius: '12px',
+                   fontWeight: 500,
+                   boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                   '& .MuiAlert-message': { width: '100%' }
+                }}
+             >
+               This tool is for informational purposes only and does not constitute medical advice. 
+               Please consult a qualified healthcare provider for diagnosis and treatment.
+             </Alert>
+           </Box>
             {results.map((res) => (
               <div
                 key={`${res.condition}-${res.risk}`}

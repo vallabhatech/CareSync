@@ -96,7 +96,7 @@ export default function Dashboard() {
       desc: t('dashboard:todaysMedicines', { count: todayCount }),
       link: "/medicine-tracker",
       icon: <MedicationIcon fontSize="large" color="primary" />,
-      btn: t('dashboard:viewMedicineTracker'),
+      btn: t('dashboard:medicineTracker'),
     },
     {
       id: 'recent-symptom-checks',
@@ -304,7 +304,7 @@ export default function Dashboard() {
           text-align: center;
         }
         .dashboard-card-btn {
-          background: #1976d2;
+          background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
           color: #fff;
           text-decoration: none;
           padding: 10px 24px;
@@ -320,8 +320,8 @@ export default function Dashboard() {
           box-sizing: border-box;
         }
         .dashboard-card-btn:hover {
-          background: #43e97b;
-          color: #18181a;
+          background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
+          color: #fff;
         }
         @media (max-width: 700px) {
           .dashboard-container { padding: 24px 4px; }
