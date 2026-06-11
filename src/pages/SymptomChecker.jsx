@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Chip, Stack, LinearProgress } from '@mui/material';
+import { Button, Chip, Stack, LinearProgress, Alert, Box } from '@mui/material';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+
 /**
  * COMMON_SYMPTOMS
  * ---------------
@@ -584,7 +585,23 @@ export default function SymptomChecker() {
         </Button>
         {results.length > 0 && (
           <div className="symptom-results">
-            <h3 className="symptom-results-title">{t('symptom:assessmentResults')}</h3>
+
+           <h3 className="symptom-results-title">{t('symptom:assessmentResults')}</h3>
+
+           <Box sx={{ width: '100%', mb: 3 }}>
+             <Alert 
+                severity="warning" 
+                sx={{ 
+                   borderRadius: '12px',
+                   fontWeight: 500,
+                   boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                   '& .MuiAlert-message': { width: '100%' }
+                }}
+             >
+               This tool is for informational purposes only and does not constitute medical advice. 
+               Please consult a qualified healthcare provider for diagnosis and treatment.
+             </Alert>
+           </Box>
             {results.map((res) => (
               <div
                 key={`${res.condition}-${res.risk}`}
