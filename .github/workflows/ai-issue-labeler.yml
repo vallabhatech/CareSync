@@ -1,0 +1,47 @@
+name: AI Issue Labeler
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const issue = context.payload.issue;
+
+            const text = (issue.title + " " + issue.body).toLowerCase();
+
+            let labels = [];
+
+            if (text.includes("bug") || text.includes("error") || text.includes("fail")) {
+              labels.push("bug");
+            }
+
+            if (text.includes("feature") || text.includes("add")) {
+              labels.push("feature");
+            }
+
+            if (text.includes("doc")) {
+              labels.push("documentation");
+            }
+
+            if (text.includes("security") || text.includes("vulnerability")) {
+              labels.push("security");
+            }
+
+            if (labels.length === 0) labels.push("triage");
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels
+            });

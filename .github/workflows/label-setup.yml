@@ -1,0 +1,54 @@
+name: Label Setup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  setup-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const labels = [
+              { name: 'bug', color: 'd73a4a', description: 'Broken behavior / crash / incorrect output' },
+              { name: 'enhancement', color: 'a2eeef', description: 'Improve existing feature' },
+              { name: 'feature', color: '0075ca', description: 'New functionality request' },
+              { name: 'documentation', color: '0075ca', description: 'Docs missing/incorrect' },
+              { name: 'question', color: 'd876e3', description: 'Clarification needed' },
+              { name: 'good first issue', color: '7057ff', description: 'Beginner friendly' },
+              { name: 'performance', color: 'fbca04', description: 'Optimization' },
+              { name: 'security', color: 'ee0701', description: 'Vulnerability or risk' },
+              { name: 'refactor', color: 'e46671', description: 'Code cleanup only' },
+              { name: 'ui/ux', color: 'bfd4f2', description: 'Frontend experience/design' },
+              { name: 'dependencies', color: '0366d6', description: 'Dependency-related issues' },
+              { name: 'ci', color: 'bfdadc', description: 'CI/CD issues' },
+              { name: 'triage', color: 'ffffff', description: 'Needs triage' }
+            ];
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name
+                });
+                console.log(`Label "${label.name}" already exists`);
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label.name,
+                    color: label.color,
+                    description: label.description
+                  });
+                  console.log(`Created label "${label.name}"`);
+                } else {
+                  throw error;
+                }
+              }
+            }
