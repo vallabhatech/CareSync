@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for inactivity
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const WARNING_MARKER = '<!-- caresync-issue-inactivity-warning -->';
