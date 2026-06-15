@@ -6,7 +6,7 @@
     "@date-io/date-fns": "^3.2.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.14.1",
-    "@fontsource/fira-mono": "^5.0.14",
+    "@fontsource/fira-mono": "^5.2.7",
     "@fontsource/roboto": "^5.0.14",
     "@mui/icons-material": "^9.1.1",
     "@mui/lab": "^6.0.0-dev.20240529-082515-213b5e33ab",
