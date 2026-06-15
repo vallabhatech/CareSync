@@ -16,17 +16,19 @@ jobs:
             const labels = [
               { name: 'bug', color: 'd73a4a', description: 'Broken behavior / crash / incorrect output' },
               { name: 'enhancement', color: 'a2eeef', description: 'Improve existing feature' },
-              { name: 'feature', color: '0075ca', description: 'New functionality request' },
               { name: 'documentation', color: '0075ca', description: 'Docs missing/incorrect' },
               { name: 'question', color: 'd876e3', description: 'Clarification needed' },
               { name: 'good first issue', color: '7057ff', description: 'Beginner friendly' },
               { name: 'performance', color: 'fbca04', description: 'Optimization' },
               { name: 'security', color: 'ee0701', description: 'Vulnerability or risk' },
-              { name: 'refactor', color: 'e46671', description: 'Code cleanup only' },
               { name: 'ui/ux', color: 'bfd4f2', description: 'Frontend experience/design' },
-              { name: 'dependencies', color: '0366d6', description: 'Dependency-related issues' },
-              { name: 'ci', color: 'bfdadc', description: 'CI/CD issues' },
-              { name: 'triage', color: 'ffffff', description: 'Needs triage' }
+              { name: 'frontend', color: 'c2e0c6', description: 'Client-side application work' },
+              { name: 'backend', color: '0e8a16', description: 'Server-side application work' },
+              { name: 'testing', color: '5319e7', description: 'Tests or test automation' },
+              { name: 'ELUSOC', color: '0066cc', description: 'Project-specific label' },
+              { name: 'NEWBIE', color: '1d76db', description: 'Simple changes and easy fixes' },
+              { name: 'ADVENTURER', color: 'fbca04', description: 'Moderate multi-file work' },
+              { name: 'VETERAN', color: 'b60205', description: 'Complex architecture or security work' }
             ];
 
             for (const label of labels) {
