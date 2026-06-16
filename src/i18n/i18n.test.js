@@ -10,9 +10,7 @@
  *    string is left untranslated when a contributor adds a language
  */
 
-import i18n, { SUPPORTED_LANGUAGES, LANGUAGE_STORAGE_KEY } from '../i18n';
-import en from './locales/en.json';
-import hi from './locales/hi.json';
+import i18n, { SUPPORTED_LANGUAGES, LANGUAGE_STORAGE_KEY, resources } from '../i18n';
 
 /** Recursively collect dot-joined leaf key paths from a nested object. */
 function leafKeys(obj, prefix = '') {
@@ -33,10 +31,10 @@ beforeAll(async () => {
 });
 
 describe('i18n configuration', () => {
-  test('exposes the supported languages (English + Hindi)', () => {
+  test('exposes all supported languages', () => {
     const codes = SUPPORTED_LANGUAGES.map((l) => l.code);
+    expect(codes.length).toBeGreaterThanOrEqual(10);
     expect(codes).toContain('en');
-    expect(codes).toContain('hi');
   });
 
   test('uses the expected localStorage key for persistence', () => {
@@ -78,19 +76,26 @@ describe('t() translation function', () => {
 });
 
 describe('locale resource integrity', () => {
-  test('English and Hindi have identical key structures', () => {
-    const enKeys = leafKeys(en).sort();
-    const hiKeys = leafKeys(hi).sort();
-    expect(hiKeys).toEqual(enKeys);
+  test('all supported languages have identical key structures to English', () => {
+    const enKeys = leafKeys(resources.en).sort();
+    
+    SUPPORTED_LANGUAGES.forEach((lang) => {
+      if (lang.code === 'en') return;
+      const langKeys = leafKeys(resources[lang.code]).sort();
+      expect(langKeys).toEqual(enKeys);
+    });
   });
 
-  test('no Hindi value is empty', () => {
+  test('no translation value is empty', () => {
     const check = (obj) => {
       Object.values(obj).forEach((v) => {
         if (v && typeof v === 'object') check(v);
         else expect(String(v).trim().length).toBeGreaterThan(0);
       });
     };
-    check(hi);
+    
+    SUPPORTED_LANGUAGES.forEach((lang) => {
+      check(resources[lang.code]);
+    });
   });
 });

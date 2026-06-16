@@ -34,7 +34,7 @@
     "todaysMedicinesTitle": "आज की दवाइयाँ",
     "todaysMedicines_one": "आज के लिए 1 दवा निर्धारित है।",
     "todaysMedicines_other": "आज के लिए {{count}} दवाइयाँ निर्धारित हैं।",
-    "viewMedicineTracker": "दवा ट्रैकर देखें",
+    "medicineTracker": "दवा ट्रैकर देखें",
     "recentSymptomChecksTitle": "हाल की लक्षण जाँच",
     "recentSymptomChecksDesc": "आखिरी जाँच: कोई बड़ा लक्षण नहीं मिला।",
     "checkSymptoms": "लक्षण जाँचें",
