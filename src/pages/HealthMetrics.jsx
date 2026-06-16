@@ -18,6 +18,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -138,6 +139,25 @@ export default function HealthMetrics() {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const res = await API.get('/api/health-metrics/export/pdf', {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `health-report-${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      console.error('Error exporting PDF:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to export PDF';
+      setError(`Error exporting PDF: ${errorMsg}`);
+    }
+  };
+
   const getMetricStatus = (metric) => {
     const statuses = [];
     if (metric.weight) {
@@ -186,13 +206,25 @@ export default function HealthMetrics() {
 
         <Card sx={{ p: 0, borderRadius: 4, boxShadow: 6, mb: 4 }}>
           <CardContent sx={{ p: { xs: 3, md: 5 } }}>
-            <Typography variant="h4" fontWeight={700} gutterBottom>
-              Health Metrics Dashboard
-            </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              Track and analyze your vital signs and health metrics over time. Record weight, blood
-              pressure, heart rate, temperature, blood sugar, and oxygen saturation.
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+              <Box>
+                <Typography variant="h4" fontWeight={700} gutterBottom>
+                  Health Metrics Dashboard
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Track and analyze your vital signs and health metrics over time. Record weight, blood
+                  pressure, heart rate, temperature, blood sugar, and oxygen saturation.
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                startIcon={<FileDownloadIcon />}
+                onClick={handleExportPDF}
+                sx={{ whiteSpace: 'nowrap' }}
+              >
+                Export PDF
+              </Button>
+            </Box>
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
