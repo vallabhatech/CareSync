@@ -9,6 +9,7 @@ import {
   PUSH_ENABLED_KEY,
 } from "../utils/notifications";
 import API from "../utils/api";
+import { checkInteractions } from '../utils/interactions';
 import { useAuth } from "../context/AuthContext";
 
 const STORAGE_KEY = "caresync_medicines";
@@ -138,7 +139,8 @@ export default function MedicineTracker() {
       saveMedicines(updated);
       setEditingMedicine(null);
     } else {
-      saveMedicines([...medicines, nextMedicine]);
+      const withNew = [...medicines, nextMedicine];
+      saveMedicines(withNew);
     }
 
     setName("");
@@ -172,6 +174,8 @@ export default function MedicineTracker() {
     };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
+
+  const interactionWarnings = checkInteractions(medicines);
 
   return (
     <div className="medtracker-bg">
@@ -209,6 +213,15 @@ export default function MedicineTracker() {
                 </li>
               ))}
             </ul>
+          )}
+          {interactionWarnings.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              {interactionWarnings.map((w, i) => (
+                <div key={i} className={`interaction-warning interaction-${w.severity}`}>
+                  <strong>{w.severity.toUpperCase()}:</strong> {w.description}
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
@@ -439,6 +452,17 @@ export default function MedicineTracker() {
           transform: scale(1.05);
           opacity: 1;
         }
+        .interaction-warning {
+          background: #fff3cd;
+          color: #856404;
+          border-radius: 8px;
+          padding: 10px;
+          margin-top: 8px;
+          font-weight: 600;
+        }
+        .interaction-high { background: #ffd6d6; color: #8b0000; }
+        .interaction-moderate { background: #fff4cc; color: #b36b00; }
+        .interaction-low { background: #e6f0ff; color: #0b4da0; }
         @media (max-width: 600px) {
   .medtracker-form-row {
     flex-wrap: wrap;
