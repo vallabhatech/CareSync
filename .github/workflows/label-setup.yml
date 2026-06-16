@@ -1,0 +1,56 @@
+name: Label Setup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  setup-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const labels = [
+              { name: 'bug', color: 'd73a4a', description: 'Broken behavior / crash / incorrect output' },
+              { name: 'enhancement', color: 'a2eeef', description: 'Improve existing feature' },
+              { name: 'documentation', color: '0075ca', description: 'Docs missing/incorrect' },
+              { name: 'question', color: 'd876e3', description: 'Clarification needed' },
+              { name: 'good first issue', color: '7057ff', description: 'Beginner friendly' },
+              { name: 'performance', color: 'fbca04', description: 'Optimization' },
+              { name: 'security', color: 'ee0701', description: 'Vulnerability or risk' },
+              { name: 'ui/ux', color: 'bfd4f2', description: 'Frontend experience/design' },
+              { name: 'frontend', color: 'c2e0c6', description: 'Client-side application work' },
+              { name: 'backend', color: '0e8a16', description: 'Server-side application work' },
+              { name: 'testing', color: '5319e7', description: 'Tests or test automation' },
+              { name: 'ELUSOC', color: '0066cc', description: 'Project-specific label' },
+              { name: 'NEWBIE', color: '1d76db', description: 'Simple changes and easy fixes' },
+              { name: 'ADVENTURER', color: 'fbca04', description: 'Moderate multi-file work' },
+              { name: 'VETERAN', color: 'b60205', description: 'Complex architecture or security work' }
+            ];
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name
+                });
+                console.log(`Label "${label.name}" already exists`);
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label.name,
+                    color: label.color,
+                    description: label.description
+                  });
+                  console.log(`Created label "${label.name}"`);
+                } else {
+                  throw error;
+                }
+              }
+            }

@@ -1,0 +1,122 @@
+name: Manual Issue Triage & Label Fixer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const issues = await github.paginate(
+              github.rest.issues.listForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open'
+              }
+            );
+
+            const allowedLabels = new Set([
+              'bug',
+              'enhancement',
+              'documentation',
+              'question',
+              'security',
+              'performance',
+              'ui/ux',
+              'frontend',
+              'backend',
+              'testing',
+              'good first issue',
+              'ELUSOC',
+              'NEWBIE',
+              'ADVENTURER',
+              'VETERAN'
+            ]);
+
+            const maxLabels = 5;
+
+            const classifyDifficulty = (text, topicalHitCount) => {
+              if (topicalHitCount === 0) {
+                return 'ADVENTURER';
+              }
+
+              if (text.includes('architecture') || text.includes('security') || text.includes('optimize') || text.includes('performance')) {
+                return 'VETERAN';
+              }
+
+              if (text.includes('refactor') || text.includes('feature') || text.includes('api') || text.includes('integration') || text.includes('multi-file')) {
+                return 'ADVENTURER';
+              }
+
+              return 'NEWBIE';
+            };
+
+            for (const issue of issues) {
+              if (issue.pull_request) continue;
+
+              const existingLabels = issue.labels.map((label) => label.name);
+              const text = `${issue.title} ${issue.body || ''}`.toLowerCase();
+
+              const suggestedLabels = [];
+              let topicalHitCount = 0;
+
+              const topicalRules = [
+                ['bug', ['bug', 'error', 'fail', 'crash', 'broken', 'incorrect', 'does not work']],
+                ['enhancement', ['enhancement', 'feature', 'add', 'improve', 'request']],
+                ['documentation', ['doc', 'documentation', 'readme', 'guide', 'typo']],
+                ['question', ['question', 'clarify', 'help', 'how do i', 'how to', 'unclear']],
+                ['security', ['security', 'vulnerability', 'cve', 'auth bypass', 'xss', 'csrf']],
+                ['performance', ['performance', 'slow', 'optimize', 'optimization', 'latency']],
+                ['ui/ux', ['ui', 'ux', 'design', 'layout', 'spacing', 'responsive']],
+                ['frontend', ['frontend', 'react', 'css', 'html', 'javascript', 'ui']],
+                ['backend', ['backend', 'api', 'server', 'database', 'auth', 'endpoint']],
+                ['testing', ['test', 'testing', 'jest', 'cypress', 'playwright', 'qa']]
+              ];
+
+              for (const [label, keywords] of topicalRules) {
+                if (suggestedLabels.length >= maxLabels) break;
+                if (keywords.some((keyword) => text.includes(keyword))) {
+                  suggestedLabels.push(label);
+                  topicalHitCount += 1;
+                }
+              }
+
+              const hasDifficulty = existingLabels.some((label) => ['NEWBIE', 'ADVENTURER', 'VETERAN'].includes(label));
+              const difficultyLabel = hasDifficulty ? null : classifyDifficulty(text, topicalHitCount);
+
+              if (!hasDifficulty) {
+                suggestedLabels.unshift(difficultyLabel);
+              }
+
+              if (suggestedLabels.length === 0) {
+                suggestedLabels.push('question', 'ADVENTURER');
+              }
+
+              const mergedLabels = [...new Set([...existingLabels, ...suggestedLabels])]
+                .filter((label) => allowedLabels.has(label))
+                .slice(0, maxLabels);
+
+              const labelsToAdd = mergedLabels.filter((label) => !existingLabels.includes(label));
+
+              if (labelsToAdd.length === 0) {
+                console.log(`Processed #${issue.number} - no new labels needed`);
+                continue;
+              }
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labelsToAdd
+              });
+
+              console.log(`Processed #${issue.number}`);
+            }
