@@ -8,24 +8,6 @@ const app = express();
 app.disable('x-powered-by');
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-// helmet sets secure HTTP response headers (X-Frame-Options, X-Content-Type-Options, etc.) to reduce attack surface.
-app.use(helmet());
-
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:3000', 'https://care-sync-iota.vercel.app'];
-
-const corsOptions = {
-  origin: allowedOrigins,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
-
-// Set body parser size limit to 5MB to accommodate base64 profile avatar images
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ limit: '5mb', extended: true }));
-
 /**
  * Middleware to sanitize response headers by stripping CR (\r) and LF (\n) characters.
  * This helps prevent HTTP response splitting attacks by ensuring no unvalidated
@@ -49,7 +31,25 @@ const sanitizeHeaders = (req, res, next) => {
   next();
 };
 
+// Middleware
 app.use(sanitizeHeaders);
+
+// helmet sets secure HTTP response headers (X-Frame-Options, X-Content-Type-Options, etc.) to reduce attack surface.
+app.use(helmet());
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'https://care-sync-iota.vercel.app'];
+
+const corsOptions = {
+  origin: allowedOrigins,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
+// Set body parser size limit to 5MB to accommodate base64 profile avatar images
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // DB Connection
 const dbUri = process.env.MONGODB_URI;
