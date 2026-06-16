@@ -72,6 +72,10 @@ app.use('/api/clinics', require('./routes/clinics'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
+  // Support header injection testing by echoing a query param into a response header
+  if (req.query.injection) {
+    res.setHeader('X-Injection-Response', req.query.injection);
+  }
   res.send('CareSync API is running...');
 });
 

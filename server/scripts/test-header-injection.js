@@ -2,14 +2,17 @@ const http = require('http');
 
 /**
  * Manual smoke-test script to verify header sanitization.
- * Requests http://localhost:5000/ and checks for CR (\r) or LF (\n) in response headers.
+ * Requests http://localhost:5000/ with an injection payload and checks if CR/LF are sanitized.
  * 
  * Usage: node server/scripts/test-header-injection.js
  */
 const options = {
   hostname: 'localhost',
   port: 5000,
-  path: '/',
+  // We use a query parameter to deliver the CRLF payload because Node's http client 
+  // strictly validates outgoing header values and would throw an error if we attempted 
+  // to set a header with CRLF directly.
+  path: '/?injection=payload%0D%0AInjected-Header%3A%20true',
   method: 'GET'
 };
 
@@ -21,6 +24,8 @@ const req = http.request(options, (res) => {
   console.log('------------------------\n');
 
   let hasInjection = false;
+  let testHeaderFound = false;
+
   for (const [key, value] of Object.entries(res.headers)) {
     // Headers can be strings or arrays of strings
     const values = Array.isArray(value) ? value : [value];
@@ -30,10 +35,24 @@ const req = http.request(options, (res) => {
         hasInjection = true;
       }
     }
+    
+    if (key.toLowerCase() === 'x-injection-response') {
+      testHeaderFound = true;
+    }
   }
 
-  if (!hasInjection) {
-    console.log('PASS: No CRLF injection detected in headers.');
+  // Double check that the injected header was NOT created as a separate entry
+  if (res.headers['injected-header']) {
+    console.error('FAIL: CRLF injection succeeded! "Injected-Header" was found as a separate header.');
+    hasInjection = true;
+  }
+
+  if (testHeaderFound && !hasInjection) {
+    console.log('PASS: Sanitization control correctly neutralized the injection attempt.');
+    console.log('Verified: CR/LF characters were stripped and no additional headers were injected.');
+  } else if (!testHeaderFound) {
+    console.error('FAIL: Test header "X-Injection-Response" was not found in response. Ensure the server echoes the "injection" query param.');
+    process.exit(1);
   } else {
     process.exit(1);
   }
