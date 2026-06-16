@@ -22,6 +22,31 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
+/**
+ * Middleware to sanitize response headers by stripping CR (\r) and LF (\n) characters.
+ * This helps prevent HTTP response splitting attacks by ensuring no unvalidated
+ * line breaks are injected into the headers.
+ * 
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
+ */
+const sanitizeHeaders = (req, res, next) => {
+  const originalSetHeader = res.setHeader;
+  res.setHeader = function (name, value) {
+    let sanitizedValue = value;
+    if (typeof value === 'string') {
+      sanitizedValue = value.replace(/[\r\n]/g, '');
+    } else if (Array.isArray(value)) {
+      sanitizedValue = value.map(v => (typeof v === 'string' ? v.replace(/[\r\n]/g, '') : v));
+    }
+    return originalSetHeader.call(this, name, sanitizedValue);
+  };
+  next();
+};
+
+app.use(sanitizeHeaders);
+
 // DB Connection
 const dbUri = process.env.MONGODB_URI;
 if (!dbUri) {
