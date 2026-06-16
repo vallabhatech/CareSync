@@ -39,6 +39,7 @@ import ClinicsNearby from './pages/ClinicsNearby';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import DosageCalculator from './pages/DosageCalculator';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
@@ -305,6 +306,7 @@ function App() {
           <Route path="/symptom-checker" element={<SymptomChecker />} />
           <Route path="/clinics-nearby" element={<ClinicsNearby />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
