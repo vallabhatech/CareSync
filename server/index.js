@@ -40,6 +40,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/medicines', require('./routes/medicines'));
 app.use('/api/symptom-checks', require('./routes/symptomChecks'));
 app.use('/api/clinics', require('./routes/clinics'));
+app.use('/api/health-metrics', require('./routes/healthMetrics'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
