@@ -1,4 +1,4 @@
-const http = require('http');
+const http = require('node:http');
 
 /**
  * Manual smoke-test script to verify header sanitization.
@@ -16,17 +16,16 @@ const options = {
   method: 'GET'
 };
 
-console.log(`Requesting http://${options.hostname}:${options.port}${options.path}...`);
-
-const req = http.request(options, (res) => {
-  console.log('\n--- Received Headers ---');
-  console.log(JSON.stringify(res.headers, null, 2));
-  console.log('------------------------\n');
-
+/**
+ * Scans headers for CRLF injection and verifies the expected test header.
+ * @param {Object} headers - Response headers
+ * @returns {{ hasInjection: boolean, testHeaderFound: boolean }}
+ */
+const validateHeaders = (headers) => {
   let hasInjection = false;
   let testHeaderFound = false;
 
-  for (const [key, value] of Object.entries(res.headers)) {
+  for (const [key, value] of Object.entries(headers)) {
     // Headers can be strings or arrays of strings
     const values = Array.isArray(value) ? value : [value];
     for (const v of values) {
@@ -42,20 +41,35 @@ const req = http.request(options, (res) => {
   }
 
   // Double check that the injected header was NOT created as a separate entry
-  if (res.headers['injected-header']) {
+  if (headers['injected-header']) {
     console.error('FAIL: CRLF injection succeeded! "Injected-Header" was found as a separate header.');
     hasInjection = true;
   }
 
-  if (testHeaderFound && !hasInjection) {
-    console.log('PASS: Sanitization control correctly neutralized the injection attempt.');
-    console.log('Verified: CR/LF characters were stripped and no additional headers were injected.');
-  } else if (!testHeaderFound) {
+  return { hasInjection, testHeaderFound };
+};
+
+console.log(`Requesting http://${options.hostname}:${options.port}${options.path}...`);
+
+const req = http.request(options, (res) => {
+  console.log('\n--- Received Headers ---');
+  console.log(JSON.stringify(res.headers, null, 2));
+  console.log('------------------------\n');
+
+  const { hasInjection, testHeaderFound } = validateHeaders(res.headers);
+
+  if (!testHeaderFound) {
     console.error('FAIL: Test header "X-Injection-Response" was not found in response. Ensure the server echoes the "injection" query param.');
     process.exit(1);
-  } else {
+  }
+
+  if (hasInjection) {
+    // Error messages for injection are already logged inside validateHeaders
     process.exit(1);
   }
+
+  console.log('PASS: Sanitization control correctly neutralized the injection attempt.');
+  console.log('Verified: CR/LF characters were stripped and no additional headers were injected.');
 });
 
 req.on('error', (e) => {
