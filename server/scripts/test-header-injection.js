@@ -64,4 +64,12 @@ req.on('error', (e) => {
   process.exit(1);
 });
 
+// Set a 5-second timeout to prevent the script from hanging indefinitely
+req.setTimeout(5000);
+req.on('timeout', () => {
+  console.error('FAIL: Request timed out after 5 seconds.');
+  req.destroy();
+  process.exit(1);
+});
+
 req.end();
