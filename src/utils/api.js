@@ -38,11 +38,17 @@ API.interceptors.response.use(
     if (!error.response && error.message === 'Network Error') {
       if (error.config && ['post', 'put', 'delete', 'patch'].includes(error.config.method?.toLowerCase())) {
         const offlineQueue = JSON.parse(localStorage.getItem('caresync_offline_queue') || '[]');
+        
+        // Remove stale authorization header before saving to queue
+        const headers = { ...error.config.headers };
+        delete headers['Authorization'];
+        
         offlineQueue.push({
           url: error.config.url,
           method: error.config.method,
           data: error.config.data,
-          headers: error.config.headers
+          headers: headers,
+          retryCount: 0
         });
         localStorage.setItem('caresync_offline_queue', JSON.stringify(offlineQueue));
         return Promise.reject(new Error('Device is offline. Action queued for sync when connection is restored.'));
@@ -52,28 +58,45 @@ API.interceptors.response.use(
   }
 );
 
+let isSyncing = false;
+
 // Sync offline queue when coming online
 window.addEventListener('online', async () => {
-  const queue = JSON.parse(localStorage.getItem('caresync_offline_queue') || '[]');
-  if (queue.length === 0) return;
+  if (isSyncing) return;
+  isSyncing = true;
   
-  const remainingQueue = [];
-  for (const req of queue) {
-    try {
-      await axios({
-        url: req.url,
-        method: req.method,
-        data: req.data,
-        headers: req.headers,
-        baseURL: API.defaults.baseURL
-      });
-    } catch (err) {
-      remainingQueue.push(req);
+  try {
+    const queue = JSON.parse(localStorage.getItem('caresync_offline_queue') || '[]');
+    if (queue.length === 0) return;
+    
+    const remainingQueue = [];
+    for (const req of queue) {
+      try {
+        // Use API instance instead of raw axios to trigger request interceptors (like auth)
+        await API({
+          url: req.url,
+          method: req.method,
+          data: req.data,
+          headers: req.headers
+        });
+      } catch (err) {
+        // Distinguish retryable network errors/5xx from permanent 4xx failures
+        const isRetryable = !err.response || err.response.status >= 500;
+        req.retryCount = (req.retryCount || 0) + 1;
+        
+        if (isRetryable && req.retryCount < 3) {
+          remainingQueue.push(req);
+        } else {
+          console.warn('Dropping permanently failed offline request:', req, err);
+        }
+      }
     }
+    localStorage.setItem('caresync_offline_queue', JSON.stringify(remainingQueue));
+    // Optionally reload page to show synced data
+    window.location.reload();
+  } finally {
+    isSyncing = false;
   }
-  localStorage.setItem('caresync_offline_queue', JSON.stringify(remainingQueue));
-  // Optionally reload page to show synced data
-  window.location.reload();
 });
 
 export default API;
