@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import MedicationIcon from '@mui/icons-material/Medication';
-import CalculateIcon from '@mui/icons-material/Calculate';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -107,22 +105,6 @@ export default function Dashboard() {
       link: "/symptom-checker",
       icon: <SearchIcon fontSize="large" color="primary" />,
       btn: t('dashboard:checkSymptoms'),
-    },
-    {
-      id: 'dosage-calculator',
-      title: 'Dosage Calculator',
-      desc: 'Estimate appropriate medicine doses based on your weight, age, and frequency.',
-      link: "/dosage-calculator",
-      icon: <CalculateIcon fontSize="large" color="primary" />,
-      btn: 'Open Calculator',
-    },
-    {
-      id: 'health-metrics',
-      title: 'Health Metrics',
-      desc: 'Track and analyze vital signs including weight, BP, heart rate, and more.',
-      link: "/health-metrics",
-      icon: <FavoriteBorderIcon fontSize="large" color="primary" />,
-      btn: 'View Metrics',
     },
     {
       id: 'nearby-clinics',
