@@ -29,9 +29,9 @@
     "react-router-dom": "^7.17.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -58,6 +58,7 @@
     "@testing-library/react": "^16.3.2",
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.15",
+    "react-app-rewired": "^2.2.1",
     "react-scripts": "^5.0.1",
     "tailwindcss": "^4.3.1"
   },
