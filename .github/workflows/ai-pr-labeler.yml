@@ -1,98 +1,123 @@
 name: Manual PR Triage
 
 on:
-  workflow_dispatch:
+workflow_dispatch:
 
 permissions:
-  pull-requests: read
-  issues: write
+contents: read
+issues: write
+pull-requests: read
 
 jobs:
-  triage:
-    runs-on: ubuntu-latest
+triage:
+runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/github-script@v8
-        with:
-          script: |
-            const pulls = await github.paginate(
-              github.rest.pulls.list,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open'
-              }
-            );
+```
+steps:
+  - uses: actions/github-script@v8
+    with:
+      script: |
+        const pulls = await github.paginate(
+          github.rest.pulls.list,
+          {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'all'
+          }
+        );
 
-            for (const pr of pulls) {
-              const existingLabels = pr.labels.map(l => l.name);
+        for (const pr of pulls) {
+          const existingLabels = pr.labels.map(label => label.name);
 
-              // Skip if PR already has any labels
-              if (existingLabels.length > 0) {
-                console.log(`PR #${pr.number} already labeled. Skipping.`);
-                continue;
-              }
+          // Skip PRs that already have labels
+          if (existingLabels.length > 0) {
+            console.log(`PR #${pr.number} already labeled. Skipping.`);
+            continue;
+          }
 
-              const text = `${pr.title} ${pr.body || ''}`.toLowerCase();
+          const text = `${pr.title} ${pr.body || ''}`.toLowerCase();
 
-              const labels = [];
+          const labels = [];
 
-              if (
-                ['bug', 'fix', 'error', 'issue', 'resolve']
-                .some(k => text.includes(k))
-              ) labels.push('bug');
+          if (
+            ['bug', 'fix', 'error', 'issue', 'resolve', 'broken']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('bug');
+          }
 
-              if (
-                ['feature', 'enhancement', 'improve', 'add']
-                .some(k => text.includes(k))
-              ) labels.push('enhancement');
+          if (
+            ['feature', 'enhancement', 'improve', 'add', 'implement']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('enhancement');
+          }
 
-              if (
-                ['doc', 'documentation', 'readme']
-                .some(k => text.includes(k))
-              ) labels.push('documentation');
+          if (
+            ['doc', 'docs', 'documentation', 'readme', 'guide']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('documentation');
+          }
 
-              if (
-                ['security', 'xss', 'csrf', 'vulnerability']
-                .some(k => text.includes(k))
-              ) labels.push('security');
+          if (
+            ['security', 'vulnerability', 'xss', 'csrf', 'auth bypass']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('security');
+          }
 
-              if (
-                ['performance', 'optimize', 'latency']
-                .some(k => text.includes(k))
-              ) labels.push('performance');
+          if (
+            ['performance', 'optimize', 'optimization', 'latency', 'slow']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('performance');
+          }
 
-              if (
-                ['ui', 'ux', 'css', 'layout', 'responsive']
-                .some(k => text.includes(k))
-              ) labels.push('ui/ux');
+          if (
+            ['ui', 'ux', 'design', 'layout', 'responsive', 'css']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('ui/ux');
+          }
 
-              if (
-                ['react', 'html', 'css', 'javascript']
-                .some(k => text.includes(k))
-              ) labels.push('frontend');
+          if (
+            ['frontend', 'react', 'html', 'css', 'javascript', 'typescript']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('frontend');
+          }
 
-              if (
-                ['api', 'server', 'database', 'auth']
-                .some(k => text.includes(k))
-              ) labels.push('backend');
+          if (
+            ['backend', 'api', 'server', 'database', 'auth', 'endpoint']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('backend');
+          }
 
-              if (
-                ['test', 'jest', 'playwright', 'cypress']
-                .some(k => text.includes(k))
-              ) labels.push('testing');
+          if (
+            ['test', 'testing', 'jest', 'cypress', 'playwright', 'qa']
+              .some(keyword => text.includes(keyword))
+          ) {
+            labels.push('testing');
+          }
 
-              if (labels.length === 0) {
-                console.log(`PR #${pr.number}: no matching labels`);
-                continue;
-              }
+          if (labels.length === 0) {
+            console.log(`PR #${pr.number}: no matching labels`);
+            continue;
+          }
 
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                labels: [...new Set(labels)]
-              });
+          try {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: [...new Set(labels)]
+            });
 
-              console.log(`PR #${pr.number}: labels added`);
-            }
+            console.log(`PR #${pr.number}: added ${labels.join(', ')}`);
+          } catch (error) {
+            console.log(`PR #${pr.number}: failed - ${error.message}`);
+          }
+        }
+```
