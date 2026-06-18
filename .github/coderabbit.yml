@@ -1,0 +1,37 @@
+# CodeRabbit configuration
+# Docs: https://docs.coderabbit.ai/
+
+language: en-US
+
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+      - develop
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  path_instructions:
+    - path: "src/**/*.ts"
+      instructions: |
+        Review for TypeScript best practices, proper typing, and avoid use of `any`.
+        Check for proper error handling and async/await usage.
+    - path: "src/**/*.tsx"
+      instructions: |
+        Review for React best practices, accessibility (a11y), and performance.
+        Check for missing keys in lists and proper prop typing.
+    - path: "**/*.test.ts"
+      instructions: |
+        Ensure tests are meaningful with proper assertions.
+        Check for edge cases and error scenarios.
+  finishing_touches:
+    docstrings:
+      enabled: true
+
+chat:
+  auto_reply: true
