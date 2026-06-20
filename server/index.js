@@ -6,9 +6,20 @@ const helmet = require('helmet');
 
 const app = express();
 app.disable('x-powered-by');
-// Trust the first proxy hop (Vercel/Render/etc.) so req.ip reflects the real
-// client address — required for accurate security event IP logging.
-app.set('trust proxy', 1);
+// Configure trusted proxy hops so req.ip reflects the real client address for
+// accurate security event logging. Defaults to 1 (one proxy hop), matching the
+// documented Vercel/Render deployment where this is spoofing-resistant. Set
+// TRUST_PROXY=0 when running without a proxy (local/direct exposure) to prevent
+// X-Forwarded-For spoofing, or to a hop count / 'true' / 'false' for other setups.
+const trustProxySetting = process.env.TRUST_PROXY;
+if (trustProxySetting === undefined || trustProxySetting === '') {
+  app.set('trust proxy', 1);
+} else if (trustProxySetting === 'true' || trustProxySetting === 'false') {
+  app.set('trust proxy', trustProxySetting === 'true');
+} else {
+  const hops = Number(trustProxySetting);
+  app.set('trust proxy', Number.isInteger(hops) && hops >= 0 ? hops : 1);
+}
 const PORT = process.env.PORT || 5000;
 
 /**

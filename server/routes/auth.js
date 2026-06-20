@@ -284,6 +284,11 @@ router.put('/profile', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Snapshot original values so we can record only fields that genuinely change.
+    const trackedFields = ['name', 'email', 'phone', 'age', 'bloodGroup', 'allergies', 'avatar'];
+    const originalValues = {};
+    trackedFields.forEach((field) => { originalValues[field] = user[field]; });
+
     const emailChanged = emailInput !== undefined && emailInput !== user.email;
 
     // Check if updating email to one already in use
@@ -311,8 +316,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
     await user.save();
 
-    const updatedFields = ['name', 'email', 'phone', 'age', 'bloodGroup', 'allergies', 'avatar']
-      .filter((field) => req.body[field] !== undefined);
+    const updatedFields = trackedFields.filter((field) => user[field] !== originalValues[field]);
 
     logSecurityEvent({
       eventType: EVENT_TYPES.AUTH_PROFILE_UPDATED,

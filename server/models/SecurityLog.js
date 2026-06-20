@@ -65,5 +65,8 @@ SecurityLogSchema.index({ eventType: 1, createdAt: -1 });
 SecurityLogSchema.index({ severity: 1, createdAt: -1 });
 // Per-IP brute-force / suspicious-pattern detection
 SecurityLogSchema.index({ ip: 1, eventType: 1, createdAt: -1 });
+// Admin log filtering by email or ip with newest-first sorting
+SecurityLogSchema.index({ email: 1, createdAt: -1 });
+SecurityLogSchema.index({ ip: 1, createdAt: -1 });
 
 module.exports = mongoose.model('SecurityLog', SecurityLogSchema);

@@ -18,6 +18,15 @@ router.get('/logs', async (req, res) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 25));
     const skip = (page - 1) * limit;
 
+    // Guard against unbounded deep-offset pagination, which forces MongoDB to
+    // scan and discard huge numbers of documents as the collection grows.
+    const MAX_SKIP = 10000;
+    if (skip > MAX_SKIP) {
+      return res.status(400).json({
+        message: 'Requested page is too deep; narrow the results with filters (eventType, severity, ip, email, from, to) and retry.',
+      });
+    }
+
     const filter = {};
     if (req.query.eventType) filter.eventType = { $eq: String(req.query.eventType) };
     if (req.query.severity) filter.severity = { $eq: String(req.query.severity) };

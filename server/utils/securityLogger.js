@@ -62,8 +62,29 @@ const getClientIp = (req) => {
   return req.ip || req.socket?.remoteAddress || null;
 };
 
-const FAILED_LOGIN_THRESHOLD = Number(process.env.SECURITY_FAILED_LOGIN_THRESHOLD) || 5;
-const FAILED_LOGIN_WINDOW_MIN = Number(process.env.SECURITY_FAILED_LOGIN_WINDOW_MIN) || 15;
+// Accept an env value only if it is a positive integer (>= 1); else fall back.
+const positiveIntFromEnv = (raw, fallback) => {
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 1 ? n : fallback;
+};
+
+// Race a DB operation against a timeout so a slow/hung MongoDB can never block
+// the request path. On timeout the operation keeps running in the background
+// (its own .catch swallows late errors) and we proceed with `onTimeoutValue`.
+const withTimeout = (promise, ms, onTimeoutValue) => {
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(onTimeoutValue), ms);
+  });
+  return Promise.race([
+    Promise.resolve(promise).then((v) => { clearTimeout(timer); return v; }),
+    timeout,
+  ]);
+};
+
+const FAILED_LOGIN_THRESHOLD = positiveIntFromEnv(process.env.SECURITY_FAILED_LOGIN_THRESHOLD, 5);
+const FAILED_LOGIN_WINDOW_MIN = positiveIntFromEnv(process.env.SECURITY_FAILED_LOGIN_WINDOW_MIN, 15);
+const DB_OP_TIMEOUT_MS = positiveIntFromEnv(process.env.SECURITY_DB_TIMEOUT_MS, 3000);
 
 /**
  * Persist + emit a single security event.
@@ -113,9 +134,9 @@ const logSecurityEvent = async ({
     console.error('Security console logging failed:', err.message);
   }
 
-  // Durable persistence
+  // Durable persistence (bounded so a slow DB can't stall the request path)
   try {
-    await SecurityLog.create({
+    const createPromise = SecurityLog.create({
       eventType,
       severity,
       user: userId,
@@ -127,9 +148,12 @@ const logSecurityEvent = async ({
       statusCode,
       message,
       metadata,
+    }).catch((err) => {
+      console.error('Security event persistence failed:', err.message);
     });
+    await withTimeout(createPromise, DB_OP_TIMEOUT_MS, undefined);
   } catch (err) {
-    console.error('Security event persistence failed:', err.message);
+    console.error('Security event persistence error:', err.message);
   }
 };
 
@@ -150,20 +174,30 @@ const detectSuspiciousLogin = async ({ req = null, email = null } = {}) => {
   try {
     const windowStart = new Date(Date.now() - FAILED_LOGIN_WINDOW_MIN * 60 * 1000);
 
-    const failedCount = await SecurityLog.countDocuments({
-      eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
-      ip,
-      createdAt: { $gte: windowStart },
-    });
+    const failedCount = await withTimeout(
+      SecurityLog.countDocuments({
+        eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
+        ip,
+        createdAt: { $gte: windowStart },
+      }).catch(() => null),
+      DB_OP_TIMEOUT_MS,
+      null
+    );
 
+    // DB slow/unavailable — skip detection rather than block the response.
+    if (failedCount === null) return false;
     if (failedCount < FAILED_LOGIN_THRESHOLD) return false;
 
     // De-dupe: only alert once per window per IP.
-    const alreadyFlagged = await SecurityLog.exists({
-      eventType: EVENT_TYPES.SUSPICIOUS_LOGIN_PATTERN,
-      ip,
-      createdAt: { $gte: windowStart },
-    });
+    const alreadyFlagged = await withTimeout(
+      SecurityLog.exists({
+        eventType: EVENT_TYPES.SUSPICIOUS_LOGIN_PATTERN,
+        ip,
+        createdAt: { $gte: windowStart },
+      }).catch(() => null),
+      DB_OP_TIMEOUT_MS,
+      null
+    );
     if (alreadyFlagged) return true;
 
     await logSecurityEvent({

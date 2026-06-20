@@ -96,8 +96,10 @@ These optional variables (see `.env.example`) tune the subsystem; all have sensi
 
 - `SECURITY_FAILED_LOGIN_THRESHOLD` (default `5`)
 - `SECURITY_FAILED_LOGIN_WINDOW_MIN` (default `15`)
+- `SECURITY_DB_TIMEOUT_MS` (default `3000`) — caps how long a log read/write may block the request path
 - `SECURITY_LOG_TO_FILE` (default `false`)
 - `SECURITY_LOG_DIR` (default `server/logs`)
+- `TRUST_PROXY` (default `1`) — trusted proxy hops for correct client IP; set `0` when not behind a proxy
 
 ---
 
