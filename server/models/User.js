@@ -1,6 +1,34 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const EmergencyContactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  relationship: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  phone: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  email: {
+    type: String,
+    default: '',
+    trim: true,
+    lowercase: true,
+  },
+  isPrimary: {
+    type: Boolean,
+    default: false,
+  },
+}, { _id: true });
+
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -41,6 +69,10 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     default: 'patient',
+  },
+  emergencyContacts: {
+    type: [EmergencyContactSchema],
+    default: [],
   },
   createdAt: {
     type: Date,
