@@ -70,6 +70,7 @@ function FamilyMembers() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const loadMembers = useCallback(async () => {
@@ -145,7 +146,8 @@ function FamilyMembers() {
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
     try {
       await API.delete(`/api/family/${deleteTarget._id}`);
       setDeleteTarget(null);
@@ -153,6 +155,8 @@ function FamilyMembers() {
     } catch (err) {
       setError(err.response?.data?.message || t('family:deleteError'));
       setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -399,7 +403,7 @@ function FamilyMembers() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteTarget(null)}>{t('family:cancel')}</Button>
-          <Button onClick={confirmDelete} color="error" variant="contained">
+          <Button onClick={confirmDelete} color="error" variant="contained" disabled={deleting}>
             {t('family:delete')}
           </Button>
         </DialogActions>

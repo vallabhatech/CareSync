@@ -30,7 +30,16 @@ function pickFields(body) {
   for (const key of EDITABLE_FIELDS) {
     if (body[key] === undefined) continue;
     if (key === 'dateOfBirth') {
-      out.dateOfBirth = body.dateOfBirth ? new Date(body.dateOfBirth) : null;
+      if (!body.dateOfBirth) {
+        out.dateOfBirth = null;
+      } else {
+        const parsed = new Date(body.dateOfBirth);
+        if (Number.isNaN(parsed.getTime())) {
+          out._validationError = 'Invalid date of birth';
+        } else {
+          out.dateOfBirth = parsed;
+        }
+      }
     } else if (key === 'linkedUserId') {
       out.linkedUserId =
         body.linkedUserId && mongoose.Types.ObjectId.isValid(body.linkedUserId)
@@ -58,6 +67,9 @@ router.get('/', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const fields = pickFields(req.body);
+    if (fields._validationError) {
+      return res.status(400).json({ message: fields._validationError });
+    }
 
     if (!fields.name || !fields.name.trim()) {
       return res.status(400).json({ message: 'Name is required' });
@@ -86,15 +98,16 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Family member not found' });
     }
 
-    const member = await FamilyMember.findById(req.params.id);
+    // findOne with ownership predicate makes auth + fetch atomic (single DB op).
+    const member = await FamilyMember.findOne({ _id: req.params.id, user: req.user.id });
     if (!member) {
       return res.status(404).json({ message: 'Family member not found' });
     }
-    if (member.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
 
     const fields = pickFields(req.body);
+    if (fields._validationError) {
+      return res.status(400).json({ message: fields._validationError });
+    }
     if (fields.name !== undefined && !String(fields.name).trim()) {
       return res.status(400).json({ message: 'Name cannot be empty' });
     }
@@ -115,15 +128,11 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Family member not found' });
     }
 
-    const member = await FamilyMember.findById(req.params.id);
+    // findOneAndDelete with ownership predicate makes auth + deletion atomic (single DB op).
+    const member = await FamilyMember.findOneAndDelete({ _id: req.params.id, user: req.user.id });
     if (!member) {
       return res.status(404).json({ message: 'Family member not found' });
     }
-    if (member.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
-
-    await FamilyMember.findByIdAndDelete(req.params.id);
     res.json({ message: 'Family member deleted' });
   } catch (err) {
     console.error('Error deleting family member:', err);
