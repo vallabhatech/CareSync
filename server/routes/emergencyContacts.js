@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
   const relationship = String(req.body.relationship || '').trim();
   const phone = String(req.body.phone || '').trim();
   const email = String(req.body.email || '').trim().toLowerCase();
-  const isPrimary = Boolean(req.body.isPrimary);
+  const isPrimary = req.body.isPrimary === true || req.body.isPrimary === 'true';
 
   try {
     if (!name || !phone) {
@@ -111,7 +111,7 @@ router.put('/:id', async (req, res) => {
       }
       contact.email = email;
     }
-    if (req.body.isPrimary !== undefined && Boolean(req.body.isPrimary)) {
+    if (req.body.isPrimary !== undefined && (req.body.isPrimary === true || req.body.isPrimary === 'true')) {
       user.emergencyContacts.forEach((c) => { c.isPrimary = false; });
       contact.isPrimary = true;
     }
