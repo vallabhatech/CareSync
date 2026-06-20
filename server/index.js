@@ -6,6 +6,9 @@ const helmet = require('helmet');
 
 const app = express();
 app.disable('x-powered-by');
+// Trust the first proxy hop (Vercel/Render/etc.) so req.ip reflects the real
+// client address — required for accurate security event IP logging.
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 /**
@@ -70,6 +73,7 @@ app.use('/api/medicines', require('./routes/medicines'));
 app.use('/api/symptom-checks', require('./routes/symptomChecks'));
 app.use('/api/clinics', require('./routes/clinics'));
 app.use('/api/health-metrics', require('./routes/healthMetrics'));
+app.use('/api/security', require('./routes/security'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {

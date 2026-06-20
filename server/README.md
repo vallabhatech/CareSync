@@ -55,6 +55,52 @@ The API will be available at:
 
 ---
 
+## 🛡️ Security Event Logging
+
+All authentication-related security events are logged with structured metadata, persisted to MongoDB, surfaced in real time on the console, and exposed to admins through dedicated endpoints. Suspicious activity (e.g. brute-force login attempts) raises a real-time `CRITICAL` alert.
+
+### Logged events
+
+| Event Type | Severity | Raised when |
+|---|---|---|
+| `AUTH_REGISTER_SUCCESS` | info | A new account is created |
+| `AUTH_REGISTER_FAILURE` | warning | Registration is rejected (missing fields, invalid email, duplicate email, or server error) |
+| `AUTH_LOGIN_SUCCESS` | info | A user logs in successfully |
+| `AUTH_LOGIN_FAILURE` | warning | Login fails (missing fields, invalid email, unknown account, or wrong password) |
+| `AUTH_TOKEN_REJECTED` | warning | A request is denied due to a missing, invalid, or expired token, or a token for a deleted user |
+| `AUTH_PROFILE_UPDATED` | info | A user updates their profile (records which fields changed) |
+| `AUTH_PROFILE_UPDATE_FAILURE` | warning | A profile update is rejected |
+| `ADMIN_ACCESS_DENIED` | warning | A non-admin attempts to reach an admin-only endpoint |
+| `SUSPICIOUS_LOGIN_PATTERN` | critical | An IP exceeds the failed-login threshold within the window (possible brute-force) |
+
+Each record stores: `eventType`, `severity`, `user` (when known), `email`, `ip`, `userAgent`, `method`, `path`, `statusCode`, `message`, `metadata`, and `createdAt`. Passwords are **never** logged.
+
+### Real-time visibility & alerting
+
+- Every event is printed to the server console (and therefore appears in the hosting platform's logs) via a leveled logger.
+- Repeated failed logins from the same IP trigger a single `CRITICAL` `SUSPICIOUS_LOGIN_PATTERN` alert per window (de-duplicated), making brute-force attempts immediately visible.
+- Optional file logging can be enabled with `SECURITY_LOG_TO_FILE=true` (keep it `false` on serverless/read-only hosts such as Vercel).
+
+### Admin endpoints (`/api/security`)
+
+Both routes require an authenticated user whose `role` is `admin` (`Authorization: Bearer <token>`).
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/security/logs` | Paginated, filterable event log. Query params: `page`, `limit` (max 100), `eventType`, `severity`, `ip`, `email`, `from`, `to`. |
+| `GET` | `/api/security/stats` | Aggregated overview for a window (`hours`, default 24): counts by event type and severity, top offending login IPs, and recent critical events. |
+
+### Configuration
+
+These optional variables (see `.env.example`) tune the subsystem; all have sensible defaults:
+
+- `SECURITY_FAILED_LOGIN_THRESHOLD` (default `5`)
+- `SECURITY_FAILED_LOGIN_WINDOW_MIN` (default `15`)
+- `SECURITY_LOG_TO_FILE` (default `false`)
+- `SECURITY_LOG_DIR` (default `server/logs`)
+
+---
+
 ## 📖 API Documentation
 
 All request payloads should use `Content-Type: application/json`. Private routes require the `Authorization: Bearer <token>` header.
