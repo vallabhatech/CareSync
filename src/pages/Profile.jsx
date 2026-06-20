@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import FamilyMembers from '../components/FamilyMembers';
 
 function Profile() {
   const { t } = useTranslation();
@@ -221,6 +222,8 @@ function Profile() {
           </Box>
         </CardContent>
       </Card>
+
+      <FamilyMembers />
     </Box>
   );
 }
