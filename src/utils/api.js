@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { sanitizeConfig, validateAndNormalizeHeaders } from './sanitize';
+import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sanitize';
+
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -21,6 +22,15 @@ const API = axios.create({
 // Request interceptor to attach JWT token and sanitize/validate user-controlled configs
 API.interceptors.request.use(
   (config) => {
+    // ── SSRF guard: validate the resolved URL before sending ──────────────────
+    // config.url is relative when using the baseURL, so we construct the
+    // absolute URL here and validate it to prevent protocol abuse or
+    // private-network targets being injected via dynamic config.
+    const resolvedUrl = config.baseURL
+      ? new URL(config.url || '', config.baseURL).href
+      : config.url;
+    validateUrl(resolvedUrl); // throws on disallowed targets
+
     if (config.headers) {
       config.headers = validateAndNormalizeHeaders(config.headers);
     }
@@ -41,6 +51,7 @@ API.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
 
 // Response interceptor for offline queueing
 API.interceptors.response.use(
@@ -83,6 +94,13 @@ window.addEventListener('online', async () => {
     const remainingQueue = [];
     for (const req of queue) {
       try {
+        // Re-validate URL before replaying — the environment may have changed
+        // since the request was queued (e.g. baseURL env var updated).
+        const replayUrl = apiBaseURL
+          ? new URL(req.url || '', apiBaseURL).href
+          : req.url;
+        validateUrl(replayUrl);
+
         // Use API instance instead of raw axios to trigger request interceptors (like auth)
         await API({
           url: req.url,
@@ -90,6 +108,7 @@ window.addEventListener('online', async () => {
           data: req.data,
           headers: req.headers
         });
+
       } catch (err) {
         // Distinguish retryable network errors/5xx from permanent 4xx failures
         const isRetryable = !err.response || err.response.status >= 500;
