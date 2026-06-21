@@ -3,6 +3,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
+const { logSecurityEvent, detectSuspiciousLogin } = require('../utils/securityLogger');
+const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
 
 const generateToken = (userId) => {
   const jwtSecret = process.env.JWT_SECRET;
@@ -26,17 +28,45 @@ router.post('/register', async (req, res) => {
 
   try {
     if (!name || !email || !password) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_REGISTER_FAILURE,
+        severity: SEVERITY.WARNING,
+        req,
+        email: email || null,
+        statusCode: 400,
+        message: 'Registration rejected: missing fields',
+        metadata: { reason: 'missing_fields' },
+      });
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
     const { isValidEmail } = require('../utils/validation');
     if (!isValidEmail(email)) {
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_REGISTER_FAILURE,
+        severity: SEVERITY.WARNING,
+        req,
+        email,
+        statusCode: 400,
+        message: 'Registration rejected: invalid email format',
+        metadata: { reason: 'invalid_email_format' },
+      });
       return res.status(400).json({ message: 'Invalid email address' });
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: { $eq: email } });
     if (existingUser) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_REGISTER_FAILURE,
+        severity: SEVERITY.WARNING,
+        req,
+        email,
+        statusCode: 400,
+        message: 'Registration rejected: email already in use',
+        metadata: { reason: 'duplicate_email' },
+      });
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
@@ -51,6 +81,16 @@ router.post('/register', async (req, res) => {
 
     // Generate JWT token
     const token = generateToken(newUser._id);
+
+    logSecurityEvent({
+      eventType: EVENT_TYPES.AUTH_REGISTER_SUCCESS,
+      severity: SEVERITY.INFO,
+      req,
+      user: newUser,
+      email: newUser.email,
+      statusCode: 201,
+      message: 'New user registered',
+    });
 
     res.status(201).json({
       token,
@@ -68,6 +108,15 @@ router.post('/register', async (req, res) => {
     });
   } catch (err) {
     console.error('Registration error:', err.message);
+    await logSecurityEvent({
+      eventType: EVENT_TYPES.AUTH_REGISTER_FAILURE,
+      severity: SEVERITY.WARNING,
+      req,
+      email: email || null,
+      statusCode: 500,
+      message: 'Registration failed: server error',
+      metadata: { reason: 'server_error', error: err.message },
+    });
     res.status(500).json({ message: 'Server error during registration' });
   }
 });
@@ -81,28 +130,78 @@ router.post('/login', async (req, res) => {
 
   try {
     if (!email || !password) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
+        severity: SEVERITY.WARNING,
+        req,
+        email: email || null,
+        statusCode: 400,
+        message: 'Login rejected: missing fields',
+        metadata: { reason: 'missing_fields' },
+      });
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
     const { isValidEmail } = require('../utils/validation');
     if (!isValidEmail(email)) {
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
+        severity: SEVERITY.WARNING,
+        req,
+        email,
+        statusCode: 400,
+        message: 'Login rejected: invalid email format',
+        metadata: { reason: 'invalid_email_format' },
+      });
       return res.status(400).json({ message: 'Invalid email address' });
     }
 
     // Check user
     const user = await User.findOne({ email: { $eq: email } });
     if (!user) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
+        severity: SEVERITY.WARNING,
+        req,
+        email,
+        statusCode: 400,
+        message: 'Login failed: no account for email',
+        metadata: { reason: 'user_not_found' },
+      });
+      await detectSuspiciousLogin({ req, email });
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Compare password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
+        severity: SEVERITY.WARNING,
+        req,
+        user,
+        email,
+        statusCode: 400,
+        message: 'Login failed: incorrect password',
+        metadata: { reason: 'invalid_password' },
+      });
+      await detectSuspiciousLogin({ req, email });
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Generate JWT token
     const token = generateToken(user._id);
+
+    logSecurityEvent({
+      eventType: EVENT_TYPES.AUTH_LOGIN_SUCCESS,
+      severity: SEVERITY.INFO,
+      req,
+      user,
+      email: user.email,
+      statusCode: 200,
+      message: 'User logged in',
+    });
 
     res.json({
       token,
@@ -120,6 +219,15 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err.message);
+    await logSecurityEvent({
+      eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
+      severity: SEVERITY.WARNING,
+      req,
+      email: email || null,
+      statusCode: 500,
+      message: 'Login failed: server error',
+      metadata: { reason: 'server_error', error: err.message },
+    });
     res.status(500).json({ message: 'Server error during login' });
   }
 });
@@ -168,11 +276,28 @@ router.put('/profile', authMiddleware, async (req, res) => {
   try {
     const user = await User.findOne({ _id: { $eq: req.user._id } });
     if (!user) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_PROFILE_UPDATE_FAILURE,
+        severity: SEVERITY.WARNING,
+        req,
+        user: req.user,
+        email: req.user?.email || null,
+        statusCode: 404,
+        message: 'Profile update failed: user not found',
+        metadata: { reason: 'user_not_found' },
+      });
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Snapshot original values so we can record only fields that genuinely change.
+    const trackedFields = ['name', 'email', 'phone', 'age', 'bloodGroup', 'allergies', 'avatar'];
+    const originalValues = {};
+    trackedFields.forEach((field) => { originalValues[field] = user[field]; });
+
+    const emailChanged = emailInput !== undefined && emailInput !== user.email;
+
     // Check if updating email to one already in use
-    if (emailInput !== undefined && emailInput !== user.email) {
+    if (emailChanged) {
       user.email = await validateAndGetEmailUpdate(emailInput, user);
     }
 
@@ -196,6 +321,19 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
     await user.save();
 
+    const updatedFields = trackedFields.filter((field) => user[field] !== originalValues[field]);
+
+    logSecurityEvent({
+      eventType: EVENT_TYPES.AUTH_PROFILE_UPDATED,
+      severity: SEVERITY.INFO,
+      req,
+      user,
+      email: user.email,
+      statusCode: 200,
+      message: 'User profile updated',
+      metadata: { updatedFields, emailChanged },
+    });
+
     res.json({
       user: {
         id: user._id,
@@ -212,6 +350,16 @@ router.put('/profile', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Update profile error:', err.message);
     const isValidationError = err.message === 'Invalid email address' || err.message === 'Email already in use';
+    await logSecurityEvent({
+      eventType: EVENT_TYPES.AUTH_PROFILE_UPDATE_FAILURE,
+      severity: SEVERITY.WARNING,
+      req,
+      user: req.user,
+      email: req.user?.email || null,
+      statusCode: isValidationError ? 400 : 500,
+      message: 'Profile update failed',
+      metadata: { reason: isValidationError ? 'validation_error' : 'server_error', error: err.message },
+    });
     res.status(isValidationError ? 400 : 500).json({ message: err.message || 'Server error updating user profile' });
   }
 });
