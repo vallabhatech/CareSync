@@ -42,6 +42,14 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: 'patient',
   },
+  isTwoFactorEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  twoFactorSecret: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
