@@ -29,7 +29,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    const { isValidEmail } = require('../utils/validation');
+    if (!isValidEmail(email)) {
       return res.status(400).json({ message: 'Invalid email address' });
     }
 
@@ -83,7 +84,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    const { isValidEmail } = require('../utils/validation');
+    if (!isValidEmail(email)) {
       return res.status(400).json({ message: 'Invalid email address' });
     }
 
@@ -146,7 +148,8 @@ router.get('/me', authMiddleware, async (req, res) => {
 });
 
 const validateAndGetEmailUpdate = async (email, currentUser) => {
-  if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+  const { isValidEmail } = require('../utils/validation');
+  if (!isValidEmail(email)) {
     throw new Error('Invalid email address');
   }
   const emailExists = await User.findOne({ email: { $eq: email } });

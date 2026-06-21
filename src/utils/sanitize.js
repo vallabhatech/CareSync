@@ -66,6 +66,11 @@ export function validateAndNormalizeHeaders(headers) {
     const trimmedKey = key.trim();
     const keyLower = trimmedKey.toLowerCase();
 
+    // Enforce conservative length limits to mitigate abuse
+    if (trimmedKey.length === 0 || trimmedKey.length > 256) {
+      throw new Error(`Malformed header name: "${trimmedKey}"`);
+    }
+
     // 1. Reject prototype pollution derived headers
     if (
       keyLower === '__proto__' ||
@@ -92,6 +97,9 @@ export function validateAndNormalizeHeaders(headers) {
     } else if (Array.isArray(value)) {
       normalizedValue = value.map(v => {
         const strVal = String(v).trim();
+        if (strVal.length > 4096) {
+          throw new Error(`Header value too long for key "${trimmedKey}"`);
+        }
         // Reject CRLF injection
         if (/[\r\n]/.test(strVal)) {
           throw new Error(`CRLF injection detected in header value for key "${trimmedKey}"`);
@@ -105,6 +113,9 @@ export function validateAndNormalizeHeaders(headers) {
       });
     } else {
       normalizedValue = String(value).trim();
+      if (normalizedValue.length > 4096) {
+        throw new Error(`Header value too long for key "${trimmedKey}"`);
+      }
       // Reject CRLF injection
       if (/[\r\n]/.test(normalizedValue)) {
         throw new Error(`CRLF injection detected in header value for key "${trimmedKey}"`);

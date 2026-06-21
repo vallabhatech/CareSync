@@ -59,12 +59,21 @@ export function parseNoProxyEntry(entry) {
     return { type: 'wildcard', raw, suffix };
   }
 
-  const portMatch = raw.match(/^(.+):(\d+)$/);
+  // Protect against ridiculously long NO_PROXY entries
+  if (raw.length > 256) {
+    throw new Error(`NO_PROXY entry too long: "${raw.slice(0, 64)}..."`);
+  }
+
+  const portMatch = raw.match(/^(.+?):([0-9]{1,5})$/);
   const hostPart = (portMatch ? portMatch[1] : raw).toLowerCase();
   const port = portMatch ? Number.parseInt(portMatch[2], 10) : undefined;
 
-  if (Number.isNaN(port)) {
+  if (port !== undefined && (Number.isNaN(port) || port < 1 || port > 65535)) {
     throw new Error(`Invalid NO_PROXY port in entry "${raw}".`);
+  }
+
+  if (hostPart.length > 253) {
+    throw new Error(`NO_PROXY host part too long in entry "${raw}".`);
   }
 
   return { type: 'host', raw, host: hostPart, port };
