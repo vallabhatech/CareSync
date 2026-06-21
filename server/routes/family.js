@@ -26,6 +26,7 @@ const EDITABLE_FIELDS = [
 // keys that are actually present are copied; `dateOfBirth` is coerced to a
 // Date (or null), and empty `linkedUserId` is normalised to null.
 function pickFields(body) {
+  if (!body || typeof body !== 'object') return {};
   const out = {};
   for (const key of EDITABLE_FIELDS) {
     if (body[key] === undefined) continue;
@@ -71,9 +72,10 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: fields._validationError });
     }
 
-    if (!fields.name || !fields.name.trim()) {
+    if (typeof fields.name !== 'string' || !fields.name.trim()) {
       return res.status(400).json({ message: 'Name is required' });
     }
+    fields.name = fields.name.trim();
 
     const count = await FamilyMember.countDocuments({ user: req.user.id });
     if (count >= MAX_FAMILY_MEMBERS) {
@@ -108,8 +110,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (fields._validationError) {
       return res.status(400).json({ message: fields._validationError });
     }
-    if (fields.name !== undefined && !String(fields.name).trim()) {
-      return res.status(400).json({ message: 'Name cannot be empty' });
+    if (fields.name !== undefined) {
+      if (typeof fields.name !== 'string' || !fields.name.trim()) {
+        return res.status(400).json({ message: 'Name cannot be empty' });
+      }
+      fields.name = fields.name.trim();
     }
     Object.assign(member, fields);
 
