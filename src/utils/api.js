@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { sanitizeConfig } from './sanitize';
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -17,9 +18,19 @@ const API = axios.create({
   },
 });
 
-// Request interceptor to attach JWT token
+// Request interceptor to attach JWT token and sanitize user-controlled configs
 API.interceptors.request.use(
   (config) => {
+    if (config.headers) {
+      config.headers = sanitizeConfig(config.headers);
+    }
+    if (config.params) {
+      config.params = sanitizeConfig(config.params);
+    }
+    if (config.data) {
+      config.data = sanitizeConfig(config.data);
+    }
+
     const token = localStorage.getItem('caresync_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -39,14 +50,14 @@ API.interceptors.response.use(
       if (error.config && ['post', 'put', 'delete', 'patch'].includes(error.config.method?.toLowerCase())) {
         const offlineQueue = JSON.parse(localStorage.getItem('caresync_offline_queue') || '[]');
         
-        // Remove stale authorization header before saving to queue
-        const headers = { ...error.config.headers };
+        // Sanitize headers and remove stale authorization header before saving to queue
+        const headers = sanitizeConfig(error.config.headers || {});
         delete headers['Authorization'];
         
         offlineQueue.push({
           url: error.config.url,
           method: error.config.method,
-          data: error.config.data,
+          data: sanitizeConfig(error.config.data),
           headers: headers,
           retryCount: 0
         });
