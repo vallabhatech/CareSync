@@ -80,6 +80,7 @@ mongoose.connect(dbUri)
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth/emergency-contacts', require('./routes/emergencyContacts'));
 app.use('/api/medicines', require('./routes/medicines'));
 app.use('/api/symptom-checks', require('./routes/symptomChecks'));
 app.use('/api/clinics', require('./routes/clinics'));
