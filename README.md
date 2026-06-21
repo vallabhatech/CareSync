@@ -199,6 +199,14 @@ Contributions are what make the open-source community grow and thrive. Any contr
 git checkout -b feature/AmazingFeature
 ```
 
+## Configured request/response limits
+
+- **Server body limit:** configured via `server/config/limits.js` (default `5mb`). Override with `BODY_LIMIT` or `BODY_LIMIT_BYTES` environment variables.
+- **Client axios limits:** configured via `src/utils/httpConfig.js` (`REACT_APP_MAX_CONTENT_LENGTH` and `REACT_APP_MAX_BODY_LENGTH`, defaults `5MB`).
+
+Requests rejected due to oversized payloads are logged on the server with IP, URL, method and Content-Length.
+
+
 3. Commit your changes
 
 ```bash

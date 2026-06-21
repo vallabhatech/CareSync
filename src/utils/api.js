@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sanitize';
+import httpConfig from './httpConfig';
 
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
@@ -17,6 +18,9 @@ const API = axios.create({
   headers: {
     'Content-Type': 'application/json',     
   },
+  // Protect client from very large responses and request bodies (DoS protection)
+  maxContentLength: httpConfig.DEFAULT_MAX_CONTENT_LENGTH,
+  maxBodyLength: httpConfig.DEFAULT_MAX_BODY_LENGTH,
 });
 
 // Request interceptor to attach JWT token and sanitize/validate user-controlled configs

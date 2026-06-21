@@ -8,6 +8,8 @@ const app = express();
 app.disable('x-powered-by');
 const PORT = process.env.PORT || 5000;
 
+const limits = require('./config/limits');
+
 /**
  * Middleware to sanitize response headers by stripping CR (\r) and LF (\n) characters.
  * This helps prevent HTTP response splitting attacks by ensuring no unvalidated
@@ -47,9 +49,24 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Set body parser size limit to 5MB to accommodate base64 profile avatar images
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ limit: '5mb', extended: true }));
+// Set body parser size limit using centralized limits configuration
+app.use(express.json({ limit: limits.DEFAULT_BODY_LIMIT }));
+app.use(express.urlencoded({ limit: limits.DEFAULT_BODY_LIMIT, extended: true }));
+
+// Middleware to catch oversized payload errors thrown by body parsers and log them
+app.use((err, req, res, next) => {
+  if (err && (err.type === 'entity.too.large' || err.status === 413)) {
+    const ip = req.ip || req.headers['x-forwarded-for'] || (req.connection && req.connection.remoteAddress) || 'unknown';
+    console.warn('Rejected oversized request', {
+      ip,
+      url: req.originalUrl,
+      method: req.method,
+      contentLength: req.headers['content-length'] || 'unknown',
+    });
+    return res.status(413).json({ message: 'Payload Too Large' });
+  }
+  next(err);
+});
 
 // DB Connection
 const dbUri = process.env.MONGODB_URI;
@@ -86,6 +103,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal Server Error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
