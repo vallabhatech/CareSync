@@ -33,8 +33,13 @@ const sanitizeHeaders = (req, res, next) => {
   next();
 };
 
+
 // Middleware
 app.use(sanitizeHeaders);
+
+// Sanitize incoming JSON bodies to prevent prototype pollution attacks
+const { sanitizeBody } = require('./utils/requestSanitize');
+app.use(sanitizeBody);
 
 // helmet sets secure HTTP response headers (X-Frame-Options, X-Content-Type-Options, etc.) to reduce attack surface.
 app.use(helmet());
@@ -110,3 +115,17 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
+// Test-only endpoints used by the security test-suite. Only enabled in test env.
+if (process.env.NODE_ENV === 'test') {
+  app.post('/__test/sanitize', (req, res) => {
+    res.json(req.body || {});
+  });
+
+  app.get('/__test/echo-header', (req, res) => {
+    const v = req.headers['x-echo'] || '';
+    // setHeader is sanitized by sanitizeHeaders middleware
+    res.setHeader('X-Echo-Response', v);
+    res.json({ ok: true });
+  });
+}
