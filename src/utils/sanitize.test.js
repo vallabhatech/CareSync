@@ -307,7 +307,9 @@ describe('validateUrl utility (SSRF prevention)', () => {
     });
 
     test('blocks 169.254.169.254 (AWS IMDS)', () => {
-      expect(() => validateUrl('http://169.254.169.254/')).toThrow(/blocked/);
+      expect(() => validateUrl('http://169.254.169.254/')).toThrow(
+        /metadata endpoint|blocked/
+      );
     });
   });
 
@@ -316,13 +318,13 @@ describe('validateUrl utility (SSRF prevention)', () => {
     test('blocks 169.254.169.254 IP metadata', () => {
       expect(() =>
         validateUrl('http://169.254.169.254/latest/meta-data/iam/security-credentials/')
-      ).toThrow(/blocked/);
+      ).toThrow(/metadata endpoint|blocked/);
     });
 
     test('blocks 100.100.100.200 (Alibaba Cloud)', () => {
       expect(() =>
         validateUrl('http://100.100.100.200/latest/meta-data/')
-      ).toThrow(/blocked/);
+      ).toThrow(/metadata endpoint|blocked/);
     });
 
     test('blocks metadata.google.internal', () => {

@@ -1,3 +1,9 @@
+import {
+  isLoopbackAlias,
+  normalizeIPv4,
+  normalizeIPv6,
+} from './hostNormalize';
+
 /**
  * Deep sanitizes an object by removing prototype pollution vectors.
  * Recursively rejects any keys matching:
@@ -195,51 +201,49 @@ export function validateUrl(rawUrl) {
   }
 
   // 6b. Numeric IPv4 (standard dotted-decimal, decimal, hex, octal) ──────────
-  const ipv4 = _normalizeIPv4(ip);
+  const ipv4 = normalizeIPv4(ip);
   if (ipv4 !== null && _isBlockedIPv4(ipv4)) {
     throw new Error(
       `URL validation failed: IP address "${ip}" resolves to a blocked (loopback/private/link-local) range.`
     );
   }
 
-  // ── 7. Reject "localhost" and common alias hostnames ──────────────────�function _isBlockedIPv6(ip) {
-  // Must contain a colon to be IPv6 (covers both "[::1]" and "::1")
-  if (!ip.includes(':')) return false;
+  // ── 7. Reject "localhost" and common alias hostnames ───────────────────────
+  if (isLoopbackAlias(hostname)) {
+    throw new Error(
+      `URL validation failed: Hostname "${hostname}" is a blocked loopback alias.`
+    );
+  }
 
-  // Node.js URL parser returns hostnames for IPv6 addresses WITH brackets,
-  // e.g. parsed.hostname === "[fe80::1]". Strip them before processing.
-  const bare = ip.startsWith('[') && ip.endsWith(']')
-    ? ip.slice(1, -1)
-    : ip;
+  return parsed;
+}
 
-  // Normalise the bare address through the URL parser so abbreviated forms
-  // (e.g. "::1") are retained consistently. We wrap in brackets for the URL.
-  let normalised;
-  try {
-    const testUrl = new URL(`http://[${bare}]/`);
-    // .hostname returns with brackets; strip them again.
-    const raw = testUrl.hostname;
-    normalised = (raw.startsWith('[') ? raw.slice(1, -1) : raw).toLowerCase();
-  } catch {
-    // URL parser rejected the address — treat it as malformed and block it.
+function _isBlockedIPv6(ip) {
+  if (!ip.includes(':')) {
+    return false;
+  }
+
+  let normalised = normalizeIPv6(ip);
+  if (!normalised) {
     throw new Error(`URL validation failed: Malformed IPv6 address "${ip}".`);
   }
 
-  // ── Loopback ::1 ──────────────────────────────────────────────────────────
-  if (normalised === '::1') return true;
+  if (normalised === '::1') {
+    return true;
+  }
 
-  // ── All-zeros / unspecified :: ────────────────────────────────────────────
-  if (normalised === '::' || /^::0*$/.test(normalised)) return true;
+  if (normalised === '::' || /^::0*$/.test(normalised)) {
+    return true;
+  }
 
-  // ── Link-local fe80::/10  (fe80 – febf) ──────────────────────────────────
-  if (/^fe[89ab][0-9a-f]:/i.test(normalised)) return true;
+  if (/^fe[89ab][0-9a-f]:/i.test(normalised)) {
+    return true;
+  }
 
-  // ── Unique local fc00::/7  (fc00 – fdff) ─────────────────────────────────
-  if (/^f[cd][0-9a-f]{2}:/i.test(normalised)) return true;
+  if (/^f[cd][0-9a-f]{2}:/i.test(normalised)) {
+    return true;
+  }
 
-  // ── IPv4-mapped ::ffff:<hex16>:<hex16> ───────────────────────────────────
-  // Node.js URL parser normalises [::ffff:127.0.0.1] → "::ffff:7f00:1"
-  // i.e. two 16-bit hex groups rather than dotted-decimal.
   const mappedHexMatch = normalised.match(
     /^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i
   );
@@ -251,98 +255,20 @@ export function validateUrl(rawUrl) {
     const c = (lo >> 8) & 0xff;
     const d = lo & 0xff;
     const dotted = `${a}.${b}.${c}.${d}`;
-    if (_isBlockedIPv4(dotted)) return true;
-  }
-
-  // ── IPv4-mapped in dotted-decimal notation (fallback) ─────────────────────
-  const mappedDottedMatch = normalised.match(/^::(?:ffff:)?([\d.]+)$/i);
-  if (mappedDottedMatch) {
-    const ipv4 = _normalizeIPv4(mappedDottedMatch[1]);
-    if (ipv4 !== null && _isBlockedIPv4(ipv4)) return true;
-  }
-
-  return false;
-}
-
-f]{2}:/i.test(normalised)) return true;
-
-  // ── IPv4-mapped ::ffff:<hex16>:<hex16> ───────────────────────────────────
-  // Node.js URL parser normalises [::ffff:127.0.0.1] → "::ffff:7f00:1"
-  // i.e. two 16-bit hex groups rather than dotted-decimal.
-  const mappedHexMatch = normalised.match(
-    /^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i
-  );
-  if (mappedHexMatch) {
-    const hi = parseInt(mappedHexMatch[1], 16);
-    const lo = parseInt(mappedHexMatch[2], 16);
-    const a = (hi >> 8) & 0xff;
-    const b = hi & 0xff;
-    const c = (lo >> 8) & 0xff;
-    const d = lo & 0xff;
-    const dotted = `${a}.${b}.${c}.${d}`;
-    if (_isBlockedIPv4(dotted)) return true;
-  }
-
-  // ── IPv4-mapped in dotted-decimal notation (some environments) ────────────
-  const mappedDottedMatch = normalised.match(/^::(?:ffff:)?([\d.]+)$/i);
-  if (mappedDottedMatch) {
-    const ipv4 = _normalizeIPv4(mappedDottedMatch[1]);
-    if (ipv4 !== null && _isBlockedIPv4(ipv4)) return true;
-  }
-
-  return false;
-}
-
-
-/**
- * Normalizes an IPv4 address from any representation (dotted-decimal,
- * decimal, hex, octal, mixed) into standard dotted-decimal notation.
- * Returns null when the string is not a recognisable IPv4 address.
- *
- * @param {string} ip
- * @returns {string|null} Dotted-decimal string like "192.168.1.1" or null.
- */
-function _normalizeIPv4(ip) {
-  // Must not contain colons (would be IPv6)
-  if (ip.includes(':')) return null;
-
-  // Split on dots
-  const parts = ip.split('.');
-  if (parts.length < 1 || parts.length > 4) return null;
-
-  try {
-    const octets = parts.map((part) => {
-      let val;
-      if (/^0x[0-9a-f]+$/i.test(part)) {
-        // Hexadecimal: 0x7f
-        val = parseInt(part, 16);
-      } else if (/^0[0-7]+$/.test(part) && part.length > 1) {
-        // Octal: 0177
-        val = parseInt(part, 8);
-      } else if (/^\d+$/.test(part)) {
-        val = parseInt(part, 10);
-      } else {
-        // Not a valid numeric part → not an IP
-        return null;
-      }
-      if (val < 0 || val > 255) return null;
-      return val;
-    });
-
-    if (octets.some((o) => o === null)) return null;
-
-    // Fewer than 4 parts: classful expansion (e.g. 2130706433 → 127.0.0.1)
-    // Expand to 4 octets
-    while (octets.length < 4) {
-      const last = octets.pop();
-      octets.push(last & 0xff);
-      octets.unshift((last >> 8) & 0xff);
+    if (_isBlockedIPv4(dotted)) {
+      return true;
     }
-
-    return octets.join('.');
-  } catch {
-    return null;
   }
+
+  const mappedDottedMatch = normalised.match(/^::(?:ffff:)?([\d.]+)$/i);
+  if (mappedDottedMatch) {
+    const mappedIpv4 = normalizeIPv4(mappedDottedMatch[1]);
+    if (mappedIpv4 !== null && _isBlockedIPv4(mappedIpv4)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
