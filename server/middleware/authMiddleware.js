@@ -1,10 +1,20 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { logSecurityEvent } = require('../utils/securityLogger');
+const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
 
 const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.header('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_TOKEN_REJECTED,
+        severity: SEVERITY.WARNING,
+        req,
+        statusCode: 401,
+        message: 'Missing or malformed Authorization header',
+        metadata: { reason: 'no_token' },
+      });
       return res.status(401).json({ message: 'No authorization token, access denied' });
     }
 
@@ -19,6 +29,14 @@ const authMiddleware = async (req, res, next) => {
     
     const user = await User.findOne({ _id: { $eq: decoded.id } }).select('-password');
     if (!user) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_TOKEN_REJECTED,
+        severity: SEVERITY.WARNING,
+        req,
+        statusCode: 401,
+        message: 'Valid token but user no longer exists',
+        metadata: { reason: 'user_not_found', tokenUserId: decoded?.id },
+      });
       return res.status(401).json({ message: 'User not found, authorization failed' });
     }
 
@@ -27,6 +45,14 @@ const authMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Authentication middleware error:', error.message);
+    await logSecurityEvent({
+      eventType: EVENT_TYPES.AUTH_TOKEN_REJECTED,
+      severity: SEVERITY.WARNING,
+      req,
+      statusCode: 401,
+      message: 'Token verification failed',
+      metadata: { reason: 'invalid_or_expired', error: error.message },
+    });
     res.status(401).json({ message: 'Token is invalid or expired, authorization failed' });
   }
 };
