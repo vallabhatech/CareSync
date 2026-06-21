@@ -27,6 +27,18 @@ const authMiddleware = async (req, res, next) => {
     const token = authHeader.replace('Bearer ', '');
     const decoded = jwt.verify(token, jwtSecret);
     
+    if (decoded.isTemp) {
+      await logSecurityEvent({
+        eventType: EVENT_TYPES.AUTH_TOKEN_REJECTED,
+        severity: SEVERITY.WARNING,
+        req,
+        statusCode: 401,
+        message: 'Temporary tokens cannot be used to access protected routes',
+        metadata: { reason: 'temp_token' },
+      });
+      return res.status(401).json({ message: 'Temporary tokens cannot be used to access protected routes' });
+    }
+    
     const user = await User.findOne({ _id: { $eq: decoded.id } }).select('-password');
     if (!user) {
       await logSecurityEvent({
