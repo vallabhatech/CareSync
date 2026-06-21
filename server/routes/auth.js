@@ -430,6 +430,9 @@ router.post('/login/verify-2fa', async (req, res) => {
       },
     });
   } catch (err) {
+    if (err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid or expired temporary token' });
+    }
     console.error('2FA Verification error:', err.message);
     res.status(500).json({ message: 'Server error during 2FA verification' });
   }
@@ -516,9 +519,19 @@ router.post('/2fa/verify-setup', authMiddleware, async (req, res) => {
 // @desc    Disable 2FA
 // @access  Private
 router.post('/2fa/disable', authMiddleware, async (req, res) => {
+  const { password } = req.body;
+  if (!password) {
+    return res.status(400).json({ message: 'Password is required to disable 2FA' });
+  }
+  
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Incorrect password' });
+    }
 
     user.isTwoFactorEnabled = false;
     user.twoFactorSecret = null;

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 const EmergencyContactSchema = new mongoose.Schema({
   name: {
@@ -77,6 +78,8 @@ const UserSchema = new mongoose.Schema({
   twoFactorSecret: {
     type: String,
     default: null,
+    get: decrypt,
+    set: encrypt,
   },
   emergencyContacts: {
     type: [EmergencyContactSchema],
