@@ -85,6 +85,7 @@ app.use('/api/medicines', require('./routes/medicines'));
 app.use('/api/symptom-checks', require('./routes/symptomChecks'));
 app.use('/api/clinics', require('./routes/clinics'));
 app.use('/api/health-metrics', require('./routes/healthMetrics'));
+app.use('/api/family', require('./routes/family'));
 app.use('/api/security', require('./routes/security'));
 
 // Health Check / Default route

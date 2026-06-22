@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import FamilyMembers from '../components/FamilyMembers';
 import EmergencyContacts from '../components/EmergencyContacts';
 
 function Profile() {
@@ -223,6 +224,7 @@ function Profile() {
         </CardContent>
       </Card>
 
+      <FamilyMembers />
       <EmergencyContacts />
     </Box>
   );
