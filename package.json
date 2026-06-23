@@ -9,9 +9,9 @@
     "@fontsource/fira-mono": "^5.2.7",
     "@fontsource/roboto": "^5.2.10",
     "@mui/icons-material": "^9.1.1",
-    "@mui/lab": "^6.0.0-dev.20240529-082515-213b5e33ab",
+    "@mui/lab": "^7.0.0-beta.17",
     "@mui/material": "^9.1.1",
-    "@mui/x-date-pickers": "^9.5.0",
+    "@mui/x-date-pickers": "^9.6.0",
     "ajv": "^8.20.0",
     "ajv-keywords": "^5.1.0",
     "aos": "^2.3.4",
@@ -26,12 +26,12 @@
     "react-i18next": "^17.0.8",
     "react-icons": "^5.6.0",
     "react-leaflet": "^5.0.0",
-    "react-router-dom": "^7.17.0"
+    "react-router-dom": "^7.18.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -58,7 +58,11 @@
     "@testing-library/react": "^16.3.2",
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.15",
+    "react-app-rewired": "^2.2.1",
     "react-scripts": "^5.0.1",
     "tailwindcss": "^4.3.1"
+  },
+  "overrides": {
+    "form-data": "4.0.6"
   }
 }

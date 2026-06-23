@@ -1,5 +1,34 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { encrypt, decrypt } = require('../utils/encryption');
+
+const EmergencyContactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  relationship: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  phone: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  email: {
+    type: String,
+    default: '',
+    trim: true,
+    lowercase: true,
+  },
+  isPrimary: {
+    type: Boolean,
+    default: false,
+  },
+}, { _id: true });
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -41,6 +70,20 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     default: 'patient',
+  },
+  isTwoFactorEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  twoFactorSecret: {
+    type: String,
+    default: null,
+    get: decrypt,
+    set: encrypt,
+  },
+  emergencyContacts: {
+    type: [EmergencyContactSchema],
+    default: [],
   },
   createdAt: {
     type: Date,

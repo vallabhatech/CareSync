@@ -7,6 +7,8 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
 import SettingsIcon from '@mui/icons-material/Settings';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -131,6 +133,22 @@ export default function Dashboard() {
       link: "/clinics-nearby",
       icon: <PlaceIcon fontSize="large" color="primary" />,
       btn: t('dashboard:findClinics'),
+    },
+    {
+      id: 'dosage-calculator',
+      title: 'Dosage Calculator',
+      desc: 'Estimate medicine doses based on your weight, age, and dosing guidance.',
+      link: "/dosage-calculator",
+      icon: <CalculateIcon fontSize="large" color="primary" />,
+      btn: 'Calculate Dosage',
+    },
+    {
+      id: 'health-metrics',
+      title: 'Health Metrics',
+      desc: 'Track your vitals — blood pressure, heart rate, weight, and more.',
+      link: "/health-metrics",
+      icon: <MonitorHeartIcon fontSize="large" color="primary" />,
+      btn: 'View Health Metrics',
     },
     {
       id: 'profile-settings',

@@ -158,6 +158,7 @@ export default function HealthMetrics() {
     }
   };
 
+
   const getMetricStatus = (metric) => {
     const statuses = [];
     if (metric.weight) {
