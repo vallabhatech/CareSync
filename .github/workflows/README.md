@@ -16,7 +16,7 @@ The following workflows automate common repository tasks:
 
 **Purpose**: Automatically posts a friendly welcome comment when a new issue is opened.
 
-**Triggers**: 
+**Triggers**:
 - `issues: opened`
 
 **What it does**:
@@ -108,19 +108,43 @@ The following workflows automate common repository tasks:
 
 ---
 
-### 5. label-management.yml
+### 5. ai-issue-labeler.yml
 
-**Purpose**: Automatically applies the "elusoc" label to new issues and pull requests.
+**Purpose**: Manually scans open issues and applies missing labels from the repository label set.
+
+**Triggers**:
+- `workflow_dispatch`
+
+**What it does**:
+- Scans all open issues when run manually
+- Reads issue title and body text
+- Adds missing labels from the approved repository label set only
+- Assigns one difficulty label if none is already present
+- Skips pull requests and avoids duplicate labels
+
+**Permissions required**:
+- `issues: write`
+
+**Key features**:
+- Uses `actions/github-script@v8` for GitHub API interactions
+- Safe to re-run because it only adds missing labels
+- Keeps label count intentionally small to avoid label spam
+
+---
+
+### 6. label-management.yml
+
+**Purpose**: Automatically applies the "ELUSOC" label to new issues and pull requests.
 
 **Triggers**: 
 - `issues: opened`
 - `pull_request: opened`
 
 **What it does**:
-- Checks if the "elusoc" label exists in the repository
+- Checks if the "ELUSOC" label exists in the repository
 - Creates the label if it doesn't exist (with color: #0066cc)
-- Applies the "elusoc" label to newly opened issues
-- Applies the "elusoc" label to newly opened pull requests
+- Applies the "ELUSOC" label to newly opened issues
+- Applies the "ELUSOC" label to newly opened pull requests
 - Logs all actions for tracking
 
 **Permissions required**:
@@ -171,6 +195,7 @@ Ensure all workflow files are present in `.github/workflows/`:
 - ✅ pr-welcome.yml
 - ✅ auto-review-request.yml
 - ✅ issue-inactivity-monitor.yml
+- ✅ ai-issue-labeler.yml
 - ✅ label-management.yml
 
 ### Step 2: Enable Workflow Permissions

@@ -2,12 +2,55 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const app = express();
 app.disable('x-powered-by');
+// Configure trusted proxy hops so req.ip reflects the real client address for
+// accurate security event logging. Defaults to 1 (one proxy hop), matching the
+// documented Vercel/Render deployment where this is spoofing-resistant. Set
+// TRUST_PROXY=0 when running without a proxy (local/direct exposure) to prevent
+// X-Forwarded-For spoofing, or to a hop count / 'true' / 'false' for other setups.
+const trustProxySetting = process.env.TRUST_PROXY;
+if (trustProxySetting === undefined || trustProxySetting === '') {
+  app.set('trust proxy', 1);
+} else if (trustProxySetting === 'true' || trustProxySetting === 'false') {
+  app.set('trust proxy', trustProxySetting === 'true');
+} else {
+  const hops = Number(trustProxySetting);
+  app.set('trust proxy', Number.isInteger(hops) && hops >= 0 ? hops : 1);
+}
 const PORT = process.env.PORT || 5000;
 
+/**
+ * Middleware to sanitize response headers by stripping CR (\r) and LF (\n) characters.
+ * This helps prevent HTTP response splitting attacks by ensuring no unvalidated
+ * line breaks are injected into the headers.
+ * 
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
+ */
+const sanitizeHeaders = (req, res, next) => {
+  const originalSetHeader = res.setHeader;
+  res.setHeader = function (name, value) {
+    let sanitizedValue = value;
+    if (typeof value === 'string') {
+      sanitizedValue = value.replace(/[\r\n]/g, '');
+    } else if (Array.isArray(value)) {
+      sanitizedValue = value.map(v => (typeof v === 'string' ? v.replace(/[\r\n]/g, '') : v));
+    }
+    return originalSetHeader.call(this, name, sanitizedValue);
+  };
+  next();
+};
+
 // Middleware
+app.use(sanitizeHeaders);
+
+// helmet sets secure HTTP response headers (X-Frame-Options, X-Content-Type-Options, etc.) to reduce attack surface.
+app.use(helmet());
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : ['http://localhost:3000', 'https://care-sync-iota.vercel.app'];
@@ -37,12 +80,20 @@ mongoose.connect(dbUri)
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth/emergency-contacts', require('./routes/emergencyContacts'));
 app.use('/api/medicines', require('./routes/medicines'));
 app.use('/api/symptom-checks', require('./routes/symptomChecks'));
 app.use('/api/clinics', require('./routes/clinics'));
+app.use('/api/health-metrics', require('./routes/healthMetrics'));
+app.use('/api/family', require('./routes/family'));
+app.use('/api/security', require('./routes/security'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
+  // Support header injection testing by echoing a query param into a response header
+  if (req.query.injection) {
+    res.setHeader('X-Injection-Response', req.query.injection);
+  }
   res.send('CareSync API is running...');
 });
 

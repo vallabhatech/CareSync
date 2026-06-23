@@ -19,6 +19,14 @@ import LanguageDetector from "i18next-browser-languagedetector";
 
 import en from "./i18n/locales/en.json";
 import hi from "./i18n/locales/hi.json";
+import es from "./i18n/locales/es.json";
+import fr from "./i18n/locales/fr.json";
+import de from "./i18n/locales/de.json";
+import zh from "./i18n/locales/zh.json";
+import ar from "./i18n/locales/ar.json";
+import pt from "./i18n/locales/pt.json";
+import ru from "./i18n/locales/ru.json";
+import ja from "./i18n/locales/ja.json";
 
 // Single source of truth for which languages the UI offers. The Settings
 // language selector maps over this list, so adding an entry here (plus the
@@ -26,6 +34,14 @@ import hi from "./i18n/locales/hi.json";
 export const SUPPORTED_LANGUAGES = [
   { code: "en", label: "English", dir: "ltr" },
   { code: "hi", label: "हिन्दी (Hindi)", dir: "ltr" },
+  { code: "es", label: "Español (Spanish)", dir: "ltr" },
+  { code: "fr", label: "Français (French)", dir: "ltr" },
+  { code: "de", label: "Deutsch (German)", dir: "ltr" },
+  { code: "zh", label: "中文 (Chinese)", dir: "ltr" },
+  { code: "ar", label: "العربية (Arabic)", dir: "rtl" },
+  { code: "pt", label: "Português (Portuguese)", dir: "ltr" },
+  { code: "ru", label: "Русский (Russian)", dir: "ltr" },
+  { code: "ja", label: "日本語 (Japanese)", dir: "ltr" },
 ];
 
 // localStorage key used by the language detector to persist the choice.
@@ -34,6 +50,14 @@ export const LANGUAGE_STORAGE_KEY = "caresync_language";
 export const resources = {
   en,
   hi,
+  es,
+  fr,
+  de,
+  zh,
+  ar,
+  pt,
+  ru,
+  ja,
 };
 
 i18n
@@ -43,7 +67,7 @@ i18n
     resources,
     fallbackLng: "en",
     // Namespaces correspond to the top-level keys in each locale file.
-    ns: ["common", "nav", "dashboard", "medicine", "symptom", "clinics", "login", "profile", "settings", "footer"],
+    ns: ["common", "nav", "dashboard", "medicine", "symptom", "clinics", "login", "profile", "settings", "footer", "family"],
     defaultNS: "common",
     supportedLngs: SUPPORTED_LANGUAGES.map((l) => l.code),
     detection: {

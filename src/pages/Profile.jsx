@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -13,6 +13,8 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import FamilyMembers from '../components/FamilyMembers';
+import EmergencyContacts from '../components/EmergencyContacts';
 
 function Profile() {
   const { t } = useTranslation();
@@ -221,6 +223,9 @@ function Profile() {
           </Box>
         </CardContent>
       </Card>
+
+      <FamilyMembers />
+      <EmergencyContacts />
     </Box>
   );
 }

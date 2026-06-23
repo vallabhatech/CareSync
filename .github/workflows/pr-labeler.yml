@@ -1,0 +1,119 @@
+name: Manual PR Triage & Label Fixer
+
+on:
+  workflow_dispatch:
+
+# Adding labels to a pull request goes through the issues API, but the
+# GITHUB_TOKEN permission required for PRs is pull-requests: write.
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            // Process every pull request regardless of state:
+            // open, closed, and merged (merged PRs are closed with merged_at set).
+            const pullRequests = await github.paginate(
+              github.rest.pulls.list,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all'
+              }
+            );
+
+            const allowedLabels = new Set([
+              'bug',
+              'enhancement',
+              'documentation',
+              'security',
+              'performance',
+              'ui/ux',
+              'frontend',
+              'backend',
+              'testing'
+            ]);
+
+            const maxLabels = 5;
+
+            // Topical keyword rules. Only the allowed labels above are used;
+            // there are no difficulty (NEWBIE/ADVENTURER/VETERAN) labels.
+            const topicalRules = [
+              ['bug', ['bug', 'error', 'fail', 'crash', 'broken', 'incorrect', 'does not work']],
+              ['enhancement', ['enhancement', 'feature', 'add', 'improve', 'request']],
+              ['documentation', ['doc', 'documentation', 'readme', 'guide', 'typo']],
+              ['security', ['security', 'vulnerability', 'cve', 'auth bypass', 'xss', 'csrf']],
+              ['performance', ['performance', 'slow', 'optimize', 'optimization', 'latency']],
+              ['ui/ux', ['ui', 'ux', 'design', 'layout', 'spacing', 'responsive']],
+              ['frontend', ['frontend', 'react', 'css', 'html', 'javascript', 'ui']],
+              ['backend', ['backend', 'api', 'server', 'database', 'auth', 'endpoint']],
+              ['testing', ['test', 'testing', 'jest', 'cypress', 'playwright', 'qa']]
+            ];
+
+            let labeledCount = 0;
+            let skippedCount = 0;
+            let failedCount = 0;
+
+            for (const pullRequest of pullRequests) {
+              try {
+                const existingLabels = (pullRequest.labels || []).map((label) => label.name);
+
+                // Idempotency: if a PR already has any label, skip it completely.
+                // Never remove, replace, or modify existing/manual labels.
+                if (existingLabels.length > 0) {
+                  console.log(`Skipping PR #${pullRequest.number} - already has labels: ${existingLabels.join(', ')}`);
+                  skippedCount += 1;
+                  continue;
+                }
+
+                const text = `${pullRequest.title} ${pullRequest.body || ''}`.toLowerCase();
+
+                const suggestedLabels = [];
+                for (const [label, keywords] of topicalRules) {
+                  if (suggestedLabels.length >= maxLabels) break;
+                  if (keywords.some((keyword) => text.includes(keyword))) {
+                    suggestedLabels.push(label);
+                  }
+                }
+
+                const labelsToAdd = [...new Set(suggestedLabels)]
+                  .filter((label) => allowedLabels.has(label))
+                  .slice(0, maxLabels);
+
+                // No matching label: skip the PR, do not add any fallback label.
+                if (labelsToAdd.length === 0) {
+                  console.log(`Skipping PR #${pullRequest.number} - no matching labels`);
+                  skippedCount += 1;
+                  continue;
+                }
+
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pullRequest.number,
+                  labels: labelsToAdd
+                });
+
+                console.log(`Labeled PR #${pullRequest.number} with: ${labelsToAdd.join(', ')}`);
+                labeledCount += 1;
+              } catch (error) {
+                // PRs from forks may not be writable with the default token.
+                // Handle permission errors gracefully and keep processing.
+                const status = error && error.status;
+                if (status === 403) {
+                  console.log(`Permission denied for PR #${pullRequest.number} (likely a fork): ${error.message}`);
+                } else {
+                  console.log(`Failed to process PR #${pullRequest.number}: ${error && error.message ? error.message : error}`);
+                }
+                failedCount += 1;
+                continue;
+              }
+            }
+
+            console.log(`Done. Labeled: ${labeledCount}, Skipped: ${skippedCount}, Failed: ${failedCount}, Total: ${pullRequests.length}`);
