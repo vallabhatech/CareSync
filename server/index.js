@@ -1,108 +1,55 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 app.disable('x-powered-by');
-// Configure trusted proxy hops so req.ip reflects the real client address for
-// accurate security event logging. Defaults to 1 (one proxy hop), matching the
-// documented Vercel/Render deployment where this is spoofing-resistant. Set
-// TRUST_PROXY=0 when running without a proxy (local/direct exposure) to prevent
-// X-Forwarded-For spoofing, or to a hop count / 'true' / 'false' for other setups.
-const trustProxySetting = process.env.TRUST_PROXY;
-if (trustProxySetting === undefined || trustProxySetting === '') {
-  app.set('trust proxy', 1);
-} else if (trustProxySetting === 'true' || trustProxySetting === 'false') {
-  app.set('trust proxy', trustProxySetting === 'true');
-} else {
-  const hops = Number(trustProxySetting);
-  app.set('trust proxy', Number.isInteger(hops) && hops >= 0 ? hops : 1);
-}
-const PORT = process.env.PORT || 5000;
 
-/**
- * Middleware to sanitize response headers by stripping CR (\r) and LF (\n) characters.
- * This helps prevent HTTP response splitting attacks by ensuring no unvalidated
- * line breaks are injected into the headers.
- * 
- * @param {import('express').Request} req - Express request object
- * @param {import('express').Response} res - Express response object
- * @param {import('express').NextFunction} next - Express next middleware function
- */
-const sanitizeHeaders = (req, res, next) => {
-  const originalSetHeader = res.setHeader;
-  res.setHeader = function (name, value) {
-    let sanitizedValue = value;
-    if (typeof value === 'string') {
-      sanitizedValue = value.replace(/[\r\n]/g, '');
-    } else if (Array.isArray(value)) {
-      sanitizedValue = value.map(v => (typeof v === 'string' ? v.replace(/[\r\n]/g, '') : v));
-    }
-    return originalSetHeader.call(this, name, sanitizedValue);
-  };
-  next();
-};
-
-// Middleware
-app.use(sanitizeHeaders);
-
-// helmet sets secure HTTP response headers (X-Frame-Options, X-Content-Type-Options, etc.) to reduce attack surface.
 app.use(helmet());
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : ['http://localhost:3000', 'https://care-sync-iota.vercel.app'];
 
-const corsOptions = {
-  origin: allowedOrigins,
-  optionsSuccessStatus: 200
+app.use(cors({ origin: allowedOrigins, optionsSuccessStatus: 200 }));
+
+// Microservices routing map
+const services = {
+  '/api/auth': 'http://127.0.0.1:5001',
+  '/api/security': 'http://127.0.0.1:5001',
+  '/api/family': 'http://127.0.0.1:5002',
+  '/api/health-metrics': 'http://127.0.0.1:5002',
+  '/api/medicines': 'http://127.0.0.1:5003',
+  '/api/symptom-checks': 'http://127.0.0.1:5004',
+  '/api/clinics': 'http://127.0.0.1:5005',
 };
-app.use(cors(corsOptions));
 
-// Set body parser size limit to 5MB to accommodate base64 profile avatar images
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ limit: '5mb', extended: true }));
-
-// DB Connection
-const dbUri = process.env.MONGODB_URI;
-if (!dbUri) {
-  console.error('Error: MONGODB_URI environment variable is not defined.');
-  process.exit(1);
+// Setup proxies
+for (const [route, target] of Object.entries(services)) {
+  app.use(route, createProxyMiddleware({ 
+    target, 
+    changeOrigin: true,
+    pathRewrite: (path, req) => path // keep original path
+  }));
 }
-mongoose.connect(dbUri)
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
-    console.log('Ensure MongoDB service is running locally or check MONGODB_URI in server/.env');
-  });
-
-// API Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/auth/emergency-contacts', require('./routes/emergencyContacts'));
-app.use('/api/medicines', require('./routes/medicines'));
-app.use('/api/symptom-checks', require('./routes/symptomChecks'));
-app.use('/api/clinics', require('./routes/clinics'));
-app.use('/api/health-metrics', require('./routes/healthMetrics'));
-app.use('/api/family', require('./routes/family'));
-app.use('/api/security', require('./routes/security'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
-  // Support header injection testing by echoing a query param into a response header
   if (req.query.injection) {
     res.setHeader('X-Injection-Response', req.query.injection);
   }
-  res.send('CareSync API is running...');
+  res.send('CareSync API Gateway is running...');
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('API Error:', err.stack);
-  res.status(500).json({ message: 'Internal Server Error' });
+  console.error('API Gateway Error:', err.stack);
+  res.status(500).json({ message: 'Internal Server Error in API Gateway' });
 });
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`API Gateway is running on port ${PORT}`);
 });
