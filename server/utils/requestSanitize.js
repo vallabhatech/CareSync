@@ -20,8 +20,8 @@ function sanitizeObject(obj) {
 
 function sanitizeBody(req, res, next) {
   try {
-    if (req.body && typeof req.body === 'object') {
-      req.body = sanitizeObject(req.body);
+    if (typeof req.body === 'object' && req.body !== null) {
+      req.body = sanitizeObject(req.body); // req.body is an object, so we sanitize it.
     }
   } catch (e) {
     // If anything goes wrong, don't block legitimate requests — log and continue

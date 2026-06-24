@@ -31,7 +31,7 @@ function isValidEmail(email) {
   if (!domainOk) return false;
 
   // Domain must contain at least one dot and labels must be <=63
-  if (domain.indexOf('.') === -1) return false;
+  if (!domain.includes('.')) return false;
   const labels = domain.split('.');
   for (const label of labels) {
     if (label.length === 0 || label.length > 63) return false;

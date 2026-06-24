@@ -75,7 +75,7 @@ app.use(express.urlencoded({ limit: limits.DEFAULT_BODY_LIMIT, extended: true })
 // Middleware to catch oversized payload errors thrown by body parsers and log them
 app.use((err, req, res, next) => {
   if (err && (err.type === 'entity.too.large' || err.status === 413)) {
-    const ip = req.ip || req.headers['x-forwarded-for'] || (req.connection && req.connection.remoteAddress) || 'unknown';
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
     console.warn('Rejected oversized request', {
       ip,
       url: req.originalUrl,
@@ -107,7 +107,6 @@ app.use('/api/medicines', require('./routes/medicines'));
 app.use('/api/symptom-checks', require('./routes/symptomChecks'));
 app.use('/api/clinics', require('./routes/clinics'));
 app.use('/api/health-metrics', require('./routes/healthMetrics'));
-app.use('/api/family', require('./routes/family'));
 app.use('/api/security', require('./routes/security'));
 
 // Health Check / Default route
