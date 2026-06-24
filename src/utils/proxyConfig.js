@@ -42,36 +42,40 @@ export function parseNoProxyEntry(entry) {
     return { type: 'all', raw };
   }
 
+  // Handle wildcard entries like "*.example.com"
   if (raw.includes('*')) {
-    if (!raw.startsWith('*.')) {
-      throw new Error(
-        `Invalid NO_PROXY wildcard "${raw}". Only "*.example.com" suffix patterns are allowed.`
-      );
+    // A valid wildcard must be a suffix pattern, e.g., "*.example.com".
+    if (raw.startsWith('*.')) {
+      const suffix = raw.slice(1).toLowerCase();
+      // The suffix must contain at least one more dot, ensuring it's not a bare TLD like "*.com".
+      // e.g., ".example.com" is valid, but ".com" is not.
+      if (!suffix.substring(1).includes('.')) {
+        throw new Error(
+          `Invalid NO_PROXY wildcard "${raw}". Suffix must include a domain and TLD (e.g. "*.example.com").`
+        );
+      }
+      return { type: 'wildcard', raw, suffix };
     }
-
-    const suffix = raw.slice(1).toLowerCase();
-    if (!suffix.startsWith('.') || suffix.indexOf('.', 1) === -1) {
-      throw new Error(
-        `Invalid NO_PROXY wildcard "${raw}". Suffix must include a domain and TLD (e.g. "*.example.com").`
-      );
-    }
-
-    return { type: 'wildcard', raw, suffix };
+    // Reject other wildcard patterns like "foo.*.com" or "foo*bar".
+    throw new Error(
+      `Invalid NO_PROXY wildcard "${raw}". Only "*.example.com" suffix patterns are allowed.`
+    );
   }
 
   // Protect against ridiculously long NO_PROXY entries
   if (raw.length > 256) {
     throw new Error(`NO_PROXY entry too long: "${raw.slice(0, 64)}..."`);
   }
-
-  const portMatch = raw.match(/^(.+?):([0-9]{1,5})$/);
+  // Regex to capture host and port from entries like "example.com:8080".
+  // Using \d instead of [0-9] for conciseness.
+  const portRegex = /^(.+?):(\d{1,5})$/;
+  const portMatch = portRegex.exec(raw);
   const hostPart = (portMatch ? portMatch[1] : raw).toLowerCase();
   const port = portMatch ? Number.parseInt(portMatch[2], 10) : undefined;
 
   if (port !== undefined && (Number.isNaN(port) || port < 1 || port > 65535)) {
     throw new Error(`Invalid NO_PROXY port in entry "${raw}".`);
   }
-
   if (hostPart.length > 253) {
     throw new Error(`NO_PROXY host part too long in entry "${raw}".`);
   }
