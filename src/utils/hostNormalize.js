@@ -31,11 +31,11 @@ export function normalizeIPv4(ip) {
     const octets = parts.map((part) => {
       let val;
       if (/^0x[0-9a-f]+$/i.test(part)) {
-        val = parseInt(part, 16);
+        val = Number.parseInt(part, 16);
       } else if (/^0[0-7]+$/.test(part) && part.length > 1) {
-        val = parseInt(part, 8);
+        val = Number.parseInt(part, 8);
       } else if (/^\d+$/.test(part)) {
-        val = parseInt(part, 10);
+        val = Number.parseInt(part, 10);
       } else {
         return null;
       }
@@ -45,7 +45,7 @@ export function normalizeIPv4(ip) {
       return val;
     });
 
-    if (octets.some((octet) => octet === null)) {
+    if (octets.includes(null)) {
       return null;
     }
 
