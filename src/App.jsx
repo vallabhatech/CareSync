@@ -49,7 +49,7 @@ const NAV_LINKS = [
   { key: 'medicineTracker', to: '/medicine-tracker' },
   { key: 'symptomChecker', to: '/symptom-checker' },
   { key: 'clinicsNearby', to: '/clinics-nearby' },
-  { key: 'settings', to: '/settings' },
+  { key: 'recommendations', to: '/recommendations' },
 ];
 
 function HideOnScroll(props) {
