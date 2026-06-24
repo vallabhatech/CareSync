@@ -67,7 +67,7 @@ i18n
     resources,
     fallbackLng: "en",
     // Namespaces correspond to the top-level keys in each locale file.
-    ns: ["common", "nav", "dashboard", "medicine", "symptom", "clinics", "login", "profile", "settings", "footer"],
+    ns: ["common", "nav", "dashboard", "medicine", "symptom", "clinics", "login", "profile", "settings", "footer", "family"],
     defaultNS: "common",
     supportedLngs: SUPPORTED_LANGUAGES.map((l) => l.code),
     detection: {

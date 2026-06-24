@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const HealthMetric = require('../models/HealthMetric');
+const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
+const { generateHealthReportPDF } = require('../utils/pdfGenerator');
 
 // Get all health metrics for a user (optional: filter by date range)
 router.get('/', authMiddleware, async (req, res) => {
@@ -104,6 +106,30 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error deleting health metric:', err);
     res.status(500).json({ message: 'Failed to delete health metric' });
+  }
+});
+
+// Export health metrics as PDF
+router.get('/export/pdf', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const metrics = await HealthMetric.find({ user: req.user.id }).sort({ recordedAt: -1 });
+
+    const pdfBuffer = await generateHealthReportPDF(user, metrics);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="health-report-${new Date().toISOString().split('T')[0]}.pdf"`
+    );
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Error generating PDF:', err);
+    res.status(500).json({ message: 'Failed to generate PDF report' });
   }
 });
 
