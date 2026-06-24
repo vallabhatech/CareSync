@@ -1,5 +1,5 @@
 import {
-  isLoopbackAlias,
+  isLoopbackAlias, // eslint-disable-line import/no-unresolved
   normalizeIPv4,
   normalizeIPv6,
 } from './hostNormalize';
@@ -15,28 +15,18 @@ import {
  * @returns {*} The sanitized copy of the input.
  */
 export function sanitizeConfig(obj) {
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
+    if (Array.isArray(obj)) {
+      return obj.map(sanitizeConfig);
+    }
     return obj;
   }
 
-  // Handle arrays
-  if (Array.isArray(obj)) {
-    return obj.map(sanitizeConfig);
-  }
-
   const sanitized = {};
+  const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
   for (const [key, value] of Object.entries(obj)) {
-    const keyLower = key.trim().toLowerCase();
-    
-    // Check for dangerous keys
-    if (
-      keyLower === '__proto__' ||
-      keyLower === 'constructor' ||
-      keyLower === 'prototype' ||
-      key === '__proto__' ||
-      key === 'constructor' ||
-      key === 'prototype'
-    ) {
+    if (DANGEROUS_KEYS.has(key.trim().toLowerCase())) {
       console.warn(`Prototype pollution attempt blocked. Rejected key: "${key}"`);
       continue;
     }
@@ -47,6 +37,33 @@ export function sanitizeConfig(obj) {
   return sanitized;
 }
 
+/**
+ * Normalizes and validates a single header value or an array of values.
+ * @param {string|string[]} value - The header value(s).
+ * @param {string} key - The header key (for error messages).
+ * @returns {string|string[]} The normalized value(s).
+ * @throws {Error} If a value is invalid.
+ */
+function _normalizeAndValidateHeaderValue(value, key) {
+  const strVal = String(value).trim();
+
+  if (strVal.length > 4096) {
+    throw new Error(`Header value too long for key "${key}"`);
+  }
+
+  // Reject CRLF injection
+  if (/[\r\n]/.test(strVal)) {
+    throw new Error(`CRLF injection detected in header value for key "${key}"`);
+  }
+
+  // Reject other control characters to prevent header injection/evasion
+  // eslint-disable-next-line no-control-regex
+  if (/[\x00-\x1F\x7F]/.test(strVal)) {
+    throw new Error(`Control characters detected in header value for key "${key}"`);
+  }
+
+  return strVal;
+}
 /**
  * Validates and normalizes request headers to prevent CRLF injection,
  * prototype pollution derived headers, and malformed header names.
@@ -60,71 +77,34 @@ export function validateAndNormalizeHeaders(headers) {
     return {};
   }
 
+  const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+  const validHeaderNameRegex = /^[a-zA-Z0-9!#$%&'*+\-.^_`|~]+$/;
   const cleanHeaders = Object.create(null);
 
   for (const [key, value] of Object.entries(headers)) {
     const trimmedKey = key.trim();
-    const keyLower = trimmedKey.toLowerCase();
 
     // Enforce conservative length limits to mitigate abuse
     if (trimmedKey.length === 0 || trimmedKey.length > 256) {
       throw new Error(`Malformed header name: "${trimmedKey}"`);
     }
 
-    // 1. Reject prototype pollution derived headers
-    if (
-      keyLower === '__proto__' ||
-      keyLower === 'constructor' ||
-      keyLower === 'prototype' ||
-      key === '__proto__' ||
-      key === 'constructor' ||
-      key === 'prototype' ||
-      !Object.prototype.hasOwnProperty.call(headers, key)
-    ) {
+    // 1. Reject prototype pollution derived headers and non-own properties
+    if (DANGEROUS_KEYS.has(trimmedKey.toLowerCase()) || !Object.hasOwn(headers, key)) {
       throw new Error(`Invalid header name: "${trimmedKey}" (blocked prototype key)`);
     }
 
     // 2. Reject malformed header names (RFC 7230 token definition)
-    const validHeaderNameRegex = /^[a-zA-Z0-9!#$%&'*+\-.^_`|~]+$/;
     if (!validHeaderNameRegex.test(trimmedKey)) {
       throw new Error(`Malformed header name: "${trimmedKey}"`);
     }
 
     // 3. Normalize values and reject injection
-    let normalizedValue = value;
-    if (value === null || value === undefined) {
-      normalizedValue = '';
-    } else if (Array.isArray(value)) {
-      normalizedValue = value.map(v => {
-        const strVal = String(v).trim();
-        if (strVal.length > 4096) {
-          throw new Error(`Header value too long for key "${trimmedKey}"`);
-        }
-        // Reject CRLF injection
-        if (/[\r\n]/.test(strVal)) {
-          throw new Error(`CRLF injection detected in header value for key "${trimmedKey}"`);
-        }
-        // Reject other control characters to prevent header injection/evasion
-        // eslint-disable-next-line no-control-regex
-        if (/[\x00-\x1F\x7F]/.test(strVal)) {
-          throw new Error(`Control characters detected in header value for key "${trimmedKey}"`);
-        }
-        return strVal;
-      });
+    let normalizedValue;
+    if (Array.isArray(value)) {
+      normalizedValue = value.map(v => _normalizeAndValidateHeaderValue(v, trimmedKey));
     } else {
-      normalizedValue = String(value).trim();
-      if (normalizedValue.length > 4096) {
-        throw new Error(`Header value too long for key "${trimmedKey}"`);
-      }
-      // Reject CRLF injection
-      if (/[\r\n]/.test(normalizedValue)) {
-        throw new Error(`CRLF injection detected in header value for key "${trimmedKey}"`);
-      }
-      // Reject other control characters to prevent header injection/evasion
-      // eslint-disable-next-line no-control-regex
-      if (/[\x00-\x1F\x7F]/.test(normalizedValue)) {
-        throw new Error(`Control characters detected in header value for key "${trimmedKey}"`);
-      }
+      normalizedValue = _normalizeAndValidateHeaderValue(value, trimmedKey);
     }
 
     cleanHeaders[trimmedKey] = normalizedValue;
@@ -144,11 +124,11 @@ const ALLOWED_PROTOCOLS = new Set(['https:', 'http:']);
  * Patterns are matched case-insensitively against the request hostname.
  */
 const METADATA_HOSTNAMES = [
-  '169.254.169.254',   // AWS, GCP, Azure IMDS
-  '100.100.100.200',   // Alibaba Cloud metadata
-  'fd00:ec2::254',     // AWS IPv6 metadata
-  'metadata.google.internal',
-  'metadata.goog',
+  '169.254.169.254',        // AWS, GCP, Azure, DigitalOcean, etc. IMDS (Instance Metadata Service) IPv4 endpoint.
+  '100.100.100.200',        // Alibaba Cloud metadata service endpoint.
+  'fd00:ec2::254',          // AWS IMDS IPv6 endpoint.
+  'metadata.google.internal', // GCP metadata service hostname.
+  'metadata.goog',          // Alternative GCP metadata service hostname.
 ];
 
 /**
@@ -234,47 +214,42 @@ function _isBlockedIPv6(ip) {
     return false;
   }
 
-  let normalised = normalizeIPv6(ip);
-  if (!normalised) {
+  const normalized = normalizeIPv6(ip);
+  if (!normalized) {
     throw new Error(`URL validation failed: Malformed IPv6 address "${ip}".`);
   }
 
-  if (normalised === '::1') {
+  // Loopback, Unspecified, Link-local, Unique local
+  if (normalized === '::1' || // Loopback
+      normalized === '::' || /^::0*$/.test(normalized) || // Unspecified
+      /^fe[89ab][0-9a-f]:/i.test(normalized) || // Link-local
+      /^f[cd][0-9a-f]{2}:/i.test(normalized) // Unique local
+  ) {
     return true;
   }
 
-  if (normalised === '::' || /^::0*$/.test(normalised)) {
-    return true;
-  }
-
-  if (/^fe[89ab][0-9a-f]:/i.test(normalised)) {
-    return true;
-  }
-
-  if (/^f[cd][0-9a-f]{2}:/i.test(normalised)) {
-    return true;
-  }
-
-  const mappedHexMatch = normalised.match(
-    /^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i
-  );
+  // Check for IPv4-mapped IPv6 addresses (e.g., ::ffff:127.0.0.1)
+  const mappedHexRegex = /^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i;
+  const mappedHexMatch = mappedHexRegex.exec(normalized);
   if (mappedHexMatch) {
-    const hi = parseInt(mappedHexMatch[1], 16);
-    const lo = parseInt(mappedHexMatch[2], 16);
+    const hi = Number.parseInt(mappedHexMatch[1], 16);
+    const lo = Number.parseInt(mappedHexMatch[2], 16);
     const a = (hi >> 8) & 0xff;
     const b = hi & 0xff;
     const c = (lo >> 8) & 0xff;
     const d = lo & 0xff;
     const dotted = `${a}.${b}.${c}.${d}`;
+
     if (_isBlockedIPv4(dotted)) {
       return true;
     }
   }
 
-  const mappedDottedMatch = normalised.match(/^::(?:ffff:)?([\d.]+)$/i);
+  const mappedDottedRegex = /^::(?:ffff:)?([\d.]+)$/i;
+  const mappedDottedMatch = mappedDottedRegex.exec(normalized);
   if (mappedDottedMatch) {
     const mappedIpv4 = normalizeIPv4(mappedDottedMatch[1]);
-    if (mappedIpv4 !== null && _isBlockedIPv4(mappedIpv4)) {
+    if (mappedIpv4 && _isBlockedIPv4(mappedIpv4)) {
       return true;
     }
   }
@@ -299,7 +274,7 @@ function _isBlockedIPv6(ip) {
  * @returns {boolean}
  */
 function _isBlockedIPv4(dotted) {
-  const [a, b, c] = dotted.split('.').map(Number);
+  const [a, b] = dotted.split('.').map(Number);
   return (
     a === 0 ||                                     // 0.0.0.0/8
     a === 10 ||                                    // 10.0.0.0/8

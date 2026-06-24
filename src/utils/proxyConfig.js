@@ -1,4 +1,4 @@
-import { hostnamesMatch, normalizeHostname } from './hostNormalize';
+import { hostnamesMatch, normalizeHostname, normalizeIPv4, normalizeIPv6 } from './hostNormalize';
 
 const DEFAULT_PORTS = {
   ftp: 21,
@@ -207,4 +207,4 @@ export function getProxyForUrl(url, options = {}) {
   return proxy;
 }
 
-export { normalizeHostname, normalizeIPv4, normalizeIPv6 } from './hostNormalize';
+export { normalizeHostname, normalizeIPv4, normalizeIPv6 };
