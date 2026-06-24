@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.disable('x-powered-by');
@@ -12,14 +13,17 @@ app.disable('x-powered-by');
 // TRUST_PROXY=0 when running without a proxy (local/direct exposure) to prevent
 // X-Forwarded-For spoofing, or to a hop count / 'true' / 'false' for other setups.
 const trustProxySetting = process.env.TRUST_PROXY;
+let effectiveTrustProxy;
 if (trustProxySetting === undefined || trustProxySetting === '') {
-  app.set('trust proxy', 1);
+  effectiveTrustProxy = 1;
 } else if (trustProxySetting === 'true' || trustProxySetting === 'false') {
-  app.set('trust proxy', trustProxySetting === 'true');
+  effectiveTrustProxy = (trustProxySetting === 'true');
 } else {
   const hops = Number(trustProxySetting);
-  app.set('trust proxy', Number.isInteger(hops) && hops >= 0 ? hops : 1);
+  effectiveTrustProxy = (Number.isInteger(hops) && hops >= 0 ? hops : 1);
 }
+app.set('trust proxy', effectiveTrustProxy);
+console.log(`Express 'trust proxy' setting is: ${JSON.stringify(app.get('trust proxy'))}`);
 const PORT = process.env.PORT || 5000;
 
 const limits = require('./config/limits');
@@ -54,12 +58,39 @@ app.use(sanitizeHeaders);
 // helmet sets secure HTTP response headers (X-Frame-Options, X-Content-Type-Options, etc.) to reduce attack surface.
 app.use(helmet());
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:3000', 'https://care-sync-iota.vercel.app'];
+// Apply rate limiting to all requests to prevent DoS and brute-force attacks
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 100, // Limit each IP to 100 requests per windowMs
+	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+	message: 'Too many requests from this IP, please try again after 15 minutes',
+});
+app.use(limiter);
+
+let allowedOrigins;
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.ALLOWED_ORIGINS) {
+    console.error('FATAL ERROR: ALLOWED_ORIGINS is not set in production environment.');
+    process.exit(1);
+  }
+  allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
+} else {
+  // In development, use a more permissive default
+  allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : ['http://localhost:3000', 'https://care-sync-iota.vercel.app'];
+}
 
 const corsOptions = {
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
@@ -103,6 +134,16 @@ mongoose.connect(dbUri)
     console.log('Ensure MongoDB service is running locally or check MONGODB_URI in server/.env');
   });
 
+// Apply stricter rate limiting to auth routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5, // Limit each IP to 5 login/register requests per window
+  message: 'Too many login attempts from this IP, please try again after 15 minutes',
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/auth/emergency-contacts', require('./routes/emergencyContacts'));
@@ -127,11 +168,29 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal Server Error' });
 });
 
+let server;
 if (require.main === module) {
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
 }
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Application specific logging, throwing an error, or other logic here
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
 
 module.exports = app;
 
