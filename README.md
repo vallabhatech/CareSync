@@ -240,13 +240,9 @@ This project includes a set of defensive controls and tests to mitigate common w
 - `sanitizeConfig()` in `src/utils/sanitize.js` also removes prototype keys from client-side config data where applicable.
 
 7. Testing strategy
-- Server tests (Jest + Supertest) located under `server/tests/`:
-  - `security.test.js` — end-to-end tests for prototype pollution, header injection, oversized payload handling, and ReDoS resilience.
-  - `regex-resilience.test.js` — focused ReDoS resistance tests.
-  - `oversize.test.js` — oversized payload rejection.
-- Frontend tests (Jest + react-testing-library): `src/utils/*.test.js` validate axios configuration and sanitizers.
-- Tests are designed to fail on vulnerable behavior and pass after remediation. Run server tests:
-
+- Server tests (Jest + Supertest) are located under `server/tests/`.
+- Frontend tests (Jest + react-testing-library) are located under `src/utils/`.
+- To run server tests:
 ```powershell
 cd server
 npm install

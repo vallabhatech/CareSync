@@ -22,13 +22,26 @@ export function normalizeIPv4(ip) {
     return null;
   }
 
-  const parts = ip.split('.');
-  if (parts.length < 1 || parts.length > 4) {
+  // Handle decimal IPs (e.g., 2130706433)
+  if (!ip.includes('.')) {
+    const num = Number.parseInt(ip, 10);
+    if (!Number.isNaN(num) && num >= 0 && num <= 0xffffffff) {
+      return [
+        (num >> 24) & 0xff,
+        (num >> 16) & 0xff,
+        (num >> 8) & 0xff,
+        num & 0xff,
+      ].join('.');
+    }
+  }
+
+  const parts = ip.split('.').filter(p => p !== '');
+  if (parts.length > 4) {
     return null;
   }
 
   try {
-    const octets = parts.map((part) => {
+    let octets = parts.map((part) => {
       let val;
       if (/^0x[0-9a-f]+$/i.test(part)) {
         val = Number.parseInt(part, 16);
@@ -49,11 +62,16 @@ export function normalizeIPv4(ip) {
       return null;
     }
 
-    while (octets.length < 4) {
-      const last = octets.pop();
-      octets.push(last & 0xff);
-      octets.unshift((last >> 8) & 0xff);
+    if (octets.length < 4) {
+      const last = octets.pop() ?? 0;
+      const remaining = 4 - octets.length;
+      for (let i = 0; i < remaining; i++) {
+        octets.push((last >> (8 * (remaining - 1 - i))) & 0xff);
+      }
     }
+    // Ensure final array has 4 elements
+    if (octets.length !== 4) return null;
+
 
     return octets.join('.');
   } catch {
@@ -94,7 +112,10 @@ export function normalizeHostname(hostname) {
     return { hostname: '', ipv4: null, ipv6: null };
   }
 
-  const lower = hostname.toLowerCase();
+  let lower = hostname.toLowerCase();
+  if (lower.endsWith('.')) {
+    lower = lower.slice(0, -1);
+  }
   const ipv4 = normalizeIPv4(lower);
   if (ipv4) {
     return { hostname: ipv4, ipv4, ipv6: null };
@@ -113,7 +134,11 @@ export function normalizeHostname(hostname) {
  * @returns {boolean}
  */
 export function isLoopbackAlias(hostname) {
-  return LOOPBACK_ALIASES.has(String(hostname || '').toLowerCase());
+  let lower = String(hostname || '').toLowerCase();
+  if (lower.endsWith('.')) {
+    lower = lower.slice(0, -1);
+  }
+  return LOOPBACK_ALIASES.has(lower);
 }
 
 /**

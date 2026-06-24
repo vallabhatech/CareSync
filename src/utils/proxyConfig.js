@@ -17,7 +17,13 @@ const DEFAULT_PORTS = {
  * @returns {string}
  */
 export function getProxyEnv(key, env = typeof process !== 'undefined' ? process.env : {}) {
-  return env[key.toLowerCase()] || env[key.toUpperCase()] || '';
+  const lowerKey = key.toLowerCase();
+  for (const k in env) {
+    if (Object.hasOwn(env, k) && k.toLowerCase() === lowerKey) {
+      return env[k] || '';
+    }
+  }
+  return '';
 }
 
 /**
@@ -63,10 +69,16 @@ export function parseNoProxyEntry(entry) {
   }
   // Regex to capture host and port from entries like "example.com:8080".
   // Using \d instead of [0-9] for conciseness.
-  const portRegex = /^(.+?):(\d{1,5})$/;
-  const portMatch = portRegex.exec(raw);
-  const hostPart = (portMatch ? portMatch[1] : raw).toLowerCase();
-  const port = portMatch ? Number.parseInt(portMatch[2], 10) : undefined;
+  // This regex avoids matching the colons in IPv6 addresses.
+  const portRegex = /^(.*):(\d{1,5})$/;
+  const portMatch = !raw.includes(':') || raw.includes(']:') ? portRegex.exec(raw) : null;
+
+  let hostPart = raw;
+  let port;
+  if (portMatch) {
+    hostPart = portMatch[1];
+    port = Number.parseInt(portMatch[2], 10);
+  }
 
   if (port !== undefined && (Number.isNaN(port) || port < 1 || port > 65535)) {
     throw new Error(`Invalid NO_PROXY port in entry "${raw}".`);
@@ -75,7 +87,7 @@ export function parseNoProxyEntry(entry) {
     throw new Error(`NO_PROXY host part too long in entry "${raw}".`);
   }
 
-  return { type: 'host', raw, host: hostPart, port };
+  return { type: 'host', raw, host: hostPart.toLowerCase(), port };
 }
 
 /**

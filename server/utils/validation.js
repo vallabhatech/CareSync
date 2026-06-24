@@ -34,7 +34,11 @@ function isValidEmail(email) {
   if (!domain.includes('.')) return false;
   const labels = domain.split('.');
   for (const label of labels) {
-    if (label.length === 0 || label.length > 63) return false;
+    if (label.length === 0 || label.length > 63) {
+ return false;
+}
+    // RFC 1035: labels must not start or end with a hyphen.
+    if (label.startsWith('-') || label.endsWith('-')) return false;
     if (!/^[A-Za-z0-9-]+$/.test(label)) return false;
   }
 

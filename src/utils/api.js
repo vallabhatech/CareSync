@@ -18,9 +18,6 @@ const API = axios.create({
   headers: {
     'Content-Type': 'application/json',     
   },
-  // Protect client from very large responses and request bodies (DoS protection)
-  maxContentLength: httpConfig.DEFAULT_MAX_CONTENT_LENGTH,
-  maxBodyLength: httpConfig.DEFAULT_MAX_BODY_LENGTH,
 });
 
 // Request interceptor to attach JWT token and sanitize/validate user-controlled configs
@@ -30,10 +27,14 @@ API.interceptors.request.use(
     // config.url is relative when using the baseURL, so we construct the
     // absolute URL here and validate it to prevent protocol abuse or
     // private-network targets being injected via dynamic config.
-    const resolvedUrl = config.baseURL
-      ? new URL(config.url || '', config.baseURL).href
-      : config.url;
-    validateUrl(resolvedUrl); // throws on disallowed targets
+    const isAbsolute = config.url && (config.url.startsWith('http:') || config.url.startsWith('https:'));
+    if (isAbsolute) {
+      const resolvedUrl = config.baseURL
+        ? new URL(config.url, config.baseURL).href
+        : config.url;
+      validateUrl(resolvedUrl); // throws on disallowed targets
+    }
+
 
     if (config.headers) {
       config.headers = validateAndNormalizeHeaders(config.headers);
@@ -66,8 +67,13 @@ API.interceptors.response.use(
         const offlineQueue = JSON.parse(localStorage.getItem('caresync_offline_queue') || '[]');
         
         // Validate/sanitize headers and remove stale authorization header before saving to queue
-        const headers = validateAndNormalizeHeaders(error.config.headers || {});
-        delete headers['Authorization'];
+        const headers = validateAndNormalizeHeaders(error.config.headers || {});        
+        // Case-insensitive removal of Authorization header
+        const authKey = Object.keys(headers).find(k => k.toLowerCase() === 'authorization');
+        if (authKey) {
+          delete headers[authKey];
+        }
+
         
         offlineQueue.push({
           url: error.config.url,
@@ -100,10 +106,11 @@ window.addEventListener('online', async () => {
       try {
         // Re-validate URL before replaying — the environment may have changed
         // since the request was queued (e.g. baseURL env var updated).
-        const replayUrl = apiBaseURL
-          ? new URL(req.url || '', apiBaseURL).href
-          : req.url;
-        validateUrl(replayUrl);
+        const isAbsolute = req.url && (req.url.startsWith('http:') || req.url.startsWith('https:'));
+        if (isAbsolute) {
+          const replayUrl = new URL(req.url, API.defaults.baseURL).href;
+          validateUrl(replayUrl);
+        }
 
         // Use API instance instead of raw axios to trigger request interceptors (like auth)
         await API({

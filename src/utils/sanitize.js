@@ -15,6 +15,11 @@ import {
  * @returns {*} The sanitized copy of the input.
  */
 export function sanitizeConfig(obj) {
+  // Do not process special object types like FormData, Blob, etc.
+  if (obj && typeof obj === 'object' && obj.constructor !== Object && !Array.isArray(obj)) {
+    return obj;
+  }
+
   if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
     if (Array.isArray(obj)) {
       return obj.map(sanitizeConfig);
@@ -170,7 +175,10 @@ export function validateUrl(rawUrl) {
 
   // ── 4. Extract and normalise hostname ─────────────────────────────────────
   // parsed.hostname strips brackets from IPv6 addresses ([::1] → ::1)
-  const hostname = parsed.hostname.toLowerCase();
+  let hostname = parsed.hostname.toLowerCase();
+  if (hostname.endsWith('.')) {
+    hostname = hostname.slice(0, -1);
+  }
 
   // ── 5. Metadata endpoint blocklist ────────────────────────────────────────
   for (const blocked of METADATA_HOSTNAMES) {

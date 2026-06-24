@@ -3,12 +3,12 @@ import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sani
 
 describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   test('removes simple prototype pollution keys', () => {
-    const payload = {
+    const payload = JSON.parse(`{
       safeKey: 'safeValue',
-      __proto__: { polluted: true },
-      constructor: { polluted: true },
-      prototype: { polluted: true },
-    };
+      "__proto__": { "polluted": true },
+      "constructor": { "polluted": true },
+      "prototype": { "polluted": true }
+    }`);
 
     const result = sanitizeConfig(payload);
 
@@ -22,13 +22,13 @@ describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   });
 
   test('removes keys case-insensitively and handles spaces', () => {
-    const payload = {
+    const payload = JSON.parse(`{
       safeKey: 'safeValue',
-      '__PROTO__': { polluted: true },
-      '  __proto__  ': { polluted: true },
-      'Constructor': { polluted: true },
-      'PROTOTYPE': { polluted: true },
-    };
+      "__PROTO__": { "polluted": true },
+      "  __proto__  ": { "polluted": true },
+      "Constructor": { "polluted": true },
+      "PROTOTYPE": { "polluted": true }
+    }`);
 
     const result = sanitizeConfig(payload);
 
@@ -40,16 +40,16 @@ describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   });
 
   test('recursively sanitizes nested objects', () => {
-    const payload = {
+    const payload = JSON.parse(`{
       safeKey: {
         nestedSafe: 'nestedVal',
-        __proto__: { polluted: true },
-        nestedObject: {
-          constructor: { polluted: true },
-          deepSafe: 'deepVal',
-        },
-      },
-    };
+        "__proto__": { "polluted": true },
+        "nestedObject": {
+          "constructor": { "polluted": true },
+          "deepSafe": "deepVal"
+        }
+      }
+    }`);
 
     const result = sanitizeConfig(payload);
 
@@ -60,11 +60,11 @@ describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   });
 
   test('sanitizes objects inside arrays', () => {
-    const payload = [
-      { id: 1, safe: 'yes' },
-      { id: 2, __proto__: { polluted: true }, safe: 'also-yes' },
-      { id: 3, nested: [{ constructor: { polluted: true } }] },
-    ];
+    const payload = JSON.parse(`[
+      { "id": 1, "safe": "yes" },
+      { "id": 2, "__proto__": { "polluted": true }, "safe": "also-yes" },
+      { "id": 3, "nested": [{ "constructor": { "polluted": true } }] }
+    ]`);
 
     const result = sanitizeConfig(payload);
 
@@ -357,6 +357,14 @@ describe('validateUrl utility (SSRF prevention)', () => {
 
     test('blocks short-form 127.1 (classful expands to 127.0.0.1)', () => {
       expect(() => validateUrl('http://127.1/')).toThrow(/blocked/);
+    });
+
+    test('blocks trailing-dot bypass attempt for localhost', () => {
+      expect(() => validateUrl('http://localhost./')).toThrow(/loopback alias/);
+    });
+
+    test('blocks trailing-dot bypass for metadata service', () => {
+      expect(() => validateUrl('http://metadata.google.internal./')).toThrow(/metadata endpoint/);
     });
   });
 

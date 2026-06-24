@@ -51,10 +51,6 @@ const sanitizeHeaders = (req, res, next) => {
 // Middleware
 app.use(sanitizeHeaders);
 
-// Sanitize incoming JSON bodies to prevent prototype pollution attacks
-const { sanitizeBody } = require('./utils/requestSanitize');
-app.use(sanitizeBody);
-
 // helmet sets secure HTTP response headers (X-Frame-Options, X-Content-Type-Options, etc.) to reduce attack surface.
 app.use(helmet());
 
@@ -72,15 +68,22 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: limits.DEFAULT_BODY_LIMIT }));
 app.use(express.urlencoded({ limit: limits.DEFAULT_BODY_LIMIT, extended: true }));
 
+// Sanitize incoming JSON bodies to prevent prototype pollution attacks.
+// This must run AFTER the body parsers.
+const { sanitizeBody } = require('./utils/requestSanitize');
+app.use(sanitizeBody);
+
 // Middleware to catch oversized payload errors thrown by body parsers and log them
 app.use((err, req, res, next) => {
   if (err && (err.type === 'entity.too.large' || err.status === 413)) {
     const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+    const sanitize = (str) => String(str).replace(/[\r\n]/g, '');
+
     console.warn('Rejected oversized request', {
-      ip,
-      url: req.originalUrl,
-      method: req.method,
-      contentLength: req.headers['content-length'] || 'unknown',
+      ip: sanitize(ip),
+      url: sanitize(req.originalUrl),
+      method: sanitize(req.method),
+      contentLength: sanitize(req.headers['content-length'] || 'unknown'),
     });
     return res.status(413).json({ message: 'Payload Too Large' });
   }
