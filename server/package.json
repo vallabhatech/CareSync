@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "concurrently \"node index.js\" \"node services/authService.js\" \"node services/userService.js\" \"node services/medicineService.js\" \"node services/symptomService.js\" \"node services/telemedicineService.js\"",
-    "dev": "concurrently \"nodemon index.js\" \"nodemon services/authService.js\" \"nodemon services/userService.js\" \"nodemon services/medicineService.js\" \"nodemon services/symptomService.js\" \"nodemon services/telemedicineService.js\""
+    "dev": "concurrently \"nodemon index.js\" \"nodemon services/authService.js\" \"nodemon services/userService.js\" \"nodemon services/medicineService.js\" \"nodemon services/symptomService.js\" \"nodemon services/telemedicineService.js\"",
+    "test": "jest"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -26,6 +27,8 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "jest": "^29.0.0",
+    "supertest": "^6.3.3"
   }
 }
