@@ -53,7 +53,7 @@ const NAV_LINKS = [
   { key: 'medicineTracker', to: '/medicine-tracker' },
   { key: 'symptomChecker', to: '/symptom-checker' },
   { key: 'clinicsNearby', to: '/clinics-nearby' },
-  { key: 'settings', to: '/settings' },
+  { key: 'recommendations', to: '/recommendations' },
 ];
 
 function HideOnScroll(props) {
@@ -312,8 +312,6 @@ function App() {
           <Route path="/health-metrics" element={<HealthMetrics />} />
           <Route path="/medical-documents" element={<MedicalDocuments />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/dosage-calculator" element={<DosageCalculator />} />
-          <Route path="/health-metrics" element={<HealthMetrics />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
