@@ -311,8 +311,6 @@ function App() {
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/health-metrics" element={<HealthMetrics />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/dosage-calculator" element={<DosageCalculator />} />
-          <Route path="/health-metrics" element={<HealthMetrics />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />

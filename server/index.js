@@ -1,12 +1,13 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const { createProxyMiddleware, fixRequestBody } = require('http-proxy-middleware');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.disable('x-powered-by');
+
 // Configure trusted proxy hops so req.ip reflects the real client address for
 // accurate security event logging. Defaults to 1 (one proxy hop), matching the
 // documented Vercel/Render deployment where this is spoofing-resistant. Set
@@ -93,6 +94,7 @@ const corsOptions = {
   },
   optionsSuccessStatus: 200
 };
+
 app.use(cors(corsOptions));
 
 // Set body parser size limit using centralized limits configuration
@@ -121,19 +123,6 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-// DB Connection
-const dbUri = process.env.MONGODB_URI;
-if (!dbUri) {
-  console.error('Error: MONGODB_URI environment variable is not defined.');
-  process.exit(1);
-}
-mongoose.connect(dbUri)
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
-    console.log('Ensure MongoDB service is running locally or check MONGODB_URI in server/.env');
-  });
-
 // Apply stricter rate limiting to auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -144,34 +133,58 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
-// API Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/auth/emergency-contacts', require('./routes/emergencyContacts'));
-app.use('/api/medicines', require('./routes/medicines'));
-app.use('/api/symptom-checks', require('./routes/symptomChecks'));
-app.use('/api/clinics', require('./routes/clinics'));
-app.use('/api/health-metrics', require('./routes/healthMetrics'));
-app.use('/api/security', require('./routes/security'));
+// Microservices routing map
+const services = {
+  '/api/auth': 'http://127.0.0.1:5001',
+  '/api/security': 'http://127.0.0.1:5001',
+  '/api/family': 'http://127.0.0.1:5002',
+  '/api/health-metrics': 'http://127.0.0.1:5002',
+  '/api/medicines': 'http://127.0.0.1:5003',
+  '/api/symptom-checks': 'http://127.0.0.1:5004',
+  '/api/clinics': 'http://127.0.0.1:5005',
+};
+
+// Setup proxies
+for (const [route, target] of Object.entries(services)) {
+  app.use(route, createProxyMiddleware({ 
+    target, 
+    changeOrigin: true,
+    timeout: 10000,
+    proxyTimeout: 10000,
+    pathRewrite: (path, req) => path, // keep original path
+    on: {
+      proxyReq: fixRequestBody,
+      error: (err, req, res) => {
+        if (!res.headersSent) {
+          if (err.code === 'ETIMEDOUT' || err.code === 'ECONNABORTED') {
+            res.status(504).json({ message: 'Upstream service timeout' });
+          } else {
+            res.status(502).json({ message: 'Upstream service unavailable' });
+          }
+        }
+      }
+    }
+  }));
+}
 
 // Health Check / Default route
 app.get('/', (req, res) => {
-  // Support header injection testing by echoing a query param into a response header
   if (req.query.injection) {
     res.setHeader('X-Injection-Response', req.query.injection);
   }
-  res.send('CareSync API is running...');
+  res.send('CareSync API Gateway is running...');
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('API Error:', err.stack);
-  res.status(500).json({ message: 'Internal Server Error' });
+  console.error('API Gateway Error:', err.stack);
+  res.status(500).json({ message: 'Internal Server Error in API Gateway' });
 });
 
 let server;
 if (require.main === module) {
   server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`API Gateway is running on port ${PORT}`);
   });
 }
 
