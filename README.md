@@ -199,6 +199,66 @@ Contributions are what make the open-source community grow and thrive. Any contr
 git checkout -b feature/AmazingFeature
 ```
 
+## Configured request/response limits
+
+- **Server body limit:** configured via `server/config/limits.js` (default `5mb`). Override with `BODY_LIMIT` or `BODY_LIMIT_BYTES` environment variables.
+- **Client axios limits:** configured via `src/utils/httpConfig.js` (`REACT_APP_MAX_CONTENT_LENGTH` and `REACT_APP_MAX_BODY_LENGTH`, defaults `5MB`).
+
+Requests rejected due to oversized payloads are logged on the server with IP, URL, method and Content-Length.
+
+## Security Considerations
+
+This project includes a set of defensive controls and tests to mitigate common web application security issues. The following sections summarize requirements, protections implemented, and how to run the security test-suite.
+
+1. Axios version requirements
+- We require `axios` >= 1.18.0 in `package.json`. Keep `axios` up-to-date to receive security fixes. Monitor advisories and update promptly. Tests in `src/utils/api.test.js` assert configured limits are present.
+
+2. Security risks addressed
+- Oversized payload (DoS) attacks: server and client limits are configured and tested.
+- Header injection (CRLF): server sanitizes response headers; the client and server validate header names/values and reject CRLF/control characters.
+- Prototype pollution: request bodies are sanitized (server-side middleware strips `__proto__`, `constructor`, and `prototype`).
+- Regular expression Denial of Service (ReDoS): complex regexes were replaced with ReDoS-resistant logic and length checks.
+- Server-Side Request Forgery (SSRF): URL validation normalizes/inspects hostnames, rejects private/loopback and cloud metadata addresses.
+
+3. SSRF protections
+- All outbound URLs validated in `src/utils/sanitize.js` via `validateUrl()`:
+  - Enforces allowed protocols (`http`, `https`).
+  - Blocks cloud metadata hostnames (e.g. `169.254.169.254`).
+  - Normalizes IPv4/IPv6 encodings to detect hex/decimal/octal encodings and mapped IPv6 forms.
+  - Rejects loopback, private, link-local, APIPA and reserved ranges.
+
+4. Header validation
+- Header names validated against RFC-like token regex and limited to 256 characters in `src/utils/sanitize.js`.
+- Header values are trimmed, disallow control characters (0x00-0x1F, 0x7F), CR/LF, and limited to 4096 characters.
+
+5. Payload size limits
+- Server body limit: configured in `server/config/limits.js` (default `5mb`). Express body-parser uses this limit and oversized payloads return `413 Payload Too Large` (or `400` in some environments). Logs include IP, URL, method, and Content-Length.
+- Client axios limits: `src/utils/httpConfig.js` defines `DEFAULT_MAX_CONTENT_LENGTH` and `DEFAULT_MAX_BODY_LENGTH` (default `5MB`). The axios instance in `src/utils/api.js` applies `maxContentLength` and `maxBodyLength`.
+
+6. Prototype pollution prevention
+- Server middleware `server/utils/requestSanitize.js` strips dangerous object keys recursively before route handlers run.
+- `sanitizeConfig()` in `src/utils/sanitize.js` also removes prototype keys from client-side config data where applicable.
+
+7. Testing strategy
+- Server tests (Jest + Supertest) are located under `server/tests/`.
+- Frontend tests (Jest + react-testing-library) are located under `src/utils/`.
+- To run server tests:
+```powershell
+cd server
+npm install
+npm test
+```
+
+Run frontend tests from repo root:
+
+```bash
+npm install
+npm test
+```
+
+If you'd like, I can open a PR with these security changes and the test-suite, or wire these tests into CI (GitHub Actions) so they run automatically on each push.
+
+
 3. Commit your changes
 
 ```bash

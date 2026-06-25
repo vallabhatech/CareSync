@@ -53,10 +53,13 @@ jobs:
 
       - name: Run tests with coverage
         run: npm test -- --coverage --ci
-        continue-on-error: true
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        # Pin to a specific version for security and reproducibility
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=your-project-key-here
