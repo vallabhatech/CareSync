@@ -149,9 +149,20 @@ for (const [route, target] of Object.entries(services)) {
   app.use(route, createProxyMiddleware({ 
     target, 
     changeOrigin: true,
+    timeout: 10000,
+    proxyTimeout: 10000,
     pathRewrite: (path, req) => path, // keep original path
     on: {
-      proxyReq: fixRequestBody
+      proxyReq: fixRequestBody,
+      error: (err, req, res) => {
+        if (!res.headersSent) {
+          if (err.code === 'ETIMEDOUT' || err.code === 'ECONNABORTED') {
+            res.status(504).json({ message: 'Upstream service timeout' });
+          } else {
+            res.status(502).json({ message: 'Upstream service unavailable' });
+          }
+        }
+      }
     }
   }));
 }

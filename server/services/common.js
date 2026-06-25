@@ -18,6 +18,7 @@ const connectDB = async () => {
     console.log('MongoDB connected successfully');
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
+    process.exit(1);
   }
 };
 
@@ -63,8 +64,8 @@ const createService = async (port, setupRoutes) => {
     res.status(500).json({ message: 'Internal Server Error' });
   });
 
-  app.listen(port, () => {
-    console.log(`Service is running on port ${port}`);
+  app.listen(port, '127.0.0.1', () => {
+    console.log(`Service is running on port ${port} (127.0.0.1)`);
   });
   return app;
 };
