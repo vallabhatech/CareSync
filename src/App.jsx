@@ -54,6 +54,7 @@ const NAV_LINKS = [
   { key: 'clinicsNearby', to: '/clinics-nearby' },
   { key: 'telehealth', to: '/telehealth' },
   { key: 'settings', to: '/settings' },
+  { key: 'recommendations', to: '/recommendations' },
 ];
 
 function HideOnScroll(props) {
