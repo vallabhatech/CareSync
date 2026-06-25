@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sanitize';
+import httpConfig from './httpConfig';
+
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -17,9 +20,32 @@ const API = axios.create({
   },
 });
 
-// Request interceptor to attach JWT token
+// Request interceptor to attach JWT token and sanitize/validate user-controlled configs
 API.interceptors.request.use(
   (config) => {
+    // ── SSRF guard: validate the resolved URL before sending ──────────────────
+    // config.url is relative when using the baseURL, so we construct the
+    // absolute URL here and validate it to prevent protocol abuse or
+    // private-network targets being injected via dynamic config.
+    const isAbsolute = config.url && (config.url.startsWith('http:') || config.url.startsWith('https:'));
+    if (isAbsolute) {
+      const resolvedUrl = config.baseURL
+        ? new URL(config.url, config.baseURL).href
+        : config.url;
+      validateUrl(resolvedUrl); // throws on disallowed targets
+    }
+
+
+    if (config.headers) {
+      config.headers = validateAndNormalizeHeaders(config.headers);
+    }
+    if (config.params) {
+      config.params = sanitizeConfig(config.params);
+    }
+    if (config.data) {
+      config.data = sanitizeConfig(config.data);
+    }
+
     const token = localStorage.getItem('caresync_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -31,6 +57,7 @@ API.interceptors.request.use(
   }
 );
 
+
 // Response interceptor for offline queueing
 API.interceptors.response.use(
   (response) => response,
@@ -39,14 +66,19 @@ API.interceptors.response.use(
       if (error.config && ['post', 'put', 'delete', 'patch'].includes(error.config.method?.toLowerCase())) {
         const offlineQueue = JSON.parse(localStorage.getItem('caresync_offline_queue') || '[]');
         
-        // Remove stale authorization header before saving to queue
-        const headers = { ...error.config.headers };
-        delete headers['Authorization'];
+        // Validate/sanitize headers and remove stale authorization header before saving to queue
+        const headers = validateAndNormalizeHeaders(error.config.headers || {});        
+        // Case-insensitive removal of Authorization header
+        const authKey = Object.keys(headers).find(k => k.toLowerCase() === 'authorization');
+        if (authKey) {
+          delete headers[authKey];
+        }
+
         
         offlineQueue.push({
           url: error.config.url,
           method: error.config.method,
-          data: error.config.data,
+          data: sanitizeConfig(error.config.data),
           headers: headers,
           retryCount: 0
         });
@@ -72,6 +104,14 @@ window.addEventListener('online', async () => {
     const remainingQueue = [];
     for (const req of queue) {
       try {
+        // Re-validate URL before replaying — the environment may have changed
+        // since the request was queued (e.g. baseURL env var updated).
+        const isAbsolute = req.url && (req.url.startsWith('http:') || req.url.startsWith('https:'));
+        if (isAbsolute) {
+          const replayUrl = new URL(req.url, API.defaults.baseURL).href;
+          validateUrl(replayUrl);
+        }
+
         // Use API instance instead of raw axios to trigger request interceptors (like auth)
         await API({
           url: req.url,
@@ -79,6 +119,7 @@ window.addEventListener('online', async () => {
           data: req.data,
           headers: req.headers
         });
+
       } catch (err) {
         // Distinguish retryable network errors/5xx from permanent 4xx failures
         const isRetryable = !err.response || err.response.status >= 500;
