@@ -20,6 +20,7 @@
     "framer-motion": "^12.40.0",
     "i18next": "^26.3.1",
     "i18next-browser-languagedetector": "^8.2.1",
+    "js-yaml": "^5.1.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -58,14 +59,13 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "autoprefixer": "^10.5.0",
+    "axios-mock-adapter": "^1.21.2",
+    "eslint": "^8.57.0",
     "postcss": "^8.5.15",
     "react-app-rewired": "^2.2.1",
     "react-scripts": "^5.0.1",
-    "tailwindcss": "^4.3.1"
-    ,
-    "axios-mock-adapter": "^1.21.2",
-    "typescript": "^5.5.4",
-    "eslint": "^8.57.0"
+    "tailwindcss": "^4.3.1",
+    "typescript": "^5.5.4"
   },
   "overrides": {
     "form-data": "4.0.6",
