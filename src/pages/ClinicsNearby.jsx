@@ -27,7 +27,9 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import API from '../utils/api';
+import { validateUrl } from '../utils/sanitize';
 import { useAuth } from '../context/AuthContext';
+
 
 // Custom Map Controller to handle bounds and view changes dynamically
 function MapController({ center, clinics }) {
@@ -266,7 +268,11 @@ export default function ClinicsNearby() {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
       query
     )}`;
+    // SSRF guard: ensure the hardcoded base is still http/https and not
+    // accidentally redirected to a private host by a DNS rebinding attack.
+    validateUrl(url);
     const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+
 
     if (!res.ok) {
       throw new Error(
@@ -303,7 +309,10 @@ export default function ClinicsNearby() {
       const top = latitude + delta;
       const bottom = latitude - delta;
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=clinic&limit=10&addressdetails=1&extratags=1&bounded=1&viewbox=${left},${top},${right},${bottom}`;
+      // SSRF guard: enforce protocol allowlist and private-range blocklist.
+      validateUrl(url);
       const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+
 
       if (!res.ok) {
         throw new Error(t('clinics:errorFetchClinics'));

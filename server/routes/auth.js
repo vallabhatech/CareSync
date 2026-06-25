@@ -42,6 +42,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
+    const { isValidEmail } = require('../utils/validation');
+    if (!isValidEmail(email)) {
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       await logSecurityEvent({
         eventType: EVENT_TYPES.AUTH_REGISTER_FAILURE,
@@ -142,6 +144,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
+    const { isValidEmail } = require('../utils/validation');
+    if (!isValidEmail(email)) {
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       await logSecurityEvent({
         eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
@@ -268,7 +272,8 @@ router.get('/me', authMiddleware, async (req, res) => {
 });
 
 const validateAndGetEmailUpdate = async (email, currentUser) => {
-  if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+  const { isValidEmail } = require('../utils/validation');
+  if (!isValidEmail(email)) {
     throw new Error('Invalid email address');
   }
   const emailExists = await User.findOne({ email: { $eq: email } });
