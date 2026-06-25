@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import MedicationIcon from '@mui/icons-material/Medication';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FolderIcon from '@mui/icons-material/Folder';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -123,6 +124,14 @@ export default function Dashboard() {
       link: "/health-metrics",
       icon: <FavoriteBorderIcon fontSize="large" color="primary" />,
       btn: 'View Metrics',
+    },
+    {
+      id: 'medical-documents',
+      title: 'Medical Documents',
+      desc: 'Securely store and manage your reports, prescriptions, scans, and insurance files.',
+      link: "/medical-documents",
+      icon: <FolderIcon fontSize="large" color="primary" />,
+      btn: 'My Documents',
     },
     {
       id: 'nearby-clinics',
