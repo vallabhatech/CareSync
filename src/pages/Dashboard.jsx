@@ -5,6 +5,7 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FolderIcon from '@mui/icons-material/Folder';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -132,6 +133,14 @@ export default function Dashboard() {
       link: "/medical-documents",
       icon: <FolderIcon fontSize="large" color="primary" />,
       btn: 'My Documents',
+    },
+    {
+      id: 'health-report-export',
+      title: 'Export Health Report',
+      desc: 'Generate and download a comprehensive PDF report of your health data.',
+      link: "/health-report-export",
+      icon: <AssessmentIcon fontSize="large" color="primary" />,
+      btn: 'Export PDF Report',
     },
     {
       id: 'nearby-clinics',
