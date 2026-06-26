@@ -30,13 +30,30 @@ export function sanitizeConfig(obj) {
   const sanitized = {};
   const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-  for (const [key, value] of Object.entries(obj)) {
+  for (const key of Object.keys(obj)) {
     if (DANGEROUS_KEYS.has(key.trim().toLowerCase())) {
       console.warn(`Prototype pollution attempt blocked. Rejected key: "${key}"`);
       continue;
     }
 
-    sanitized[key] = sanitizeConfig(value);
+    // Use Object.defineProperty instead of bracket assignment.
+    // Bracket notation (`sanitized[key] = v`) invokes the __proto__ accessor
+    // setter when key === '__proto__', mutating Object.prototype (Prototype
+    // Pollution). This is the exact mechanism exploited by js-yaml's YAML
+    // merge-key (<<) handler in versions < 4.x: it copies anchor properties
+    // into the target mapping via direct property assignment, so an anchor
+    // containing __proto__ silently poisons Object.prototype.
+    //
+    // Object.defineProperty uses [[DefineOwnProperty]] instead of [[Set]],
+    // which bypasses the setter entirely and always creates a genuine own
+    // property — even if 'key' is '__proto__'. This is a second-layer
+    // defence that makes the guard above redundant-safe.
+    Object.defineProperty(sanitized, key, {
+      value: sanitizeConfig(obj[key]),
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
   }
 
   return sanitized;
