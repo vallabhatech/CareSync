@@ -1,24 +1,20 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 const router = express.Router();
 const InsurancePolicy = require('../models/InsurancePolicy');
 const authMiddleware = require('../middleware/authMiddleware');
 const PDFDocument = require('pdfkit');
 
-const insuranceMutationLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false
-});
-
-const insurancePolicyLimiter = rateLimit({
+const insuranceLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per window
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Too many insurance policy requests, please try again later.' }
+  message: { message: 'Too many insurance requests, please try again later.' }
 });
+
+router.use(insuranceLimiter);
 
 // Static insurance plans available for comparison & purchase
 const INSURANCE_PLANS = [
@@ -221,7 +217,7 @@ router.get('/plans', (req, res) => {
 // @route   GET /api/insurance/policies
 // @desc    Get user's purchased insurance policies
 // @access  Private
-router.get('/policies', authMiddleware, insurancePolicyLimiter, async (req, res) => {
+router.get('/policies', authMiddleware, async (req, res) => {
   try {
     const policies = await InsurancePolicy.find({ user: { $eq: req.user._id } }).sort({ createdAt: -1 });
     res.json(policies);
@@ -234,7 +230,7 @@ router.get('/policies', authMiddleware, insurancePolicyLimiter, async (req, res)
 // @route   POST /api/insurance/policies
 // @desc    Purchase a new insurance policy
 // @access  Private
-router.post('/policies', authMiddleware, insurancePolicyLimiter, async (req, res) => {
+router.post('/policies', authMiddleware, async (req, res) => {
   const {
     planId,
     planName,
@@ -272,7 +268,7 @@ router.post('/policies', authMiddleware, insurancePolicyLimiter, async (req, res
     }
 
     // Generate unique policy number
-    const randomSuffix = Math.floor(10000 + Math.random() * 90000);
+    const randomSuffix = crypto.randomInt(10000, 100000);
     const policyNumber = `CS-2026-${randomSuffix}`;
 
     // Dates
@@ -309,7 +305,7 @@ router.post('/policies', authMiddleware, insurancePolicyLimiter, async (req, res
 // @route   DELETE /api/insurance/policies/:id
 // @desc    Cancel an insurance policy
 // @access  Private
-router.delete('/policies/:id', authMiddleware, insuranceMutationLimiter, async (req, res) => {
+router.delete('/policies/:id', authMiddleware, async (req, res) => {
   const cleanId = String(req.params.id);
   try {
     const policy = await InsurancePolicy.findOne({
