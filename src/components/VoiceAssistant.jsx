@@ -3,43 +3,21 @@ import { Fab, Snackbar, Tooltip } from "@mui/material";
 import MicIcon from "@mui/icons-material/Mic";
 import { useNavigate } from "react-router-dom";
 
-const COMMANDS = [
-  {
-    keywords: ["dashboard"],
-    path: "/dashboard",
-    message: "Opening Dashboard",
-  },
-  {
-    keywords: ["medicine", "medicines"],
-    path: "/medicine-tracker",
-    message: "Opening Medicine Tracker",
-  },
-  {
-    keywords: ["symptom", "symptoms"],
-    path: "/symptom-checker",
-    message: "Opening Symptom Checker",
-  },
-  {
-    keywords: ["clinic", "clinics"],
-    path: "/clinics-nearby",
-    message: "Opening Clinics Nearby",
-  },
-  {
-    keywords: ["calculator", "dosage"],
-    path: "/dosage-calculator",
-    message: "Opening Dosage Calculator",
-  },
-  {
-    keywords: ["health", "metrics"],
-    path: "/health-metrics",
-    message: "Opening Health Metrics",
-  },
-  {
-    keywords: ["setting", "settings"],
-    path: "/settings",
-    message: "Opening Settings",
-  },
-];
+const COMMANDS = {
+  dashboard: "/dashboard",
+  medicine: "/medicine-tracker",
+  medicines: "/medicine-tracker",
+  symptom: "/symptom-checker",
+  symptoms: "/symptom-checker",
+  clinic: "/clinics-nearby",
+  clinics: "/clinics-nearby",
+  calculator: "/dosage-calculator",
+  dosage: "/dosage-calculator",
+  health: "/health-metrics",
+  metrics: "/health-metrics",
+  setting: "/settings",
+  settings: "/settings",
+};
 
 function VoiceAssistant() {
   const navigate = useNavigate();
@@ -54,24 +32,29 @@ function VoiceAssistant() {
 
     const speech = new SpeechSynthesisUtterance(text);
     speech.lang = "en-US";
-    speech.rate = 1;
-    speech.pitch = 1;
 
     window.speechSynthesis.speak(speech);
   };
 
   const handleCommand = (text) => {
-    const command = COMMANDS.find(({ keywords }) =>
-      keywords.some((keyword) => text.includes(keyword))
+    const keyword = Object.keys(COMMANDS).find((word) =>
+      text.includes(word)
     );
 
-    if (!command) {
+    if (!keyword) {
       speak("Sorry, I didn't understand.");
       return;
     }
 
-    speak(command.message);
-    navigate(command.path);
+    const path = COMMANDS[keyword];
+
+    const pageName = path
+      .replace("/", "")
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+    speak(`Opening ${pageName}`);
+    navigate(path);
   };
 
   const startListening = () => {
