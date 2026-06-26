@@ -7,6 +7,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ShieldIcon from '@mui/icons-material/Shield';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -139,6 +140,14 @@ export default function Dashboard() {
       link: "/settings",
       icon: <SettingsIcon fontSize="large" color="primary" />,
       btn: t('dashboard:goToSettings'),
+    },
+    {
+      id: 'insurance-marketplace',
+      title: 'Insurance Marketplace',
+      desc: 'Compare, calculate quotes, and purchase premium health insurance plans.',
+      link: "/insurance",
+      icon: <ShieldIcon fontSize="large" color="primary" />,
+      btn: 'Browse Plans',
     }
   ];
   

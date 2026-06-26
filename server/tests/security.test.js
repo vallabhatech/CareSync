@@ -1,5 +1,10 @@
 process.env.NODE_ENV = 'test';
 
+jest.mock('http-proxy-middleware', () => ({
+  createProxyMiddleware: jest.fn(() => (req, res, next) => next()),
+  fixRequestBody: jest.fn()
+}));
+
 const request = require('supertest');
 const app = require('../index');
 const { isValidEmail } = require('../utils/validation');
@@ -10,18 +15,18 @@ describe('Security test suite', () => {
     const res = await request(app).post('/__test/sanitize').send(payload).set('Accept', 'application/json');
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('safe', 'ok');
-    // __proto__ should not be present in the returned body
-    expect(res.body).not.toHaveProperty('__proto__');
+    // Verify __proto__ is not an own property of res.body
+    expect(Object.prototype.hasOwnProperty.call(res.body, '__proto__')).toBe(false);
     // Ensure we didn't pollute Object.prototype
     expect(Object.prototype).not.toHaveProperty('hacked');
   });
 
   test('Header injection sanitized when echoed into response header', async () => {
     const malicious = 'value\r\nX-Injected: injected';
-    const res = await request(app).get('/__test/echo-header').set('X-Echo', malicious);
+    const res = await request(app).get(`/?injection=${encodeURIComponent(malicious)}`);
     expect(res.status).toBe(200);
     // Response header must not contain raw CRLF sequences
-    const header = res.header['x-echo-response'];
+    const header = res.header['x-injection-response'];
     expect(header).toBeDefined();
     expect(/\r|\n/.test(header)).toBe(false);
   });

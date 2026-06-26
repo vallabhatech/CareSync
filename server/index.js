@@ -142,6 +142,7 @@ const services = {
   '/api/medicines': 'http://127.0.0.1:5003',
   '/api/symptom-checks': 'http://127.0.0.1:5004',
   '/api/clinics': 'http://127.0.0.1:5005',
+  '/api/insurance': 'http://127.0.0.1:5006',
 };
 
 // Setup proxies

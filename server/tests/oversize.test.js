@@ -1,5 +1,10 @@
 process.env.BODY_LIMIT = '10kb';
 
+jest.mock('http-proxy-middleware', () => ({
+  createProxyMiddleware: jest.fn(() => (req, res, next) => next()),
+  fixRequestBody: jest.fn()
+}));
+
 const request = require('supertest');
 const app = require('../index');
 
