@@ -3,6 +3,14 @@ const router = express.Router();
 const InsurancePolicy = require('../models/InsurancePolicy');
 const authMiddleware = require('../middleware/authMiddleware');
 const PDFDocument = require('pdfkit');
+const rateLimit = require('express-rate-limit');
+
+const insuranceMutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Static insurance plans available for comparison & purchase
 const INSURANCE_PLANS = [
@@ -293,7 +301,7 @@ router.post('/policies', authMiddleware, async (req, res) => {
 // @route   DELETE /api/insurance/policies/:id
 // @desc    Cancel an insurance policy
 // @access  Private
-router.delete('/policies/:id', authMiddleware, async (req, res) => {
+router.delete('/policies/:id', authMiddleware, insuranceMutationLimiter, async (req, res) => {
   const cleanId = String(req.params.id);
   try {
     const policy = await InsurancePolicy.findOne({
