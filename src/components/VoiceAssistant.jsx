@@ -48,6 +48,8 @@ function VoiceAssistant() {
   const [message, setMessage] = useState("");
 
   const speak = (text) => {
+    if (!("speechSynthesis" in window)) return;
+
     window.speechSynthesis.cancel();
 
     const speech = new SpeechSynthesisUtterance(text);
@@ -64,9 +66,7 @@ function VoiceAssistant() {
     );
 
     if (!command) {
-      speak(
-        "Sorry, I didn't understand."
-      );
+      speak("Sorry, I didn't understand.");
       return;
     }
 
@@ -75,6 +75,8 @@ function VoiceAssistant() {
   };
 
   const startListening = () => {
+    if (listening) return;
+
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -91,20 +93,19 @@ function VoiceAssistant() {
     recognition.continuous = false;
 
     setListening(true);
-
     recognition.start();
 
     recognition.onresult = ({ results }) => {
       const text = results[0][0].transcript.toLowerCase();
 
       setMessage(`You said: ${text}`);
-
       handleCommand(text);
     };
 
     recognition.onerror = () => {
       setMessage("Could not recognize speech.");
       speak("Sorry, I could not recognize your voice.");
+      setListening(false);
     };
 
     recognition.onend = () => {
@@ -116,6 +117,7 @@ function VoiceAssistant() {
     <>
       <Tooltip title={listening ? "Listening..." : "Voice Assistant"}>
         <Fab
+          aria-label="voice assistant"
           color={listening ? "secondary" : "primary"}
           onClick={startListening}
           sx={{
