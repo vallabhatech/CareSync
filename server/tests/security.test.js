@@ -37,6 +37,40 @@ describe('Security test suite', () => {
     expect([413, 400]).toContain(res.status);
   }, 20000);
 
+  test('sanitizeBody strips YAML-merge-style __proto__ injection without polluting prototype', async () => {
+    // Simulate what js-yaml's << merge operator can produce in versions < 4.x:
+    // a request body where __proto__ arrives as a string key (own property)
+    // via JSON-serialised YAML output. The sanitizer must drop the key AND
+    // must not itself pollute Object.prototype during the sanitize pass.
+    const payload = JSON.parse('{"__proto__":{"isAdmin":true},"role":"user"}');
+    const res = await request(app)
+      .post('/__test/sanitize')
+      .send(payload)
+      .set('Accept', 'application/json');
+
+    expect(res.status).toBe(200);
+    expect(res.body.role).toBe('user');
+    expect(res.body).not.toHaveProperty('__proto__');
+    // Verify the sanitize pass itself did not pollute Object.prototype.
+    expect(Object.prototype).not.toHaveProperty('isAdmin');
+  });
+
+  test('sanitizeBody strips nested YAML-merge-style constructor/prototype keys', async () => {
+    const payload = JSON.parse(
+      '{"user":{"constructor":{"polluted":true},"name":"alice"},"prototype":{"evil":1}}'
+    );
+    const res = await request(app)
+      .post('/__test/sanitize')
+      .send(payload)
+      .set('Accept', 'application/json');
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.name).toBe('alice');
+    expect(res.body.user).not.toHaveProperty('constructor');
+    expect(res.body).not.toHaveProperty('prototype');
+    expect(Object.prototype).not.toHaveProperty('polluted');
+  });
+
   test('isValidEmail is resilient to ReDoS attempts', () => {
     const evil = 'a'.repeat(200000) + '@example.com';
     const start = Date.now();

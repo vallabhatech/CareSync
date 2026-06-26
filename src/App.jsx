@@ -44,7 +44,7 @@ import HealthMetrics from './pages/HealthMetrics';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 import VoiceAssistant from "./components/VoiceAssistant";
-
+import Telehealth from "./pages/Telehealth";
 
 // Navigation targets. Labels are resolved at render time via i18n keys
 // (see the `nav` namespace) so the menu localises with the rest of the app.
@@ -53,6 +53,8 @@ const NAV_LINKS = [
   { key: 'medicineTracker', to: '/medicine-tracker' },
   { key: 'symptomChecker', to: '/symptom-checker' },
   { key: 'clinicsNearby', to: '/clinics-nearby' },
+  { key: 'telehealth', to: '/telehealth' },
+  { key: 'settings', to: '/settings' },
   { key: 'recommendations', to: '/recommendations' },
 ];
 
@@ -311,6 +313,9 @@ function App() {
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/health-metrics" element={<HealthMetrics />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/dosage-calculator" element={<DosageCalculator />} />
+          <Route path="/health-metrics" element={<HealthMetrics />} />
+          <Route path="/telehealth" element={<Telehealth />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />

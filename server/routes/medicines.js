@@ -1,5 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
+// General limiter for medicines endpoints
+const medicinesLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 80,
+  message: 'Too many requests to medicines endpoints, please try again later.',
+});
+router.use(medicinesLimiter);
 const Medicine = require('../models/Medicine');
 const authMiddleware = require('../middleware/authMiddleware');
 
