@@ -93,6 +93,10 @@ const InsurancePolicySchema = new mongoose.Schema({
       required: true,
       trim: true,
     },
+    zipCode: {
+      type: String,
+      trim: true,
+    },
   },
   coveredMembers: {
     type: [CoveredMemberSchema],

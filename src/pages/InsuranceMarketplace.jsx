@@ -143,6 +143,8 @@ export default function InsuranceMarketplace() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchUserPolicies();
+    } else {
+      setPolicies([]);
     }
     // eslint-disable-next-line
   }, [isAuthenticated]);
@@ -159,13 +161,24 @@ export default function InsuranceMarketplace() {
     }
   };
 
+  // Helper: ZIP code multiplier
+  const getZipMultiplier = (zip) => {
+    if (!zip || zip.length < 3) return 1.0;
+    const firstDigit = zip[0];
+    if (firstDigit === '9') return 1.10;
+    if (firstDigit === '0' || firstDigit === '1') return 1.15;
+    if (firstDigit === '3' || firstDigit === '4') return 1.05;
+    return 1.0;
+  };
+
   // Helper: Quote Multiplier Logic
   const getQuoteMultiplier = () => {
     const ageFactor = age > 30 ? 1 + (age - 30) * 0.015 : 1;
     const tobaccoFactor = tobacco === 'yes' ? 1.25 : 1.0;
     const familyFactor = 1 + familyMembers * 0.45;
     const preExistingFactor = 1 + preExisting.length * 0.08;
-    return ageFactor * tobaccoFactor * familyFactor * preExistingFactor;
+    const zipFactor = getZipMultiplier(zipCode);
+    return ageFactor * tobaccoFactor * familyFactor * preExistingFactor * zipFactor;
   };
 
   const calculatePremium = (basePremium) => {
@@ -279,19 +292,15 @@ export default function InsuranceMarketplace() {
     try {
       const reqPayload = {
         planId: selectedPlan.id,
-        planName: selectedPlan.name,
-        provider: selectedPlan.provider,
-        premium: calculatePremium(selectedPlan.premium),
-        deductible: selectedPlan.deductible,
-        copay: selectedPlan.copay,
-        coverageType: familyMembers > 0 ? 'family' : 'individual',
-        networkType: selectedPlan.networkType,
         primaryInsured: {
           name: applicantName,
           dob: applicantDOB,
-          ssnLastFour: applicantSSN
+          ssnLastFour: applicantSSN,
+          zipCode: zipCode
         },
-        coveredMembers: householdMembers
+        coveredMembers: householdMembers,
+        tobacco,
+        preExisting
       };
 
       await API.post('/api/insurance/policies', reqPayload);
@@ -1018,11 +1027,11 @@ export default function InsuranceMarketplace() {
           {wizardStep === 0 && (
             <Box sx={{ display: 'grid', gap: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                Provide the details for the primary policyholder.
+                {t('insurance:primaryInsuredDesc')}
               </Typography>
               <TextField
                 fullWidth
-                label="Full Name"
+                label={t('insurance:fullName')}
                 value={applicantName}
                 onChange={(e) => setApplicantName(e.target.value)}
                 required
@@ -1031,7 +1040,7 @@ export default function InsuranceMarketplace() {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Date of Birth"
+                    label={t('insurance:dob')}
                     type="date"
                     value={applicantDOB}
                     onChange={(e) => setApplicantDOB(e.target.value)}
@@ -1041,25 +1050,25 @@ export default function InsuranceMarketplace() {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth>
-                    <FormLabel sx={{ fontSize: '0.875rem' }}>Gender</FormLabel>
+                    <FormLabel sx={{ fontSize: '0.875rem' }}>{t('insurance:gender')}</FormLabel>
                     <RadioGroup
                       row
                       value={applicantGender}
                       onChange={(e) => setApplicantGender(e.target.value)}
                     >
-                      <FormControlLabel value="male" control={<Radio />} label="Male" />
-                      <FormControlLabel value="female" control={<Radio />} label="Female" />
+                      <FormControlLabel value="male" control={<Radio />} label={t('insurance:male')} />
+                      <FormControlLabel value="female" control={<Radio />} label={t('insurance:female')} />
                     </RadioGroup>
                   </FormControl>
                 </Grid>
               </Grid>
               <TextField
                 fullWidth
-                label="SSN (Last 4 Digits)"
+                label={t('insurance:ssnLabel')}
                 value={applicantSSN}
                 onChange={(e) => handleSSNInput(e.target.value)}
-                placeholder="XXXX"
-                helperText="Required for identity validation"
+                placeholder={t('insurance:ssnPlaceholder')}
+                helperText={t('insurance:ssnHelper')}
                 required
               />
             </Box>
@@ -1069,25 +1078,24 @@ export default function InsuranceMarketplace() {
           {wizardStep === 1 && (
             <Box sx={{ display: 'grid', gap: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                Confirm covered household members. Based on your settings, you are adding{' '}
-                <strong>{familyMembers}</strong> dependent(s).
+                {t('insurance:confirmHouseholdDesc', { count: familyMembers })}
               </Typography>
               {householdMembers.length === 0 ? (
                 <Alert severity="info" icon={<PersonIcon />}>
-                  Individual coverage selected. No additional household members.
+                  {t('insurance:individualCoverageAlert')}
                 </Alert>
               ) : (
                 householdMembers.map((member, i) => (
                   <Paper key={i} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
                     <Typography variant="body2" fontWeight={700} sx={{ mb: 1 }}>
-                      Dependent #{i + 1}
+                      {t('insurance:dependentTitle', { index: i + 1 })}
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
                         <TextField
                           fullWidth
                           size="small"
-                          label="Full Name"
+                          label={t('insurance:fullName')}
                           value={member.name}
                           onChange={(e) => handleHouseholdChange(i, 'name', e.target.value)}
                           required
@@ -1097,8 +1105,8 @@ export default function InsuranceMarketplace() {
                         <TextField
                           fullWidth
                           size="small"
-                          label="Relationship"
-                          placeholder="Spouse, Child, etc."
+                          label={t('insurance:relationship')}
+                          placeholder={t('insurance:relationshipPlaceholder')}
                           value={member.relationship}
                           onChange={(e) => handleHouseholdChange(i, 'relationship', e.target.value)}
                           required
@@ -1115,18 +1123,18 @@ export default function InsuranceMarketplace() {
           {wizardStep === 2 && (
             <Box sx={{ display: 'grid', gap: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                Enter simulated payment information to activate coverage.
+                {t('insurance:paymentDesc')}
               </Typography>
               <TextField
                 fullWidth
-                label="Cardholder Name"
+                label={t('insurance:cardholderName')}
                 value={cardName}
                 onChange={(e) => setCardName(e.target.value)}
                 required
               />
               <TextField
                 fullWidth
-                label="Credit Card Number"
+                label={t('insurance:cardNumber')}
                 value={cardNumber}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
@@ -1142,7 +1150,7 @@ export default function InsuranceMarketplace() {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Expiration Date"
+                    label={t('insurance:cardExpiry')}
                     placeholder="MM/YY"
                     value={cardExpiry}
                     onChange={(e) => {
@@ -1158,7 +1166,7 @@ export default function InsuranceMarketplace() {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="CVV"
+                    label={t('insurance:cardCVV')}
                     value={cardCVV}
                     onChange={(e) => setCardCVV(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     placeholder="123"
@@ -1173,44 +1181,44 @@ export default function InsuranceMarketplace() {
           {wizardStep === 3 && (
             <Box sx={{ display: 'grid', gap: 2 }}>
               <Alert severity="success" icon={<CheckCircleIcon />}>
-                Verify all information before finalizing purchase.
+                {t('insurance:verifyAlert')}
               </Alert>
 
               <Paper sx={{ p: 3, bgcolor: '#fdfdfd', borderRadius: 2 }}>
                 <Typography variant="subtitle1" fontWeight={700} color="primary" gutterBottom>
-                  Coverage Summary
+                  {t('insurance:coverageSummary')}
                 </Typography>
                 <Typography variant="body2">
-                  Plan: <strong>{selectedPlan.name}</strong>
+                  {t('insurance:plan')} <strong>{selectedPlan.name}</strong>
                 </Typography>
                 <Typography variant="body2">
-                  Monthly Premium:{' '}
+                  {t('insurance:monthlyPremiumLabel')}{' '}
                   <strong style={{ color: '#1976d2' }}>
                     ${calculatePremium(selectedPlan.premium)}.00
                   </strong>
                 </Typography>
                 <Typography variant="body2">
-                  Deductible: <strong>${selectedPlan.deductible}</strong> | Co-pay:{' '}
+                  {t('insurance:deductibleLabel')} <strong>${selectedPlan.deductible}</strong> | {t('insurance:copayLabel')}{' '}
                   <strong>${selectedPlan.copay}</strong>
                 </Typography>
 
                 <Typography variant="subtitle1" fontWeight={700} color="primary" sx={{ mt: 3, mb: 1 }}>
-                  Primary Insured
+                  {t('insurance:primaryInsuredTitle')}
                 </Typography>
                 <Typography variant="body2">
-                  Name: <strong>{applicantName}</strong>
+                  {t('insurance:nameLabel')} <strong>{applicantName}</strong>
                 </Typography>
                 <Typography variant="body2">
-                  Date of Birth: <strong>{applicantDOB}</strong>
+                  {t('insurance:dobLabel')} <strong>{applicantDOB}</strong>
                 </Typography>
                 <Typography variant="body2">
-                  SSN Masked: <strong>***-**-{applicantSSN}</strong>
+                  {t('insurance:ssnMaskedLabel')} <strong>***-**-{applicantSSN}</strong>
                 </Typography>
 
                 {householdMembers.length > 0 && (
                   <>
                     <Typography variant="subtitle1" fontWeight={700} color="primary" sx={{ mt: 3, mb: 1 }}>
-                      Dependents Covered
+                      {t('insurance:dependentsCoveredTitle')}
                     </Typography>
                     {householdMembers.map((m, idx) => (
                       <Typography key={idx} variant="body2">
@@ -1232,7 +1240,7 @@ export default function InsuranceMarketplace() {
             variant="outlined"
             sx={{ borderRadius: 2 }}
           >
-            Back
+            {t('insurance:back')}
           </Button>
 
           <Box sx={{ display: 'flex', gap: 1.5 }}>
@@ -1241,7 +1249,7 @@ export default function InsuranceMarketplace() {
               color="inherit"
               sx={{ borderRadius: 2 }}
             >
-              Cancel
+              {t('insurance:cancel')}
             </Button>
 
             {wizardStep < 3 ? (
@@ -1250,7 +1258,7 @@ export default function InsuranceMarketplace() {
                 onClick={handleNextStep}
                 sx={{ fontWeight: 700, borderRadius: 2 }}
               >
-                Next
+                {t('insurance:next')}
               </Button>
             ) : (
               <Button
@@ -1259,7 +1267,7 @@ export default function InsuranceMarketplace() {
                 onClick={handleFinalizeEnrollment}
                 sx={{ fontWeight: 700, borderRadius: 2 }}
               >
-                Finalize Enrollment
+                {t('insurance:enroll')}
               </Button>
             )}
           </Box>

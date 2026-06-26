@@ -14,6 +14,23 @@ const insuranceLimiter = rateLimit({
   message: { message: 'Too many insurance requests, please try again later.' }
 });
 
+const insuranceMutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15, // Stricter limit of 15 requests per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many sensitive insurance requests, please try again later.' }
+});
+
+const getZipMultiplier = (zip) => {
+  if (!zip || zip.length < 3) return 1.0;
+  const firstDigit = zip[0];
+  if (firstDigit === '9') return 1.10;
+  if (firstDigit === '0' || firstDigit === '1') return 1.15;
+  if (firstDigit === '3' || firstDigit === '4') return 1.05;
+  return 1.0;
+};
+
 router.use(insuranceLimiter);
 
 // Static insurance plans available for comparison & purchase
@@ -219,7 +236,9 @@ router.get('/plans', (req, res) => {
 // @access  Private
 router.get('/policies', authMiddleware, async (req, res) => {
   try {
-    const policies = await InsurancePolicy.find({ user: { $eq: req.user._id } }).sort({ createdAt: -1 });
+    const policies = await InsurancePolicy.find({ user: { $eq: req.user._id } })
+      .select('-primaryInsured.ssnLastFour')
+      .sort({ createdAt: -1 });
     res.json(policies);
   } catch (err) {
     console.error('Fetch policies error:', err.message);
@@ -230,31 +249,19 @@ router.get('/policies', authMiddleware, async (req, res) => {
 // @route   POST /api/insurance/policies
 // @desc    Purchase a new insurance policy
 // @access  Private
-router.post('/policies', authMiddleware, async (req, res) => {
+router.post('/policies', authMiddleware, insuranceMutationLimiter, async (req, res) => {
   const {
     planId,
-    planName,
-    provider,
-    premium,
-    deductible,
-    copay,
-    coverageType,
-    networkType,
     primaryInsured,
-    coveredMembers
+    coveredMembers,
+    tobacco,
+    preExisting
   } = req.body;
 
   try {
     // Validate inputs
     if (
       !planId ||
-      !planName ||
-      !provider ||
-      !premium ||
-      !deductible ||
-      !copay ||
-      !coverageType ||
-      !networkType ||
       !primaryInsured ||
       !primaryInsured.name ||
       !primaryInsured.dob ||
@@ -266,6 +273,38 @@ router.post('/policies', authMiddleware, async (req, res) => {
     if (!/^\d{4}$/.test(primaryInsured.ssnLastFour)) {
       return res.status(400).json({ message: 'SSN must be the last 4 digits' });
     }
+
+    // Look up plan from static list
+    const plan = INSURANCE_PLANS.find(p => p.id === planId);
+    if (!plan) {
+      return res.status(404).json({ message: 'Insurance plan not found' });
+    }
+
+    // Calculate age from DOB
+    const birthDate = new Date(primaryInsured.dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    if (isNaN(age) || age < 0) {
+      age = 30; // default/fallback
+    }
+
+    // Calculate factors
+    const ageFactor = age > 30 ? 1 + (age - 30) * 0.015 : 1;
+    const tobaccoFactor = tobacco === 'yes' ? 1.25 : 1.0;
+    const familyCount = Array.isArray(coveredMembers) ? coveredMembers.length : 0;
+    const familyFactor = 1 + familyCount * 0.45;
+    const preExistingCount = Array.isArray(preExisting) ? preExisting.length : 0;
+    const preExistingFactor = 1 + preExistingCount * 0.08;
+    const zipMultiplier = getZipMultiplier(primaryInsured.zipCode);
+
+    // Calculate premium on server
+    const calculatedPremium = Math.round(
+      plan.premium * ageFactor * tobaccoFactor * familyFactor * preExistingFactor * zipMultiplier
+    );
 
     // Generate unique policy number
     const randomSuffix = crypto.randomInt(10000, 100000);
@@ -280,13 +319,13 @@ router.post('/policies', authMiddleware, async (req, res) => {
       user: req.user._id,
       policyNumber,
       planId,
-      planName,
-      provider,
-      premium,
-      deductible,
-      copay,
-      coverageType,
-      networkType,
+      planName: plan.name,
+      provider: plan.provider,
+      premium: calculatedPremium,
+      deductible: plan.deductible,
+      copay: plan.copay,
+      coverageType: familyCount > 0 ? 'family' : 'individual',
+      networkType: plan.networkType,
       status: 'active',
       startDate,
       endDate,
@@ -295,7 +334,19 @@ router.post('/policies', authMiddleware, async (req, res) => {
     });
 
     await newPolicy.save();
-    res.status(201).json(newPolicy);
+
+    let policyObj = null;
+    if (typeof newPolicy.toObject === 'function') {
+      policyObj = newPolicy.toObject();
+    }
+    if (!policyObj || typeof policyObj !== 'object') {
+      policyObj = { ...(newPolicy._doc || newPolicy) };
+    }
+    if (policyObj.primaryInsured) {
+      policyObj.primaryInsured = { ...policyObj.primaryInsured };
+      delete policyObj.primaryInsured.ssnLastFour;
+    }
+    res.status(201).json(policyObj);
   } catch (err) {
     console.error('Purchase policy error:', err.message);
     res.status(500).json({ message: 'Server error saving policy purchase' });
@@ -305,7 +356,7 @@ router.post('/policies', authMiddleware, async (req, res) => {
 // @route   DELETE /api/insurance/policies/:id
 // @desc    Cancel an insurance policy
 // @access  Private
-router.delete('/policies/:id', authMiddleware, async (req, res) => {
+router.delete('/policies/:id', authMiddleware, insuranceMutationLimiter, async (req, res) => {
   const cleanId = String(req.params.id);
   try {
     const policy = await InsurancePolicy.findOne({
@@ -324,7 +375,19 @@ router.delete('/policies/:id', authMiddleware, async (req, res) => {
     policy.status = 'cancelled';
     await policy.save();
 
-    res.json({ message: 'Policy cancelled successfully', policy });
+    let policyObj = null;
+    if (typeof policy.toObject === 'function') {
+      policyObj = policy.toObject();
+    }
+    if (!policyObj || typeof policyObj !== 'object') {
+      policyObj = { ...(policy._doc || policy) };
+    }
+    if (policyObj.primaryInsured) {
+      policyObj.primaryInsured = { ...policyObj.primaryInsured };
+      delete policyObj.primaryInsured.ssnLastFour;
+    }
+
+    res.json({ message: 'Policy cancelled successfully', policy: policyObj });
   } catch (err) {
     console.error('Cancel policy error:', err.message);
     res.status(500).json({ message: 'Server error cancelling insurance policy' });
@@ -334,7 +397,7 @@ router.delete('/policies/:id', authMiddleware, async (req, res) => {
 // @route   GET /api/insurance/policies/:id/download
 // @desc    Download PDF Certificate of coverage
 // @access  Private
-router.get('/policies/:id/download', authMiddleware, async (req, res) => {
+router.get('/policies/:id/download', authMiddleware, insuranceMutationLimiter, async (req, res) => {
   const cleanId = String(req.params.id);
   try {
     const policy = await InsurancePolicy.findOne({

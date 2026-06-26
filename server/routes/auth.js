@@ -52,7 +52,6 @@ router.post('/register', async (req, res) => {
 
     const { isValidEmail } = require('../utils/validation');
     if (!isValidEmail(email)) {
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       await logSecurityEvent({
         eventType: EVENT_TYPES.AUTH_REGISTER_FAILURE,
         severity: SEVERITY.WARNING,
@@ -154,7 +153,6 @@ router.post('/login', async (req, res) => {
 
     const { isValidEmail } = require('../utils/validation');
     if (!isValidEmail(email)) {
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       await logSecurityEvent({
         eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
         severity: SEVERITY.WARNING,

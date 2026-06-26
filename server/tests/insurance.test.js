@@ -37,14 +37,16 @@ describe('Insurance Router Endpoints', () => {
       { _id: 'policy123', policyNumber: 'CS-2026-11111', planName: 'Bronze Saver', status: 'active' }
     ];
     
-    // Mock Mongoose chain: find().sort()
+    // Mock Mongoose chain: find().select().sort()
     const sortMock = jest.fn().mockResolvedValue(mockPolicies);
-    InsurancePolicy.find.mockReturnValue({ sort: sortMock });
+    const selectMock = jest.fn().mockReturnValue({ sort: sortMock });
+    InsurancePolicy.find.mockReturnValue({ select: selectMock });
 
     const res = await request(app).get('/api/insurance/policies');
     expect(res.status).toBe(200);
     expect(res.body).toEqual(mockPolicies);
     expect(InsurancePolicy.find).toHaveBeenCalledWith({ user: { $eq: 'mockuser123' } });
+    expect(selectMock).toHaveBeenCalledWith('-primaryInsured.ssnLastFour');
   });
 
   test('POST /policies creates a new policy with valid input', async () => {

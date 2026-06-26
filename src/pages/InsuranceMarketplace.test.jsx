@@ -40,7 +40,8 @@ jest.mock('react-i18next', () => ({
         'insurance:purchase': 'Purchase Plan',
         'insurance:purchaseTitle': 'Purchase Health Insurance Policy',
         'insurance:tabMarketplace': 'Find Plans',
-        'insurance:tabMyPolicies': 'My Policies'
+        'insurance:tabMyPolicies': 'My Policies',
+        'insurance:primaryInsuredDesc': 'Provide the details for the primary policyholder.'
       };
       return keys[key] || key;
     }
