@@ -44,6 +44,7 @@ import HealthMetrics from './pages/HealthMetrics';
 import InsuranceMarketplace from './pages/InsuranceMarketplace';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
+import Telehealth from './pages/Telehealth';
 
 // Navigation targets. Labels are resolved at render time via i18n keys
 // (see the `nav` namespace) so the menu localises with the rest of the app.
@@ -53,6 +54,8 @@ const NAV_LINKS = [
   { key: 'symptomChecker', to: '/symptom-checker' },
   { key: 'clinicsNearby', to: '/clinics-nearby' },
   { key: 'insurance', to: '/insurance' },
+  { key: 'telehealth', to: '/telehealth' },
+  { key: 'settings', to: '/settings' },
 ];
 
 function HideOnScroll(props) {
@@ -311,6 +314,7 @@ function App() {
           <Route path="/health-metrics" element={<HealthMetrics />} />
           <Route path="/insurance" element={<InsuranceMarketplace />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/telehealth" element={<Telehealth />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
