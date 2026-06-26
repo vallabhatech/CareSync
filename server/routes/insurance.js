@@ -4,7 +4,6 @@ const router = express.Router();
 const InsurancePolicy = require('../models/InsurancePolicy');
 const authMiddleware = require('../middleware/authMiddleware');
 const PDFDocument = require('pdfkit');
-const rateLimit = require('express-rate-limit');
 
 const insuranceMutationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
