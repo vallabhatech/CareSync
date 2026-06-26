@@ -1,0 +1,26 @@
+# Configuration for actions/labeler
+
+frontend:
+  - any-glob-to-any-file:
+    - 'src/**/*'
+    - 'public/**/*'
+
+backend:
+  - any-glob-to-any-file:
+    - 'server/**/*'
+
+testing:
+  - any-glob-to-any-file:
+    - 'src/**/*.test.*'
+    - 'src/**/*.spec.*'
+    - 'server/tests/**/*'
+
+documentation:
+  - any-glob-to-any-file:
+    - '**/*.md'
+    - 'LICENSE'
+
+ui/ux:
+  - any-glob-to-any-file:
+    - 'src/**/*.css'
+    - 'src/components/**/*'

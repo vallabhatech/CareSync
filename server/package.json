@@ -6,6 +6,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "scripts": {
     "start": "concurrently --kill-others-on-fail \"node index.js\" \"node services/authService.js\" \"node services/userService.js\" \"node services/medicineService.js\" \"node services/symptomService.js\" \"node services/telemedicineService.js\" \"node services/labTestService.js\" \"node services/insuranceService.js\"",
     "dev": "concurrently --kill-others-on-fail \"nodemon index.js\" \"nodemon services/authService.js\" \"nodemon services/userService.js\" \"nodemon services/medicineService.js\" \"nodemon services/symptomService.js\" \"nodemon services/telemedicineService.js\" \"nodemon services/labTestService.js\" \"nodemon services/insuranceService.js\"",
     "test": "jest"

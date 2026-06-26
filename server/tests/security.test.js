@@ -55,7 +55,7 @@ describe('Security test suite', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.role).toBe('user');
-    expect(res.body).not.toHaveProperty('__proto__');
+    expect(Object.prototype.hasOwnProperty.call(res.body, '__proto__')).toBe(false);
     // Verify the sanitize pass itself did not pollute Object.prototype.
     expect(Object.prototype).not.toHaveProperty('isAdmin');
   });
@@ -71,8 +71,8 @@ describe('Security test suite', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.user.name).toBe('alice');
-    expect(res.body.user).not.toHaveProperty('constructor');
-    expect(res.body).not.toHaveProperty('prototype');
+    expect(Object.prototype.hasOwnProperty.call(res.body.user, 'constructor')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(res.body, 'prototype')).toBe(false);
     expect(Object.prototype).not.toHaveProperty('polluted');
   });
 
