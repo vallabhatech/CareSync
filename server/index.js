@@ -134,6 +134,9 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
 // Microservices routing map
+const predictionRouter = require('./predictionService');
+app.use('/api/predict', predictionRouter);
+
 const services = {
   '/api/auth': 'http://127.0.0.1:5001',
   '/api/security': 'http://127.0.0.1:5001',
