@@ -82,8 +82,6 @@ const UserSchema = new mongoose.Schema({
   twoFactorSecret: {
     type: String,
     default: null,
-    get: decrypt,
-    set: encrypt,
   },
   emergencyContacts: {
     type: [EmergencyContactSchema],

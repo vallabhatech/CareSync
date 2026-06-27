@@ -36,9 +36,18 @@ API.interceptors.request.use(
     }
 
 
-    if (config.headers) {
-      config.headers = validateAndNormalizeHeaders(config.headers);
-    }
+    // Temporarily disabled as it interferes with Axios 1.x AxiosHeaders class
+    // if (config.headers) {
+    //   const sanitizedHeaders = validateAndNormalizeHeaders(config.headers);
+    //   if (config.headers.clear) {
+    //     config.headers.clear();
+    //     for (const [k, v] of Object.entries(sanitizedHeaders)) {
+    //       config.headers.set(k, v);
+    //     }
+    //   } else {
+    //     config.headers = sanitizedHeaders;
+    //   }
+    // }
     if (config.params) {
       config.params = sanitizeConfig(config.params);
     }
@@ -48,7 +57,11 @@ API.interceptors.request.use(
 
     const token = localStorage.getItem('caresync_token');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      if (config.headers && config.headers.set) {
+        config.headers.set('Authorization', `Bearer ${token}`);
+      } else {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
     }
     return config;
   },

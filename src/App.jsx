@@ -321,7 +321,6 @@ function App() {
         </Routes>
       </div>
       <ScrollToTopButton />
-      <VoiceAssistant />
       <Footer />
     </AuthProvider>
   );
