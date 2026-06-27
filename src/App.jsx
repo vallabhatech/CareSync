@@ -42,10 +42,9 @@ import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
 import MedicalDocuments from './pages/MedicalDocuments';
+import HealthRiskAssessment from './pages/HealthRiskAssessment';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
-
-import Telehealth from './pages/Telehealth';
 
 
 // Navigation targets. Labels are resolved at render time via i18n keys
@@ -315,12 +314,8 @@ function App() {
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/health-metrics" element={<HealthMetrics />} />
           <Route path="/medical-documents" element={<MedicalDocuments />} />
+          <Route path="/health-risk-assessment" element={<HealthRiskAssessment />} />
           <Route path="/settings" element={<Settings />} />
-
-          <Route path="/dosage-calculator" element={<DosageCalculator />} />
-          <Route path="/health-metrics" element={<HealthMetrics />} />
-          <Route path="/telehealth" element={<Telehealth />} />
-
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />

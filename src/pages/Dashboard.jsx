@@ -5,6 +5,7 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FolderIcon from '@mui/icons-material/Folder';
+import SecurityIcon from '@mui/icons-material/Security';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -132,6 +133,14 @@ export default function Dashboard() {
       link: "/medical-documents",
       icon: <FolderIcon fontSize="large" color="primary" />,
       btn: 'My Documents',
+    },
+    {
+      id: 'health-risk-assessment',
+      title: 'Health Risk Assessment',
+      desc: 'Get a personalised risk profile based on your vitals, lifestyle, and family history.',
+      link: "/health-risk-assessment",
+      icon: <SecurityIcon fontSize="large" color="primary" />,
+      btn: 'Run Assessment',
     },
     {
       id: 'nearby-clinics',
