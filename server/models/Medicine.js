@@ -19,6 +19,10 @@ const MedicineSchema = new mongoose.Schema({
     type: String,
     required: true, // "YYYY-MM-DD" e.g., "2026-06-08"
   },
+  isTaken: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

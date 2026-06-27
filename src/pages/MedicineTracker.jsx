@@ -67,6 +67,7 @@ export default function MedicineTracker() {
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
   const [editingMedicine, setEditingMedicine] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
   const today = getLocalDateString();
   const isEditing = Boolean(editingMedicine);
 
@@ -76,10 +77,21 @@ export default function MedicineTracker() {
       try {
         const res = await API.get("/api/medicines");
         setMedicines(res.data);
+        fetchAnalytics();
       } catch (err) {
         console.error("Failed to fetch medicines:", err);
       }
     };
+    
+    const fetchAnalytics = async () => {
+      try {
+        const res = await API.get("/api/medicines/analytics");
+        setAnalytics(res.data);
+      } catch (err) {
+        console.error("Failed to fetch analytics:", err);
+      }
+    };
+    
     fetchMedicines();
   }, [isAuthenticated]);
 
@@ -115,6 +127,11 @@ export default function MedicineTracker() {
       return;
     }
 
+    if (!isAuthenticated) {
+      alert("Please log in to save medicines.");
+      return;
+    }
+
     const pushEnabled = localStorage.getItem(PUSH_ENABLED_KEY) === "true";
     if (
       pushEnabled &&
@@ -125,27 +142,35 @@ export default function MedicineTracker() {
       await requestNotificationPermission();
     }
 
-    const nextMedicine = createMedicine({
-      id: editingMedicine?.id,
-      name: sanitizedName,
-      time: sanitizedTime,
-      date: sanitizedDate,
-    });
+    try {
+      if (editingMedicine) {
+        const res = await API.put(`/api/medicines/${encodeURIComponent(editingMedicine.id)}`, {
+          name: sanitizedName,
+          time: sanitizedTime,
+          date: sanitizedDate,
+        });
+        const updated = medicines.map((med) =>
+          med.id === editingMedicine.id ? res.data : med,
+        );
+        saveMedicines(updated);
+        setEditingMedicine(null);
+      } else {
+        const res = await API.post("/api/medicines", {
+          name: sanitizedName,
+          time: sanitizedTime,
+          date: sanitizedDate,
+        });
+        const withNew = [...medicines, res.data];
+        saveMedicines(withNew);
+      }
 
-    if (editingMedicine) {
-      const updated = medicines.map((med) =>
-        med.id === editingMedicine.id ? nextMedicine : med,
-      );
-      saveMedicines(updated);
-      setEditingMedicine(null);
-    } else {
-      const withNew = [...medicines, nextMedicine];
-      saveMedicines(withNew);
+      setName("");
+      setTime("");
+      setDate("");
+    } catch (err) {
+      console.error("Failed to save medicine:", err);
+      window.alert("Failed to save medicine. Please try again.");
     }
-
-    setName("");
-    setTime("");
-    setDate("");
   };
     const deleteMedicine = async (id) => {
       if (editingMedicine?.id === id) {
@@ -171,6 +196,37 @@ export default function MedicineTracker() {
         saveMedicines(previous);
         window.alert(t('medicine:deleteFailed') || 'Failed to delete medicine. Changes reverted.');
       }
+      
+      // Refresh analytics
+      try {
+        const res = await API.get("/api/medicines/analytics");
+        setAnalytics(res.data);
+      } catch (err) {}
+    };
+
+    const toggleMedicineStatus = async (id, currentStatus) => {
+      const cleanId = String(id ?? "").trim();
+      if (!cleanId) return;
+
+      const newStatus = !currentStatus;
+      
+      // Optimistic update
+      const previous = medicines;
+      const updated = medicines.map((med) => 
+        med.id === id ? { ...med, isTaken: newStatus } : med
+      );
+      saveMedicines(updated);
+
+      try {
+        await API.patch(`/api/medicines/${encodeURIComponent(cleanId)}/status`, { isTaken: newStatus });
+        
+        // Refresh analytics after status change
+        const res = await API.get("/api/medicines/analytics");
+        setAnalytics(res.data);
+      } catch (err) {
+        console.error('Failed to update medicine status:', err);
+        saveMedicines(previous);
+      }
     };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
@@ -182,6 +238,23 @@ export default function MedicineTracker() {
       <div className="medtracker-container">
         <h2 className="medtracker-title">{t("medicine:title")}</h2>
 
+        {analytics && (
+          <div className="medtracker-analytics-section">
+            <h3>Adherence Insights</h3>
+            <div className="analytics-stats">
+              <div className="analytics-rate">
+                <span className="rate-number">{analytics.adherenceRate}%</span>
+                <span className="rate-label">30-Day Rate</span>
+              </div>
+              <div className="analytics-details">
+                <p><strong>Taken:</strong> {analytics.taken} / {analytics.total}</p>
+                <p>{analytics.insights}</p>
+                <p className="analytics-suggestion">💡 {analytics.suggestions}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="medtracker-reminder-section">
           <h3>{t("medicine:todaysReminders")}</h3>
           {todaysReminders.length === 0 ? (
@@ -191,7 +264,14 @@ export default function MedicineTracker() {
           ) : (
             <ul className="medtracker-reminder-list">
               {todaysReminders.map((med) => (
-                <li key={med.id} className="medtracker-reminder-item">
+                <li key={med.id} className={`medtracker-reminder-item ${med.isTaken ? 'med-taken' : ''}`}>
+                  <input 
+                    type="checkbox" 
+                    className="med-checkbox"
+                    checked={!!med.isTaken}
+                    onChange={() => toggleMedicineStatus(med.id, med.isTaken)}
+                    title="Mark as taken"
+                  />
                   <span className="medtracker-pill">{med.name}</span>
                   <span className="medtracker-time">{med.time}</span>
                   <IconButton
@@ -272,7 +352,14 @@ export default function MedicineTracker() {
             </li>
           )}
           {medicines.map((med) => (
-            <li key={med.id} className="medtracker-list-item">
+            <li key={med.id} className={`medtracker-list-item ${med.isTaken ? 'med-taken' : ''}`}>
+              <input 
+                type="checkbox" 
+                className="med-checkbox"
+                checked={!!med.isTaken}
+                onChange={() => toggleMedicineStatus(med.id, med.isTaken)}
+                title="Mark as taken"
+              />
               <span className="medtracker-pill">{med.name}</span>
               <span className="medtracker-date">{med.date}</span>
               <span className="medtracker-time">{med.time}</span>
@@ -319,6 +406,55 @@ export default function MedicineTracker() {
           margin-bottom: 18px;
           text-align: center;
         }
+        .medtracker-analytics-section {
+          background: #fff8e1;
+          border-left: 4px solid #ffca28;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 24px;
+        }
+        .medtracker-analytics-section h3 {
+          margin: 0 0 12px;
+          color: #ff8f00;
+          font-size: 1.15rem;
+        }
+        .analytics-stats {
+          display: flex;
+          gap: 20px;
+          align-items: center;
+        }
+        .analytics-rate {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+          border-radius: 50%;
+          width: 80px;
+          height: 80px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .rate-number {
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #ff8f00;
+        }
+        .rate-label {
+          font-size: 0.7rem;
+          color: #666;
+          text-transform: uppercase;
+        }
+        .analytics-details p {
+          margin: 4px 0;
+          font-size: 0.95rem;
+          color: #333;
+        }
+        .analytics-suggestion {
+          margin-top: 8px !important;
+          font-style: italic;
+          color: #1565c0 !important;
+          font-weight: 500;
+        }
         .medtracker-reminder-section {
           background: #e3fcec;
           border-radius: 12px;
@@ -357,6 +493,19 @@ export default function MedicineTracker() {
           padding-right: 0;
           background: transparent;
           margin-bottom: 0;
+        }
+        .med-taken .medtracker-pill {
+          background: #b0bec5;
+          text-decoration: line-through;
+        }
+        .med-taken .medtracker-time, .med-taken .medtracker-date {
+          color: #78909c;
+        }
+        .med-checkbox {
+          width: 20px;
+          height: 20px;
+          cursor: pointer;
+          accent-color: #43a047;
         }
         .medtracker-pill {
           background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
@@ -464,6 +613,10 @@ export default function MedicineTracker() {
         .interaction-moderate { background: #fff4cc; color: #b36b00; }
         .interaction-low { background: #e6f0ff; color: #0b4da0; }
         @media (max-width: 600px) {
+  .analytics-stats {
+    flex-direction: column;
+    align-items: flex-start;
+  }
   .medtracker-form-row {
     flex-wrap: wrap;
   }
