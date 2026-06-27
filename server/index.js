@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.disable('x-powered-by');
+
 // Configure trusted proxy hops so req.ip reflects the real client address for
 // accurate security event logging. Defaults to 1 (one proxy hop), matching the
 // documented Vercel/Render deployment where this is spoofing-resistant. Set
@@ -93,6 +94,7 @@ const corsOptions = {
   },
   optionsSuccessStatus: 200
 };
+
 app.use(cors(corsOptions));
 
 // Set body parser size limit using centralized limits configuration
@@ -121,6 +123,16 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+// Apply stricter rate limiting to auth routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5, // Limit each IP to 5 login/register requests per window
+  message: 'Too many login attempts from this IP, please try again after 15 minutes',
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
 // DB Connection
 const dbUri = process.env.MONGODB_URI;
 if (!dbUri) {
@@ -133,16 +145,6 @@ mongoose.connect(dbUri)
     console.error('MongoDB connection error:', err.message);
     console.log('Ensure MongoDB service is running locally or check MONGODB_URI in server/.env');
   });
-
-// Apply stricter rate limiting to auth routes
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5, // Limit each IP to 5 login/register requests per window
-  message: 'Too many login attempts from this IP, please try again after 15 minutes',
-});
-
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -158,7 +160,6 @@ app.use('/api/security', require('./routes/security'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
-  // Support header injection testing by echoing a query param into a response header
   if (req.query.injection) {
     res.setHeader('X-Injection-Response', req.query.injection);
   }
