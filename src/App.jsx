@@ -41,8 +41,6 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
-import MedicalDocuments from './pages/MedicalDocuments';
-import HealthRiskAssessment from './pages/HealthRiskAssessment';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
@@ -313,8 +311,6 @@ function App() {
           <Route path="/clinics-nearby" element={<ClinicsNearby />} />
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/health-metrics" element={<HealthMetrics />} />
-          <Route path="/medical-documents" element={<MedicalDocuments />} />
-          <Route path="/health-risk-assessment" element={<HealthRiskAssessment />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
