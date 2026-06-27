@@ -174,9 +174,6 @@ for (const [route, target] of Object.entries(services)) {
 
 // Health Check / Default route
 app.get('/', (req, res) => {
-  if (req.query.injection) {
-    res.setHeader('X-Injection-Response', req.query.injection);
-  }
   res.send('CareSync API Gateway is running...');
 });
 
@@ -216,12 +213,5 @@ module.exports = app;
 if (process.env.NODE_ENV === 'test') {
   app.post('/__test/sanitize', (req, res) => {
     res.json(req.body || {});
-  });
-
-  app.get('/__test/echo-header', (req, res) => {
-    const v = req.headers['x-echo'] || '';
-    // setHeader is sanitized by sanitizeHeaders middleware
-    res.setHeader('X-Echo-Response', v);
-    res.json({ ok: true });
   });
 }

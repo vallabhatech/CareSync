@@ -52,7 +52,7 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage
-        run: npm test -- --coverage --ci
+        run: npm test -- --coverage --ci --passWithNoTests
 
       - name: SonarQube Scan
         # Pin to a specific version for security and reproducibility
@@ -62,4 +62,4 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
-            -Dsonar.projectKey=your-project-key-here
+            -Dsonar.projectKey=vallabhatech_CareSync

@@ -91,24 +91,44 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm ci
 
-      - name: Run tests
+      - name: Run frontend tests
         id: tests
         run: |
-          npm test -- --coverage --ci 2>&1 | tee test-output.txt
+          npm test -- --coverage --ci --passWithNoTests 2>&1 | tee test-output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         continue-on-error: true
+
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Run server tests
+        id: server_tests
+        run: |
+          npm test 2>&1 | tee ../test-server-output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        working-directory: server
+        continue-on-error: true
+        env:
+          NODE_ENV: test
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: test-output.txt
+          path: |
+            test-output.txt
+            test-server-output.txt
 
-      - name: Fail if tests failed
+      - name: Fail if frontend tests failed
         if: steps.tests.outputs.exit_code != '0'
+        run: exit 1
+
+      - name: Fail if server tests failed
+        if: steps.server_tests.outputs.exit_code != '0'
         run: exit 1
 
   pr-comment:

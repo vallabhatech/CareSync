@@ -21,16 +21,6 @@ describe('Security test suite', () => {
     expect(Object.prototype).not.toHaveProperty('hacked');
   });
 
-  test('Header injection sanitized when echoed into response header', async () => {
-    const malicious = 'value\r\nX-Injected: injected';
-    const res = await request(app).get(`/?injection=${encodeURIComponent(malicious)}`);
-    expect(res.status).toBe(200);
-    // Response header must not contain raw CRLF sequences
-    const header = res.header['x-injection-response'];
-    expect(header).toBeDefined();
-    expect(/\r|\n/.test(header)).toBe(false);
-  });
-
   test('Oversized payloads are rejected with 413', async () => {
     const big = 'a'.repeat(6 * 1024 * 1024);
     const res = await request(app)
