@@ -13,10 +13,10 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "concurrently": "^10.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0",
     "http-proxy-middleware": "^4.1.1",
     "jsonwebtoken": "^9.0.2",
@@ -27,9 +27,9 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
+    "concurrently": "^10.0.3",
     "jest": "^29.0.0",
+    "nodemon": "^3.1.14",
     "supertest": "^6.3.3"
   }
 }
-

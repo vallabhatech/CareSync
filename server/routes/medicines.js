@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
 // General limiter for medicines endpoints
 const medicinesLimiter = rateLimit({
@@ -11,21 +12,40 @@ router.use(medicinesLimiter);
 const Medicine = require('../models/Medicine');
 const authMiddleware = require('../middleware/authMiddleware');
 
+// Helper: resolve the familyMemberId from a request body or query string.
+// Returns a valid ObjectId string, or null (meaning "primary user").
+function resolveFamilyMemberId(value) {
+  if (!value) return null;
+  const str = String(value).trim();
+  return mongoose.Types.ObjectId.isValid(str) ? str : null;
+}
+
 // @route   GET /api/medicines
-// @desc    Get all medicines for the logged-in user
+// @desc    Get all medicines for the logged-in user (or a family member)
 // @access  Private
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const medicines = await Medicine.find({ user: { $eq: req.user._id } }).sort({ createdAt: 1 });
-    
+    const familyMemberId = resolveFamilyMemberId(req.query.familyMemberId);
+
+    // Build a query filter scoped to this user. When familyMemberId is
+    // provided we match it explicitly; otherwise we return only documents
+    // where familyMemberId is null (primary-user medicines).
+    const filter = {
+      user: { $eq: req.user._id },
+      familyMemberId: familyMemberId ? { $eq: familyMemberId } : { $in: [null, undefined] },
+    };
+
+    const medicines = await Medicine.find(filter).sort({ createdAt: 1 });
+
     // Format medicines to match the frontend expectations: { id, name, time, date }
     const formatted = medicines.map(med => ({
       id: med._id,
       name: med.name,
       time: med.time,
       date: med.date,
+      familyMemberId: med.familyMemberId || null,
     }));
-    
+
     res.json(formatted);
   } catch (err) {
     console.error('Fetch medicines error:', err.message);
@@ -34,12 +54,13 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // @route   POST /api/medicines
-// @desc    Add a new medicine reminder
+// @desc    Add a new medicine reminder (optionally for a family member)
 // @access  Private
 router.post('/', authMiddleware, async (req, res) => {
   const name = req.body.name === undefined ? '' : String(req.body.name).trim();
   const time = req.body.time === undefined ? '' : String(req.body.time).trim();
   const date = req.body.date === undefined ? '' : String(req.body.date).trim();
+  const familyMemberId = resolveFamilyMemberId(req.body.familyMemberId);
 
   try {
     if (!name || !time || !date) {
@@ -48,6 +69,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const newMedicine = new Medicine({
       user: req.user._id,
+      familyMemberId,
       name,
       time,
       date,
@@ -60,6 +82,7 @@ router.post('/', authMiddleware, async (req, res) => {
       name: newMedicine.name,
       time: newMedicine.time,
       date: newMedicine.date,
+      familyMemberId: newMedicine.familyMemberId || null,
     });
   } catch (err) {
     console.error('Add medicine error:', err.message);
@@ -74,7 +97,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   const cleanId = String(req.params.id);
   try {
     const medicine = await Medicine.findOne({ _id: { $eq: cleanId }, user: { $eq: req.user._id } });
-    
+
     if (!medicine) {
       return res.status(404).json({ message: 'Medicine reminder not found or unauthorized' });
     }

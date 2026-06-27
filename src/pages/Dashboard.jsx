@@ -7,6 +7,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import SearchIcon from '@mui/icons-material/Search';
 import PlaceIcon from '@mui/icons-material/Place';
 import SettingsIcon from '@mui/icons-material/Settings';
+import GroupsIcon from '@mui/icons-material/Groups';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -46,6 +47,7 @@ export default function Dashboard() {
   const [quote, setQuote] = useState(healthQuotes[0]);
   const [todayCount, setTodayCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
+  const [familyCount, setFamilyCount] = useState(0);
 
   useEffect(() => {
     setQuote(healthQuotes[Math.floor(Math.random() * healthQuotes.length)]);
@@ -57,19 +59,22 @@ export default function Dashboard() {
       if (!isAuthenticated) {
         setTodayCount(0);
         setFavCount(0);
+        setFamilyCount(0);
         return;
       }
       try {
-        const [medRes, favRes] = await Promise.all([
+        const [medRes, favRes, familyRes] = await Promise.all([
           API.get('/api/medicines'),
-          API.get('/api/clinics/favorites')
+          API.get('/api/clinics/favorites'),
+          API.get('/api/family'),
         ]);
-        
+
         // Count today's reminders (using local date string comparison)
         const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
         const todays = medRes.data.filter(med => med.date === todayStr);
         setTodayCount(todays.length);
         setFavCount(favRes.data.length);
+        setFamilyCount(Array.isArray(familyRes.data) ? familyRes.data.length : 0);
       } catch (err) {
         console.error('Failed to load dashboard statistics:', err);
       }
@@ -161,6 +166,14 @@ export default function Dashboard() {
             <p>{t('dashboard:statClinicsNearby')}</p>
           </div>
 
+          <div className="stat-card stat-card--family">
+            <Link to="/profile" className="stat-card-link">
+              <h2>{familyCount}</h2>
+              <p>Family Profiles</p>
+              <span className="stat-card-icon"><GroupsIcon fontSize="small" /></span>
+            </Link>
+          </div>
+
           <div className="stat-card">
             <h2>✓</h2>
             <p>{t('dashboard:statHealthStatus')}</p>
@@ -241,6 +254,33 @@ export default function Dashboard() {
           margin-top: 8px;
           color: #666;
           font-weight: 600;
+        }
+        .stat-card--family {
+          border: 1.5px solid #b2dfdb;
+          background: linear-gradient(135deg, rgba(255,255,255,0.95) 70%, rgba(178,223,219,0.3) 100%);
+          position: relative;
+          overflow: hidden;
+          transition: transform 0.2s, box-shadow 0.2s;
+          cursor: pointer;
+        }
+        .stat-card--family:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 24px rgba(0,150,136,0.18);
+        }
+        .stat-card-link {
+          display: block;
+          text-decoration: none;
+          color: inherit;
+        }
+        .stat-card--family h2 {
+          color: #00796b;
+        }
+        .stat-card-icon {
+          position: absolute;
+          top: 10px;
+          right: 12px;
+          color: #b2dfdb;
+          opacity: 0.8;
         }
         .dashboard-quote-section {
           display: flex;

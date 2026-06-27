@@ -6,6 +6,13 @@ const SymptomCheckSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  // Optional link to a FamilyMember document. Null means the check belongs to
+  // the primary user (i.e. "Myself").
+  familyMemberId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FamilyMember',
+    default: null,
+  },
   symptoms: [{
     type: String,
     required: true,

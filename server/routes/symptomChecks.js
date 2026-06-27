@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
 // General limiter for symptom check endpoints
 const symptomLimiter = rateLimit({
@@ -11,12 +12,27 @@ router.use(symptomLimiter);
 const SymptomCheck = require('../models/SymptomCheck');
 const authMiddleware = require('../middleware/authMiddleware');
 
+// Helper: resolve the familyMemberId from a request body or query string.
+// Returns a valid ObjectId string, or null (meaning "primary user").
+function resolveFamilyMemberId(value) {
+  if (!value) return null;
+  const str = String(value).trim();
+  return mongoose.Types.ObjectId.isValid(str) ? str : null;
+}
+
 // @route   GET /api/symptom-checks
-// @desc    Get all symptom check records for the logged-in user
+// @desc    Get all symptom check records for the logged-in user (or a family member)
 // @access  Private
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const history = await SymptomCheck.find({ user: { $eq: req.user._id } }).sort({ checkedAt: -1 });
+    const familyMemberId = resolveFamilyMemberId(req.query.familyMemberId);
+
+    const filter = {
+      user: { $eq: req.user._id },
+      familyMemberId: familyMemberId ? { $eq: familyMemberId } : { $in: [null, undefined] },
+    };
+
+    const history = await SymptomCheck.find(filter).sort({ checkedAt: -1 });
     res.json(history);
   } catch (err) {
     console.error('Fetch symptom checks error:', err.message);
@@ -25,7 +41,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // @route   POST /api/symptom-checks
-// @desc    Save a new symptom check record
+// @desc    Save a new symptom check record (optionally for a family member)
 // @access  Private
 router.post('/', authMiddleware, async (req, res) => {
   const symptoms = Array.isArray(req.body.symptoms) ? req.body.symptoms.map(String) : [];
@@ -36,6 +52,7 @@ router.post('/', authMiddleware, async (req, res) => {
     solutions: Array.isArray(r.solutions) ? r.solutions.map(String) : [],
     risk: String(r.risk || 'low')
   })) : [];
+  const familyMemberId = resolveFamilyMemberId(req.body.familyMemberId);
 
   try {
     if (symptoms.length === 0) {
@@ -48,6 +65,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const newCheck = new SymptomCheck({
       user: req.user._id,
+      familyMemberId,
       symptoms,
       results,
     });

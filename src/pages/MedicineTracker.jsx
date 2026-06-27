@@ -11,6 +11,8 @@ import {
 import API from "../utils/api";
 import { checkInteractions } from '../utils/interactions';
 import { useAuth } from "../context/AuthContext";
+import { useFamily } from "../context/FamilyContext";
+import ProfileSelector from "../components/ProfileSelector";
 
 const STORAGE_KEY = "caresync_medicines";
 let fallbackIdCounter = 0;
@@ -62,6 +64,7 @@ function createMedicine(med) {
 export default function MedicineTracker() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const { selectedMember } = useFamily();
   const [medicines, setMedicines] = useState([]);
   const [name, setName] = useState("");
   const [time, setTime] = useState("");
@@ -70,18 +73,20 @@ export default function MedicineTracker() {
   const today = getLocalDateString();
   const isEditing = Boolean(editingMedicine);
 
+  // Re-fetch whenever the selected profile changes
   useEffect(() => {
     const fetchMedicines = async () => {
       if (!isAuthenticated) return;
       try {
-        const res = await API.get("/api/medicines");
+        const params = selectedMember ? { familyMemberId: selectedMember._id } : {};
+        const res = await API.get("/api/medicines", { params });
         setMedicines(res.data);
       } catch (err) {
         console.error("Failed to fetch medicines:", err);
       }
     };
     fetchMedicines();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, selectedMember]);
 
   useEffect(() => {
     scheduleNotifications(medicines);
@@ -139,48 +144,83 @@ export default function MedicineTracker() {
       saveMedicines(updated);
       setEditingMedicine(null);
     } else {
-      const withNew = [...medicines, nextMedicine];
-      saveMedicines(withNew);
+      // Persist to backend with optional familyMemberId
+      if (isAuthenticated) {
+        try {
+          const payload = {
+            name: sanitizedName,
+            time: sanitizedTime,
+            date: sanitizedDate,
+            ...(selectedMember ? { familyMemberId: selectedMember._id } : {}),
+          };
+          const res = await API.post("/api/medicines", payload);
+          const saved = { id: res.data.id, name: res.data.name, time: res.data.time, date: res.data.date };
+          const withNew = [...medicines, saved];
+          saveMedicines(withNew);
+        } catch (err) {
+          console.error("Failed to save medicine to backend:", err);
+          // Fall back to local-only addition
+          const withNew = [...medicines, nextMedicine];
+          saveMedicines(withNew);
+        }
+      } else {
+        const withNew = [...medicines, nextMedicine];
+        saveMedicines(withNew);
+      }
     }
 
     setName("");
     setTime("");
     setDate("");
   };
-    const deleteMedicine = async (id) => {
-      if (editingMedicine?.id === id) {
-        cancelEdit();
-      }
 
-      const cleanId = String(id ?? "").trim();
-      if (!/^[a-zA-Z0-9-]+$/.test(cleanId)) {
-        window.alert(t('medicine:invalidId') || 'Invalid medicine ID');
-        return;
-      }
+  const deleteMedicine = async (id) => {
+    if (editingMedicine?.id === id) {
+      cancelEdit();
+    }
 
-      // Optimistically update local state/localStorage, but keep previous for rollback
-      const previous = medicines;
-      const updated = medicines.filter((med) => med.id !== id);
-      saveMedicines(updated);
+    const cleanId = String(id ?? "").trim();
+    if (!/^[a-zA-Z0-9-]+$/.test(cleanId)) {
+      window.alert(t('medicine:invalidId') || 'Invalid medicine ID');
+      return;
+    }
 
-      try {
-        await API.delete(`/api/medicines/${encodeURIComponent(cleanId)}`);
-      } catch (err) {
-        console.error('Failed to delete medicine alert:', err);
-        // Rollback to previous state on error
-        saveMedicines(previous);
-        window.alert(t('medicine:deleteFailed') || 'Failed to delete medicine. Changes reverted.');
-      }
-    };
+    // Optimistically update local state/localStorage, but keep previous for rollback
+    const previous = medicines;
+    const updated = medicines.filter((med) => med.id !== id);
+    saveMedicines(updated);
+
+    try {
+      await API.delete(`/api/medicines/${encodeURIComponent(cleanId)}`);
+    } catch (err) {
+      console.error('Failed to delete medicine alert:', err);
+      // Rollback to previous state on error
+      saveMedicines(previous);
+      window.alert(t('medicine:deleteFailed') || 'Failed to delete medicine. Changes reverted.');
+    }
+  };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
 
   const interactionWarnings = checkInteractions(medicines);
 
+  // Profile display label
+  const profileLabel = selectedMember ? selectedMember.name : "Myself";
+
   return (
     <div className="medtracker-bg">
       <div className="medtracker-container">
         <h2 className="medtracker-title">{t("medicine:title")}</h2>
+
+        {/* Profile selector */}
+        {isAuthenticated && (
+          <div className="medtracker-profile-row">
+            <ProfileSelector size="small" label="Tracking for" />
+            <span className="medtracker-profile-label">
+              Showing medicines for: <strong>{profileLabel}</strong>
+            </span>
+          </div>
+        )}
 
         <div className="medtracker-reminder-section">
           <h3>{t("medicine:todaysReminders")}</h3>
@@ -305,7 +345,7 @@ export default function MedicineTracker() {
           padding: 40px 0;
         }
         .medtracker-container {
-          max-width: 600px;
+          max-width: 640px;
           margin: 0 auto;
           background: #fff;
           border-radius: 18px;
@@ -316,8 +356,27 @@ export default function MedicineTracker() {
           color: #1976d2;
           font-size: 2rem;
           font-weight: 800;
-          margin-bottom: 18px;
+          margin-bottom: 14px;
           text-align: center;
+        }
+        /* Profile selector row */
+        .medtracker-profile-row {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          background: linear-gradient(90deg, #e3f2fd 0%, #f0fff4 100%);
+          border-radius: 12px;
+          padding: 10px 16px;
+          margin-bottom: 20px;
+          border: 1px solid #b3d9f7;
+          flex-wrap: wrap;
+        }
+        .medtracker-profile-label {
+          font-size: 0.92rem;
+          color: #555;
+        }
+        .medtracker-profile-label strong {
+          color: #1976d2;
         }
         .medtracker-reminder-section {
           background: #e3fcec;
@@ -372,55 +431,55 @@ export default function MedicineTracker() {
           font-size: 1.05rem;
         }
         .medtracker-form-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 24px;
-  align-items: stretch;
-  flex-wrap: nowrap;
-}
+          display: flex;
+          gap: 10px;
+          margin-bottom: 24px;
+          align-items: stretch;
+          flex-wrap: nowrap;
+        }
         .medtracker-input {
-  flex: 1;
-  min-width: 0;
-  height: 40px;
-  box-sizing: border-box;
-  background: #f4f8fb;
-  color: #222;
-  border: 1px solid #b0bec5;
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 1rem;
-}
-       .medtracker-btn {
-  flex: 0 0 80px;
-  height: 40px;
-  box-sizing: border-box;
-  background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s;
-}
+          flex: 1;
+          min-width: 0;
+          height: 40px;
+          box-sizing: border-box;
+          background: #f4f8fb;
+          color: #222;
+          border: 1px solid #b0bec5;
+          border-radius: 8px;
+          padding: 0 12px;
+          font-size: 1rem;
+        }
+        .medtracker-btn {
+          flex: 0 0 80px;
+          height: 40px;
+          box-sizing: border-box;
+          background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-weight: 700;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.2s;
+        }
         .medtracker-btn:hover {
-  background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
-}
-.medtracker-cancel-btn {
-  flex: 0 0 80px;
-  height: 40px;
-  box-sizing: border-box;
-  background: transparent;
-  color: #1976d2;
-  border: 1px solid #1976d2;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s, color 0.2s;
-}
-.medtracker-cancel-btn:hover {
-  background: #e3f2fd;
-}
+          background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
+        }
+        .medtracker-cancel-btn {
+          flex: 0 0 80px;
+          height: 40px;
+          box-sizing: border-box;
+          background: transparent;
+          color: #1976d2;
+          border: 1px solid #1976d2;
+          border-radius: 8px;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.2s, color 0.2s;
+        }
+        .medtracker-cancel-btn:hover {
+          background: #e3f2fd;
+        }
         .medtracker-list-title {
           margin-top: 18px;
           margin-bottom: 10px;
@@ -445,7 +504,7 @@ export default function MedicineTracker() {
           font-weight: 700;
           padding: 4px 8px;
           margin-left: auto;
-          height: 2rem;    
+          height: 2rem;
         }
         .medtracker-delete-btn:hover {
           background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
@@ -464,13 +523,17 @@ export default function MedicineTracker() {
         .interaction-moderate { background: #fff4cc; color: #b36b00; }
         .interaction-low { background: #e6f0ff; color: #0b4da0; }
         @media (max-width: 600px) {
-  .medtracker-form-row {
-    flex-wrap: wrap;
-  }
-  .medtracker-input {
-    flex: 1 1 calc(50% - 5px);
-  }
-}
+          .medtracker-form-row {
+            flex-wrap: wrap;
+          }
+          .medtracker-input {
+            flex: 1 1 calc(50% - 5px);
+          }
+          .medtracker-profile-row {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+        }
       `}</style>
     </div>
   );

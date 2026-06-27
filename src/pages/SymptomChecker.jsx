@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Button, Chip, Stack, LinearProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Box } from '@mui/material';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useFamily } from '../context/FamilyContext';
+import ProfileSelector from '../components/ProfileSelector';
 
 const STORAGE_KEY = 'caresync_symptom_history';
 const MAX_HISTORY_ENTRIES = 20;
@@ -449,6 +451,7 @@ function createHistoryEntry(symptoms, results) {
 export default function SymptomChecker() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const { selectedMember } = useFamily();
   const [input, setInput] = useState('');
   const [symptoms, setSymptoms] = useState([]);
   const [results, setResults] = useState([]);
@@ -614,6 +617,7 @@ export default function SymptomChecker() {
             solutions: r.solutions,
             risk: r.risk,
           })),
+          ...(selectedMember ? { familyMemberId: selectedMember._id } : {}),
         });
         // Replace the temporary local entry with backend response using latest state
         const backendEntry = res.data;
@@ -630,10 +634,20 @@ export default function SymptomChecker() {
     }
   };
 
+  const profileLabel = selectedMember ? selectedMember.name : 'Myself';
+
   return (
     <div className="symptom-bg">
       <div className="symptom-container">
         <h2 className="symptom-title">{t('symptom:title')}</h2>
+        {isAuthenticated && (
+          <div className="symptom-profile-row">
+            <ProfileSelector size="small" label="Checking for" />
+            <span className="symptom-profile-label">
+              Checking symptoms for: <strong>{profileLabel}</strong>
+            </span>
+          </div>
+        )}
         <p className="symptom-desc">{t('symptom:description')}</p>
         <div className="symptom-form-row">
           <input
@@ -1000,6 +1014,25 @@ export default function SymptomChecker() {
           .symptom-container { padding: 16px 4px; }
           .symptom-form-row { gap: 6px; }
           .symptom-input { min-width: 100px; }
+          .symptom-profile-row { flex-direction: column; align-items: flex-start; }
+        }
+        .symptom-profile-row {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          background: linear-gradient(90deg, #e3f2fd 0%, #f0fff4 100%);
+          border-radius: 12px;
+          padding: 10px 16px;
+          margin-bottom: 18px;
+          border: 1px solid #b3d9f7;
+          flex-wrap: wrap;
+        }
+        .symptom-profile-label {
+          font-size: 0.92rem;
+          color: #555;
+        }
+        .symptom-profile-label strong {
+          color: #1976d2;
         }
       `}</style>
     </div>
