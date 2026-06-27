@@ -44,6 +44,7 @@ import HealthMetrics from './pages/HealthMetrics';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
+
 // Navigation targets. Labels are resolved at render time via i18n keys
 // (see the `nav` namespace) so the menu localises with the rest of the app.
 const NAV_LINKS = [
@@ -317,7 +318,6 @@ function App() {
         </Routes>
       </div>
       <ScrollToTopButton />
-      <VoiceAssistant />
       <Footer />
     </AuthProvider>
   );
