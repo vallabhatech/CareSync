@@ -41,10 +41,10 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
-import InsuranceMarketplace from './pages/InsuranceMarketplace';
+import MedicalDocuments from './pages/MedicalDocuments';
+import HealthRiskAssessment from './pages/HealthRiskAssessment';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
-import Telehealth from './pages/Telehealth';
 
 // Navigation targets. Labels are resolved at render time via i18n keys
 // (see the `nav` namespace) so the menu localises with the rest of the app.
@@ -321,6 +321,7 @@ function App() {
         </Routes>
       </div>
       <ScrollToTopButton />
+      <VoiceAssistant />
       <Footer />
     </AuthProvider>
   );

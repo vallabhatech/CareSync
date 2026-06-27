@@ -71,8 +71,8 @@
   },
   "overrides": {
     "form-data": "4.0.6",
-    "jsonpath": "npm:jsonpath-plus@^10.4.0",
     "picomatch": "^4.0.4",
+    "jsonpath": "npm:jsonpath-plus@^10.4.0",
     "shell-quote": "^1.8.4"
   }
 }
