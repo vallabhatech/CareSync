@@ -6,6 +6,13 @@ const MedicineSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  // Optional link to a FamilyMember document. Null means the entry belongs to
+  // the primary user (i.e. "Myself").
+  familyMemberId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FamilyMember',
+    default: null,
+  },
   name: {
     type: String,
     required: true,
