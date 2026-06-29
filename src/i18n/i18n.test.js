@@ -87,15 +87,22 @@ describe('locale resource integrity', () => {
   });
 
   test('no translation value is empty', () => {
-    const check = (obj) => {
-      Object.values(obj).forEach((v) => {
-        if (v && typeof v === 'object') check(v);
-        else expect(String(v).trim().length).toBeGreaterThan(0);
+    const emptyKeys = [];
+    const check = (obj, path = '') => {
+      Object.entries(obj).forEach(([k, v]) => {
+        const currentPath = path ? `${path}.${k}` : k;
+        if (v && typeof v === 'object') {
+          check(v, currentPath);
+        } else if (!v || String(v).trim().length === 0) {
+          emptyKeys.push(currentPath);
+        }
       });
     };
     
     SUPPORTED_LANGUAGES.forEach((lang) => {
-      check(resources[lang.code]);
+      check(resources[lang.code], lang.code);
     });
+    
+    expect(emptyKeys).toEqual([]);
   });
 });

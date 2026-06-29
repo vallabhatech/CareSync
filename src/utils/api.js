@@ -75,10 +75,19 @@ API.interceptors.response.use(
         }
 
         
+        let requestData = error.config.data;
+        if (typeof requestData === 'string') {
+          try {
+            requestData = JSON.parse(requestData);
+          } catch (e) {
+            // Keep as string if parsing fails
+          }
+        }
+
         offlineQueue.push({
           url: error.config.url,
           method: error.config.method,
-          data: sanitizeConfig(error.config.data),
+          data: sanitizeConfig(requestData),
           headers: headers,
           retryCount: 0
         });
