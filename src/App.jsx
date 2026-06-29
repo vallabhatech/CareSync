@@ -41,6 +41,8 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
+import InsuranceMarketplace from './pages/InsuranceMarketplace';
+import Telehealth from './pages/Telehealth';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
