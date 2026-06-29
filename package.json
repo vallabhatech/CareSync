@@ -61,7 +61,7 @@
     "autoprefixer": "^10.5.0",
     "axios-mock-adapter": "^2.1.0",
     "eslint": "^8.57.0",
-    "postcss": "^8.5.15",
+    "postcss": "^8.5.16",
     "react-app-rewired": "^2.2.1",
     "react-scripts": "^5.0.1",
     "tailwindcss": "^4.3.1",
