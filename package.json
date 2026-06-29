@@ -59,7 +59,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "autoprefixer": "^10.5.0",
-    "axios-mock-adapter": "^1.21.2",
+    "axios-mock-adapter": "^2.1.0",
     "eslint": "^8.57.0",
     "postcss": "^8.5.15",
     "react-app-rewired": "^2.2.1",
