@@ -97,16 +97,20 @@ async function encryptMessage(recipientPublicKeyBase64, message) {
 }
 
 /**
- * Decrypt a ciphertext using the receiver's private key.
+ * Decrypt a ciphertext using the receiver's key pair.
+ * crypto_box_seal_open requires the full key pair (public + private key).
  * @param {string} privateKeyBase64 - base64 encoded private key
+ * @param {string} publicKeyBase64  - base64 encoded public key (paired with private key)
  * @param {string} ciphertextBase64 - base64 encoded ciphertext
  * @returns {Promise<string>} - decrypted plaintext string
  */
-async function decryptMessage(privateKeyBase64, ciphertextBase64) {
+async function decryptMessage(privateKeyBase64, publicKeyBase64, ciphertextBase64) {
   await ready;
   const privateKey = Buffer.from(privateKeyBase64, 'base64');
+  const publicKey = Buffer.from(publicKeyBase64, 'base64');
   const ciphertext = Buffer.from(ciphertextBase64, 'base64');
-  const decrypted = sodium.crypto_box_seal_open(ciphertext, privateKey);
+  // crypto_box_seal_open requires the recipient's full keypair
+  const decrypted = sodium.crypto_box_seal_open(ciphertext, publicKey, privateKey);
   return Buffer.from(decrypted).toString('utf-8');
 }
 

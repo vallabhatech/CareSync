@@ -52,7 +52,9 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage
-        run: npm test -- --coverage --ci --passWithNoTests
+        run: npm test -- --coverage --ci --watchAll=false --passWithNoTests
+        env:
+          CI: true
 
       - name: SonarQube Scan
         # Pin to a specific version for security and reproducibility
