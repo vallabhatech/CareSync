@@ -10,7 +10,7 @@
     "@fontsource/roboto": "^5.2.10",
     "@mui/icons-material": "^9.1.1",
     "@mui/lab": "^7.0.0-beta.17",
-    "@mui/material": "^9.1.1",
+    "@mui/material": "^9.1.2",
     "@mui/x-date-pickers": "^9.6.0",
     "ajv": "^8.20.0",
     "ajv-keywords": "^5.1.0",
