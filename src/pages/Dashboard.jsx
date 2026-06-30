@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import MedicationIcon from '@mui/icons-material/Medication';
-import CalculateIcon from '@mui/icons-material/Calculate';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import SearchIcon from '@mui/icons-material/Search';
-import PlaceIcon from '@mui/icons-material/Place';
-import SettingsIcon from '@mui/icons-material/Settings';
-import API from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import MedicationIcon from "@mui/icons-material/Medication";
+import CalculateIcon from "@mui/icons-material/Calculate";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import SearchIcon from "@mui/icons-material/Search";
+import PlaceIcon from "@mui/icons-material/Place";
+import SettingsIcon from "@mui/icons-material/Settings";
+import API from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 const healthQuotes = [
   "Health is the greatest wealth.",
@@ -61,17 +61,17 @@ export default function Dashboard() {
       }
       try {
         const [medRes, favRes] = await Promise.all([
-          API.get('/api/medicines'),
-          API.get('/api/clinics/favorites')
+          API.get("/api/medicines"),
+          API.get("/api/clinics/favorites"),
         ]);
-        
+
         // Count today's reminders (using local date string comparison)
-        const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-        const todays = medRes.data.filter(med => med.date === todayStr);
+        const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
+        const todays = medRes.data.filter((med) => med.date === todayStr);
         setTodayCount(todays.length);
         setFavCount(favRes.data.length);
       } catch (err) {
-        console.error('Failed to load dashboard statistics:', err);
+        console.error("Failed to load dashboard statistics:", err);
       }
     };
 
@@ -86,97 +86,102 @@ export default function Dashboard() {
   const getGreeting = () => {
     const hour = new Date().getHours();
 
-    if (hour < 12) return t('dashboard:greetingMorning');
-    if (hour < 17) return t('dashboard:greetingAfternoon');
-    return t('dashboard:greetingEvening');
+    if (hour < 12) return t("dashboard:greetingMorning");
+    if (hour < 17) return t("dashboard:greetingAfternoon");
+    return t("dashboard:greetingEvening");
   };
-  
+
   const dynamicFeatures = [
     {
       id: "today's-medicines",
-      title: t('dashboard:todaysMedicinesTitle'),
-      desc: t('dashboard:todaysMedicines', { count: todayCount }),
+      title: t("dashboard:todaysMedicinesTitle"),
+      desc: t("dashboard:todaysMedicines", { count: todayCount }),
       link: "/medicine-tracker",
       icon: <MedicationIcon fontSize="large" color="primary" />,
-      btn: t('dashboard:medicineTracker'),
+      btn: t("dashboard:medicineTracker"),
     },
     {
-      id: 'recent-symptom-checks',
-      title: t('dashboard:recentSymptomChecksTitle'),
-      desc: t('dashboard:recentSymptomChecksDesc'),
+      id: "recent-symptom-checks",
+      title: t("dashboard:recentSymptomChecksTitle"),
+      desc: t("dashboard:recentSymptomChecksDesc"),
       link: "/symptom-checker",
       icon: <SearchIcon fontSize="large" color="primary" />,
-      btn: t('dashboard:checkSymptoms'),
+      btn: t("dashboard:checkSymptoms"),
     },
     {
-      id: 'dosage-calculator',
-      title: 'Dosage Calculator',
-      desc: 'Estimate appropriate medicine doses based on your weight, age, and frequency.',
+      id: "dosage-calculator",
+      title: "Dosage Calculator",
+      desc: "Estimate appropriate medicine doses based on your weight, age, and frequency.",
       link: "/dosage-calculator",
       icon: <CalculateIcon fontSize="large" color="primary" />,
-      btn: 'Open Calculator',
+      btn: "Open Calculator",
     },
     {
-      id: 'health-metrics',
-      title: 'Health Metrics',
-      desc: 'Track and analyze vital signs including weight, BP, heart rate, and more.',
+      id: "health-metrics",
+      title: "Health Metrics",
+      desc: "Track and analyze vital signs including weight, BP, heart rate, and more.",
       link: "/health-metrics",
       icon: <FavoriteBorderIcon fontSize="large" color="primary" />,
-      btn: 'View Metrics',
+      btn: "View Metrics",
     },
     {
-      id: 'nearby-clinics',
-      title: t('dashboard:nearbyClinicsTitle'),
-      desc: t('dashboard:nearbyClinicsDesc'),
+      id: "nearby-clinics",
+      title: t("dashboard:nearbyClinicsTitle"),
+      desc: t("dashboard:nearbyClinicsDesc"),
       link: "/clinics-nearby",
       icon: <PlaceIcon fontSize="large" color="primary" />,
-      btn: t('dashboard:findClinics'),
+      btn: t("dashboard:findClinics"),
     },
     {
-      id: 'profile-settings',
-      title: t('dashboard:profileSettingsTitle'),
-      desc: t('dashboard:profileSettingsDesc'),
+      id: "profile-settings",
+      title: t("dashboard:profileSettingsTitle"),
+      desc: t("dashboard:profileSettingsDesc"),
       link: "/settings",
       icon: <SettingsIcon fontSize="large" color="primary" />,
-      btn: t('dashboard:goToSettings'),
-    }
+      btn: t("dashboard:goToSettings"),
+    },
   ];
-  
+
   return (
     <div className="dashboard-bg">
       <div className="dashboard-overlay"></div>
       <div className="dashboard-container">
         <div className="dashboard-header">
           <h1 className="dashboard-title">{getGreeting()} 👋</h1>
-          <p className="dashboard-subtitle"> {t('dashboard:subtitle')}  </p>
+          <p className="dashboard-subtitle"> {t("dashboard:subtitle")} </p>
         </div>
         <div className="dashboard-stats">
           <div className="stat-card">
             <h2>{todayCount}</h2>
-            <p>{t('dashboard:statMedicinesToday')}</p>
+            <p>{t("dashboard:statMedicinesToday")}</p>
           </div>
 
           <div className="stat-card">
             <h2>{favCount}</h2>
-            <p>{t('dashboard:statClinicsNearby')}</p>
+            <p>{t("dashboard:statClinicsNearby")}</p>
           </div>
 
           <div className="stat-card">
             <h2>✓</h2>
-            <p>{t('dashboard:statHealthStatus')}</p>
+            <p>{t("dashboard:statHealthStatus")}</p>
           </div>
         </div>
         <div className="dashboard-quote-section">
           <div className="dashboard-quote">{quote}</div>
-          <button className="dashboard-quote-btn" onClick={generateQuote}>{t('dashboard:newQuote')}</button>
+          <button className="dashboard-quote-btn" onClick={generateQuote}>
+            {t("dashboard:newQuote")}
+          </button>
         </div>
-        <div className="dashboard-features">
+        <div className="dashboard-features" role="navigation"
+  aria-label="Dashboard features">
           {dynamicFeatures.map((feature) => (
             <div className="dashboard-card" key={feature.id}>
               <div className="dashboard-icon">{feature.icon}</div>
               <div className="dashboard-card-title">{feature.title}</div>
               <div className="dashboard-card-desc">{feature.desc}</div>
-              <Link to={feature.link} className="dashboard-card-btn">{feature.btn}</Link>
+              <Link to={feature.link} className="dashboard-card-btn" aria-label={`Go to ${feature.title}`}>
+                {feature.btn}
+              </Link>
             </div>
           ))}
         </div>
@@ -341,6 +346,11 @@ export default function Dashboard() {
           background: linear-gradient(90deg, #43e97b 0%, #1976d2 100%);
           color: #fff;
         }
+        .dashboard-card-btn:focus-visible {
+  outline: 3px solid #43e97b;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(67, 233, 123, 0.3);
+}
         @media (max-width: 700px) {
           .dashboard-container { padding: 24px 4px; }
           .dashboard-title { font-size: 2rem; }
