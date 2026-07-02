@@ -9,8 +9,9 @@ import {
   PUSH_ENABLED_KEY,
 } from "../utils/notifications";
 import API from "../utils/api";
-import { checkInteractions } from '../utils/interactions';
+import { checkInteractions } from "../utils/interactions";
 import { useAuth } from "../context/AuthContext";
+import MedicineCardSkeleton from "../components/MedicineCardSkeleton";
 
 const STORAGE_KEY = "caresync_medicines";
 let fallbackIdCounter = 0;
@@ -69,18 +70,26 @@ export default function MedicineTracker() {
   const [editingMedicine, setEditingMedicine] = useState(null);
   const today = getLocalDateString();
   const isEditing = Boolean(editingMedicine);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMedicines = async () => {
-      if (!isAuthenticated) return;
+    void (async () => {
+      if (!isAuthenticated) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
       try {
         const res = await API.get("/api/medicines");
         setMedicines(res.data);
       } catch (err) {
         console.error("Failed to fetch medicines:", err);
+      } finally {
+        setIsLoading(false);
       }
-    };
-    fetchMedicines();
+    })();
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -147,31 +156,34 @@ export default function MedicineTracker() {
     setTime("");
     setDate("");
   };
-    const deleteMedicine = async (id) => {
-      if (editingMedicine?.id === id) {
-        cancelEdit();
-      }
+  const deleteMedicine = async (id) => {
+    if (editingMedicine?.id === id) {
+      cancelEdit();
+    }
 
-      const cleanId = String(id ?? "").trim();
-      if (!/^[a-zA-Z0-9-]+$/.test(cleanId)) {
-        window.alert(t('medicine:invalidId') || 'Invalid medicine ID');
-        return;
-      }
+    const cleanId = String(id ?? "").trim();
+    if (!/^[a-zA-Z0-9-]+$/.test(cleanId)) {
+      window.alert(t("medicine:invalidId") || "Invalid medicine ID");
+      return;
+    }
 
-      // Optimistically update local state/localStorage, but keep previous for rollback
-      const previous = medicines;
-      const updated = medicines.filter((med) => med.id !== id);
-      saveMedicines(updated);
+    // Optimistically update local state/localStorage, but keep previous for rollback
+    const previous = medicines;
+    const updated = medicines.filter((med) => med.id !== id);
+    saveMedicines(updated);
 
-      try {
-        await API.delete(`/api/medicines/${encodeURIComponent(cleanId)}`);
-      } catch (err) {
-        console.error('Failed to delete medicine alert:', err);
-        // Rollback to previous state on error
-        saveMedicines(previous);
-        window.alert(t('medicine:deleteFailed') || 'Failed to delete medicine. Changes reverted.');
-      }
-    };
+    try {
+      await API.delete(`/api/medicines/${encodeURIComponent(cleanId)}`);
+    } catch (err) {
+      console.error("Failed to delete medicine alert:", err);
+      // Rollback to previous state on error
+      saveMedicines(previous);
+      window.alert(
+        t("medicine:deleteFailed") ||
+          "Failed to delete medicine. Changes reverted.",
+      );
+    }
+  };
 
   const todaysReminders = medicines.filter((med) => med.date === today);
 
@@ -183,7 +195,11 @@ export default function MedicineTracker() {
         <h2 className="medtracker-title">{t("medicine:title")}</h2>
 
         <div className="medtracker-reminder-section">
-          <h3>{t("medicine:todaysReminders")}</h3>
+          <h3>{isLoading ? (
+  <div className="medtracker-reminder-empty">
+    Loading reminders...
+  </div>
+) :t("medicine:todaysReminders")}</h3>
           {todaysReminders.length === 0 ? (
             <div className="medtracker-reminder-empty">
               {t("medicine:noRemindersToday")}
@@ -217,7 +233,10 @@ export default function MedicineTracker() {
           {interactionWarnings.length > 0 && (
             <div style={{ marginTop: 12 }}>
               {interactionWarnings.map((w, i) => (
-                <div key={i} className={`interaction-warning interaction-${w.severity}`}>
+                <div
+                  key={i}
+                  className={`interaction-warning interaction-${w.severity}`}
+                >
                   <strong>{w.severity.toUpperCase()}:</strong> {w.description}
                 </div>
               ))}
@@ -266,34 +285,38 @@ export default function MedicineTracker() {
           {t("medicine:allScheduledTitle")}
         </h3>
         <ul className="medtracker-list">
-          {medicines.length === 0 && (
+          {!isLoading && medicines.length === 0 && (
             <li className="medtracker-list-empty">
               {t("medicine:noMedicinesYet")}
             </li>
           )}
-          {medicines.map((med) => (
-            <li key={med.id} className="medtracker-list-item">
-              <span className="medtracker-pill">{med.name}</span>
-              <span className="medtracker-date">{med.date}</span>
-              <span className="medtracker-time">{med.time}</span>
-              <IconButton
-                aria-label={`Edit ${med.name}`}
-                title="Edit medicine"
-                onClick={() => startEdit(med)}
-                size="small"
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-              <button
-                className="medtracker-delete-btn"
-                onClick={() => deleteMedicine(med.id)}
-                title={t("medicine:deleteMedicine")}
-                type="button"
-              >
-                {t("medicine:delete")}
-              </button>
-            </li>
-          ))}
+          {isLoading
+            ? Array.from({ length: 4 }).map((_, index) => (
+                <MedicineCardSkeleton key={index} />
+              ))
+            : medicines.map((med) => (
+                <li key={med.id} className="medtracker-list-item">
+                  <span className="medtracker-pill">{med.name}</span>
+                  <span className="medtracker-date">{med.date}</span>
+                  <span className="medtracker-time">{med.time}</span>
+                  <IconButton
+                    aria-label={`Edit ${med.name}`}
+                    title="Edit medicine"
+                    onClick={() => startEdit(med)}
+                    size="small"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <button
+                    className="medtracker-delete-btn"
+                    onClick={() => deleteMedicine(med.id)}
+                    title={t("medicine:deleteMedicine")}
+                    type="button"
+                  >
+                    {t("medicine:delete")}
+                  </button>
+                </li>
+              ))}
         </ul>
       </div>
 
@@ -351,6 +374,11 @@ export default function MedicineTracker() {
           padding: 10px 14px;
           border-radius: 8px;
           font-size: 1rem;
+        }
+        .medtracker-list-item {
+          min-height: 54px;
+          box-sizing: border-box;
+          animation: medtracker-fade-in 0.18s ease-out;
         }
         .medtracker-reminder-item {
           padding-left: 0;
@@ -435,6 +463,66 @@ export default function MedicineTracker() {
         .medtracker-date {
           color: #1976d2;
           font-weight: 600;
+        }
+        .skeleton-card {
+          pointer-events: none;
+        }
+        .skeleton {
+          display: block;
+          flex: 0 0 auto;
+          position: relative;
+          overflow: hidden;
+          background: #dbe7f0;
+          border-radius: 8px;
+        }
+        .skeleton::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          transform: translateX(-100%);
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.65),
+            transparent
+          );
+          animation: medtracker-shimmer 1.2s ease-in-out infinite;
+        }
+        .skeleton-pill {
+          width: 120px;
+          height: 28px;
+          margin-right: 8px;
+        }
+        .skeleton-date {
+          width: 94px;
+          height: 22px;
+        }
+        .skeleton-time {
+          width: 56px;
+          height: 22px;
+        }
+        .skeleton-icon {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+        }
+        .skeleton-btn {
+          width: 64px;
+          height: 32px;
+          margin-left: auto;
+        }
+        @keyframes medtracker-fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes medtracker-shimmer {
+          100% {
+            transform: translateX(100%);
+          }
         }
         .medtracker-delete-btn {
           background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
