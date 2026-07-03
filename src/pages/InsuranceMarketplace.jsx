@@ -245,7 +245,7 @@ export default function InsuranceMarketplace() {
 
   // SSN input formatting
   const handleSSNInput = (val) => {
-    const digits = val.replace(/\D/g, '').slice(0, 4);
+    const digits = val.replace(/\D/g, '').slice(-4);
     setApplicantSSN(digits);
   };
 
