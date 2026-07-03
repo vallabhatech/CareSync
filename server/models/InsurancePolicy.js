@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const { encrypt, decrypt } = require('../utils/encryption');
 const CoveredMemberSchema = new mongoose.Schema({
   name: {
     type: String,
