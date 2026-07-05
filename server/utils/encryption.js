@@ -2,7 +2,7 @@
 // Provides key generation, message encryption/decryption for end‑to‑end encryption
 
 const sodium = require('libsodium-wrappers');
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
 // Ensure libsodium is initialized before any operation
 const ready = sodium.ready;

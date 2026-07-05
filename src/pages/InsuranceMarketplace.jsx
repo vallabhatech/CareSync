@@ -146,7 +146,7 @@ export default function InsuranceMarketplace() {
     } else {
       setPolicies([]);
     }
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const fetchUserPolicies = async () => {
@@ -163,18 +163,18 @@ export default function InsuranceMarketplace() {
 
   // Helper: ZIP code multiplier
   const getZipMultiplier = (zip) => {
-    if (!zip || zip.length < 3) return 1.0;
+    if (!zip || zip.length < 3) return 1;
     const firstDigit = zip[0];
-    if (firstDigit === '9') return 1.10;
+    if (firstDigit === '9') return 1.1;
     if (firstDigit === '0' || firstDigit === '1') return 1.15;
     if (firstDigit === '3' || firstDigit === '4') return 1.05;
-    return 1.0;
+    return 1;
   };
 
   // Helper: Quote Multiplier Logic
   const getQuoteMultiplier = () => {
     const ageFactor = age > 30 ? 1 + (age - 30) * 0.015 : 1;
-    const tobaccoFactor = tobacco === 'yes' ? 1.25 : 1.0;
+    const tobaccoFactor = tobacco === 'yes' ? 1.25 : 1;
     const familyFactor = 1 + familyMembers * 0.45;
     const preExistingFactor = 1 + preExisting.length * 0.08;
     const zipFactor = getZipMultiplier(zipCode);
@@ -324,7 +324,7 @@ export default function InsuranceMarketplace() {
       });
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
+      link.href = globalThis.URL.createObjectURL(blob);
       link.download = `CareSync_Policy_${policyNumber}.pdf`;
       link.click();
       setSnackbarMessage('PDF Download initiated.');
@@ -634,13 +634,11 @@ export default function InsuranceMarketplace() {
                                 <Chip
                                   label={plan.tier}
                                   size="small"
-                                  color={
-                                    plan.tier === 'Gold'
-                                      ? 'warning'
-                                      : plan.tier === 'Silver'
-                                      ? 'default'
-                                      : 'error'
-                                  }
+                                  color={(() => {
+                                    if (plan.tier === 'Gold') return 'warning';
+                                    if (plan.tier === 'Silver') return 'default';
+                                    return 'error';
+                                  })()}
                                   sx={{ fontWeight: 700 }}
                                 />
                                 <Chip label={plan.networkType} size="small" sx={{ fontWeight: 700 }} />
@@ -651,9 +649,9 @@ export default function InsuranceMarketplace() {
 
                               {/* Features checklist */}
                               <Box sx={{ mt: 2, pl: 1 }}>
-                                {plan.benefits.map((b, i) => (
+                                {plan.benefits.map((b, benefitIdx) => (
                                   <Typography
-                                    key={i}
+                                    key={`${plan.id}-benefit-${benefitIdx}`}
                                     variant="body2"
                                     sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}
                                   >
@@ -742,112 +740,120 @@ export default function InsuranceMarketplace() {
               📋 {t('insurance:activePolicies')}
             </Typography>
 
-            {loadingPolicies ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                <CircularProgress size={50} />
-              </Box>
-            ) : policies.length === 0 ? (
-              <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, boxShadow: 1 }}>
-                <ShieldIcon sx={{ fontSize: 72, color: 'divider', mb: 2 }} />
-                <Typography variant="body1" color="text.secondary" paragraph>
-                  {t('insurance:noPolicies')}
-                </Typography>
-                <Button variant="contained" onClick={() => setActiveTab(0)} sx={{ borderRadius: 2 }}>
-                  Browse Marketplace
-                </Button>
-              </Paper>
-            ) : (
-              <Box sx={{ display: 'grid', gap: 3, mt: 3 }}>
-                {policies.map((policy) => (
-                  <Card
-                    key={policy._id}
-                    sx={{
-                      borderRadius: 4,
-                      boxShadow: 3,
-                      borderLeft: `6px solid ${policy.status === 'active' ? '#43e97b' : '#d32f2f'}`
-                    }}
-                  >
-                    <CardContent sx={{ p: 4 }}>
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} md={7}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                            <Typography variant="h5" fontWeight={800}>
-                              {policy.planName}
-                            </Typography>
-                            <Chip
-                              label={policy.status === 'active' ? 'Active' : 'Cancelled'}
-                              color={policy.status === 'active' ? 'success' : 'error'}
-                              size="small"
-                              sx={{ fontWeight: 700 }}
-                            />
-                          </Box>
-                          <Typography variant="body2" color="text.secondary" paragraph>
-                            Policy Number: <strong>{policy.policyNumber}</strong> | Network:{' '}
-                            <strong>{policy.networkType}</strong>
-                          </Typography>
-
-                          {/* Member List Details */}
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="body2" fontWeight={700} gutterBottom>
-                              👤 Covered Individuals:
-                            </Typography>
-                            <Typography variant="body2">
-                              • {policy.primaryInsured?.name} (Self)
-                            </Typography>
-                            {policy.coveredMembers?.map((member, i) => (
-                              <Typography key={i} variant="body2" sx={{ pl: 2 }}>
-                                • {member.name} ({member.relationship})
+            {(() => {
+              if (loadingPolicies) {
+                return (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                    <CircularProgress size={50} />
+                  </Box>
+                );
+              }
+              if (policies.length === 0) {
+                return (
+                  <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, boxShadow: 1 }}>
+                    <ShieldIcon sx={{ fontSize: 72, color: 'divider', mb: 2 }} />
+                    <Typography variant="body1" color="text.secondary" paragraph>
+                      {t('insurance:noPolicies')}
+                    </Typography>
+                    <Button variant="contained" onClick={() => setActiveTab(0)} sx={{ borderRadius: 2 }}>
+                      Browse Marketplace
+                    </Button>
+                  </Paper>
+                );
+              }
+              return (
+                <Box sx={{ display: 'grid', gap: 3, mt: 3 }}>
+                  {policies.map((policy) => (
+                    <Card
+                      key={policy._id}
+                      sx={{
+                        borderRadius: 4,
+                        boxShadow: 3,
+                        borderLeft: `6px solid ${policy.status === 'active' ? '#43e97b' : '#d32f2f'}`
+                      }}
+                    >
+                      <CardContent sx={{ p: 4 }}>
+                        <Grid container spacing={3}>
+                          <Grid item xs={12} md={7}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                              <Typography variant="h5" fontWeight={800}>
+                                {policy.planName}
                               </Typography>
-                            ))}
-                          </Box>
-                        </Grid>
+                              <Chip
+                                label={policy.status === 'active' ? 'Active' : 'Cancelled'}
+                                color={policy.status === 'active' ? 'success' : 'error'}
+                                size="small"
+                                sx={{ fontWeight: 700 }}
+                              />
+                            </Box>
+                            <Typography variant="body2" color="text.secondary" paragraph>
+                              Policy Number: <strong>{policy.policyNumber}</strong> | Network:{' '}
+                              <strong>{policy.networkType}</strong>
+                            </Typography>
 
-                        <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: { md: 'flex-end' } }}>
-                          <Box sx={{ textAlign: { md: 'right' } }}>
-                            <Typography variant="h5" fontWeight={800} color="primary">
-                              ${policy.premium}/mo
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Deductible: <strong>${policy.deductible}</strong> | Co-pay:{' '}
-                              <strong>${policy.copay}</strong>
-                            </Typography>
-                            <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
-                              Effective: {new Date(policy.startDate).toLocaleDateString()} -{' '}
-                              {new Date(policy.endDate).toLocaleDateString()}
-                            </Typography>
-                          </Box>
+                            {/* Member List Details */}
+                            <Box sx={{ mt: 2 }}>
+                              <Typography variant="body2" fontWeight={700} gutterBottom>
+                                👤 Covered Individuals:
+                              </Typography>
+                              <Typography variant="body2">
+                                • {policy.primaryInsured?.name} (Self)
+                              </Typography>
+                              {policy.coveredMembers?.map((member, memberIdx) => (
+                                <Typography key={`${policy._id}-member-${member.name}-${memberIdx}`} variant="body2" sx={{ pl: 2 }}>
+                                  • {member.name} ({member.relationship})
+                                </Typography>
+                              ))}
+                            </Box>
+                          </Grid>
 
-                          <Box sx={{ display: 'flex', gap: 1.5, mt: 3 }}>
-                            <Button
-                              variant="outlined"
-                              color="primary"
-                              startIcon={<FileDownloadIcon />}
-                              onClick={() => handleDownloadPDF(policy._id, policy.policyNumber)}
-                              size="small"
-                              sx={{ fontWeight: 600, borderRadius: 2 }}
-                            >
-                              Download Proof
-                            </Button>
-                            {policy.status === 'active' && (
+                          <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: { md: 'flex-end' } }}>
+                            <Box sx={{ textAlign: { md: 'right' } }}>
+                              <Typography variant="h5" fontWeight={800} color="primary">
+                                ${policy.premium}/mo
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Deductible: <strong>${policy.deductible}</strong> | Co-pay:{' '}
+                                <strong>${policy.copay}</strong>
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
+                                Effective: {new Date(policy.startDate).toLocaleDateString()} -{' '}
+                                {new Date(policy.endDate).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+
+                            <Box sx={{ display: 'flex', gap: 1.5, mt: 3 }}>
                               <Button
                                 variant="outlined"
-                                color="error"
-                                startIcon={<CancelIcon />}
-                                onClick={() => setCancelPolicyItem(policy)}
+                                color="primary"
+                                startIcon={<FileDownloadIcon />}
+                                onClick={() => handleDownloadPDF(policy._id, policy.policyNumber)}
                                 size="small"
                                 sx={{ fontWeight: 600, borderRadius: 2 }}
                               >
-                                {t('insurance:cancelPolicy')}
+                                Download Proof
                               </Button>
-                            )}
-                          </Box>
+                              {policy.status === 'active' && (
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  startIcon={<CancelIcon />}
+                                  onClick={() => setCancelPolicyItem(policy)}
+                                  size="small"
+                                  sx={{ fontWeight: 600, borderRadius: 2 }}
+                                >
+                                  {t('insurance:cancelPolicy')}
+                                </Button>
+                              )}
+                            </Box>
+                          </Grid>
                         </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
-            )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              );
+            })()}
           </Box>
         )}
       </Box>
@@ -1086,7 +1092,7 @@ export default function InsuranceMarketplace() {
                 </Alert>
               ) : (
                 householdMembers.map((member, i) => (
-                  <Paper key={i} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                  <Paper key={`household-${member.name || 'member'}-${i}`} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
                     <Typography variant="body2" fontWeight={700} sx={{ mb: 1 }}>
                       {t('insurance:dependentTitle', { index: i + 1 })}
                     </Typography>
@@ -1221,7 +1227,7 @@ export default function InsuranceMarketplace() {
                       {t('insurance:dependentsCoveredTitle')}
                     </Typography>
                     {householdMembers.map((m, idx) => (
-                      <Typography key={idx} variant="body2">
+                      <Typography key={`verify-member-${m.name || 'dep'}-${idx}`} variant="body2">
                         • {m.name} ({m.relationship})
                       </Typography>
                     ))}

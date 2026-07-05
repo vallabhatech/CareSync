@@ -1,6 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const router = express.Router();
 const InsurancePolicy = require('../models/InsurancePolicy');
 const authMiddleware = require('../middleware/authMiddleware');
@@ -23,12 +23,12 @@ const insuranceMutationLimiter = rateLimit({
 });
 
 const getZipMultiplier = (zip) => {
-  if (!zip || zip.length < 3) return 1.0;
+  if (!zip || zip.length < 3) return 1;
   const firstDigit = zip[0];
-  if (firstDigit === '9') return 1.10;
+  if (firstDigit === '9') return 1.1;
   if (firstDigit === '0' || firstDigit === '1') return 1.15;
   if (firstDigit === '3' || firstDigit === '4') return 1.05;
-  return 1.0;
+  return 1;
 };
 
 router.use(insuranceLimiter);
@@ -262,10 +262,9 @@ router.post('/policies', authMiddleware, insuranceMutationLimiter, async (req, r
     // Validate inputs
     if (
       !planId ||
-      !primaryInsured ||
-      !primaryInsured.name ||
-      !primaryInsured.dob ||
-      !primaryInsured.ssnLastFour
+      !primaryInsured?.name ||
+      !primaryInsured?.dob ||
+      !primaryInsured?.ssnLastFour
     ) {
       return res.status(400).json({ message: 'Missing required checkout information' });
     }
@@ -288,13 +287,13 @@ router.post('/policies', authMiddleware, insuranceMutationLimiter, async (req, r
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    if (isNaN(age) || age < 0) {
+    if (Number.isNaN(age) || age < 0) {
       age = 30; // default/fallback
     }
 
     // Calculate factors
     const ageFactor = age > 30 ? 1 + (age - 30) * 0.015 : 1;
-    const tobaccoFactor = tobacco === 'yes' ? 1.25 : 1.0;
+    const tobaccoFactor = tobacco === 'yes' ? 1.25 : 1;
     const familyCount = Array.isArray(coveredMembers) ? coveredMembers.length : 0;
     const familyFactor = 1 + familyCount * 0.45;
     const preExistingCount = Array.isArray(preExisting) ? preExisting.length : 0;

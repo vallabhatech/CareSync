@@ -79,8 +79,9 @@ API.interceptors.response.use(
         if (typeof requestData === 'string') {
           try {
             requestData = JSON.parse(requestData);
-          } catch (e) {
-            // Keep as string if parsing fails
+          } catch (parseError) {
+            // Keep as string if JSON parsing fails — this is expected for non-JSON payloads
+            console.debug('Offline queue: payload is not JSON, storing as-is', parseError.message);
           }
         }
 
