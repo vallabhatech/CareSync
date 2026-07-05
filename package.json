@@ -34,7 +34,8 @@
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" \"server/**/*.{js,jsx}\"",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "postinstall": "patch-package"
   },
   "eslintConfig": {
     "extends": [
@@ -61,13 +62,15 @@
     "autoprefixer": "^10.5.2",
     "axios-mock-adapter": "^2.1.0",
     "eslint": "^10.6.0",
+    "patch-package": "^8.0.1",
     "postcss": "^8.5.16",
+    "postcss-svgo": "^8.0.1",
     "react-app-rewired": "^2.2.1",
     "react-scripts": "^5.0.1",
+    "serialize-javascript": "6.0.2",
+    "svgo": "^3.0.0",
     "tailwindcss": "^4.3.1",
-    "typescript": "^6.0.3",
-    "postcss-svgo": "^8.0.1",
-    "svgo": "^3.0.0"
+    "typescript": "^6.0.3"
   },
   "overrides": {
     "form-data": "4.0.6",
