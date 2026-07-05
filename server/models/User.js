@@ -36,6 +36,10 @@ const UserSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  publicKey: {
+    type: String,
+    default: null,
+  },
   email: {
     type: String,
     required: true,
