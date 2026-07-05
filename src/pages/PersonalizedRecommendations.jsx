@@ -20,7 +20,7 @@ const fetchRecommendations = async (payload) => {
 };
 
 const SectionCard = ({ title, items }) => (
-  <Card sx={{ mb: 3, backdropFilter: 'blur(12px)', background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
+  <Card sx={{ mb: 3, backdropFilter: 'blur(12px)', bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
     <CardContent>
       <Typography variant='h6' gutterBottom>{title}</Typography>
       {items.length === 0 ? (
@@ -52,9 +52,9 @@ export default function PersonalizedRecommendations() {
   }, []);
 
   return (
-    <Box className='dark-page-bg'>
-      <Box className='dark-page-container'>
-        <Typography variant='h4' gutterBottom sx={{ color: '#fff', mb: 2 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6, px: 2 }}>
+      <Box sx={{ maxWidth: 900, mx: 'auto', bgcolor: 'background.paper', borderRadius: 4, p: { xs: 3, md: 4 }, boxShadow: 4 }}>
+        <Typography variant='h4' gutterBottom sx={{ color: 'text.primary', mb: 2 }}>
           {t('recommendations:title', 'Personalized Health Recommendations')}
         </Typography>
         {loading ? (

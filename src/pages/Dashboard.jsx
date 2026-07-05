@@ -7,6 +7,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import SearchIcon from "@mui/icons-material/Search";
 import PlaceIcon from "@mui/icons-material/Place";
 import SettingsIcon from "@mui/icons-material/Settings";
+import { useTheme } from "@mui/material/styles";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -43,6 +44,7 @@ const healthQuotes = [
 export default function Dashboard() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const theme = useTheme();
   const [quote, setQuote] = useState(healthQuotes[0]);
   const [todayCount, setTodayCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
@@ -189,14 +191,15 @@ export default function Dashboard() {
       <style>{`
         .dashboard-bg {
           min-height: 100vh;
-          background: linear-gradient(135deg, #f4f8fb 0%, #e3f2fd 100%);
+          background: linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.mode === 'dark' ? '#1e293b' : '#e3f2fd'} 100%);
+          color: ${theme.palette.text.primary};
           position: relative;
           font-family: 'Segoe UI', Arial, sans-serif;
         }
         .dashboard-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(255,255,255,0.7);
+          background: ${theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255,255,255,0.7)'};
           backdrop-filter: blur(2px);
           z-index: 0;
         }
@@ -211,16 +214,16 @@ export default function Dashboard() {
           font-size: 2.7rem;
           font-weight: 900;
           margin-bottom: 22px;
-          color: #222;
+          color: var(--mui-palette-text-primary, #222);
           letter-spacing: 1.5px;
-          text-shadow: 0 2px 16px #fff6;
+          text-shadow: 0 2px 16px rgba(255,255,255,0.15);
         }
         .dashboard-header {
           margin-bottom: 24px;
         }
         .dashboard-subtitle {
           font-size: 1.1rem;
-            color: #666;
+            color: ${theme.palette.text.secondary};
             margin-top: -10px;
             margin-bottom: 0;
         }
@@ -231,7 +234,7 @@ export default function Dashboard() {
             margin-bottom: 32px;
         }
         .stat-card {
-          background: rgba(255,255,255,0.95);
+          background: color-mix(in srgb, var(--mui-palette-background-paper, #fff) 92%, transparent);
             border-radius: 16px;
             padding: 20px;
             text-align: center;
@@ -244,7 +247,7 @@ export default function Dashboard() {
         }
         .stat-card p {
           margin-top: 8px;
-          color: #666;
+          color: var(--mui-palette-text-secondary, #666);
           font-weight: 600;
         }
         .dashboard-quote-section {
@@ -255,14 +258,14 @@ export default function Dashboard() {
           flex-wrap: wrap;
         }
         .dashboard-quote {
-          background: rgba(255,255,255,0.92);
+          background: color-mix(in srgb, var(--mui-palette-background-paper, #fff) 92%, transparent);
           border-radius: 14px;
           padding: 20px 32px;
           font-style: italic;
           font-size: 1.22rem;
           box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
           min-width: 220px;
-          color: #333;
+          color: ${theme.palette.text.primary};
           border-left: 4px solid #1976d2;
           transition: box-shadow 0.2s;
         }
@@ -288,7 +291,7 @@ export default function Dashboard() {
           gap: 32px;
         }
         .dashboard-card {
-          background: rgba(255,255,255,0.97);
+          background: ${theme.palette.background.paper};
           border-radius: 20px;
           box-shadow: 0 4px 32px 0 rgba(0,0,0,0.07);
           padding: 36px 22px 28px 22px;
@@ -322,7 +325,7 @@ export default function Dashboard() {
         }
         .dashboard-card-desc {
           font-size: 1rem;
-          color: #555;
+          color: ${theme.palette.text.secondary};
           margin-bottom: 24px;
           text-align: center;
         }
