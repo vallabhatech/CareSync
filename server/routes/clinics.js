@@ -1,5 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
+// General limiter for clinic endpoints
+const clinicLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: 'Too many requests to clinic endpoints, please try again later.',
+});
+router.use(clinicLimiter);
 const { FavoriteClinic, RecentSearch } = require('../models/Clinic');
 const authMiddleware = require('../middleware/authMiddleware');
 
