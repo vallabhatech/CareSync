@@ -16,8 +16,12 @@ import {
  */
 export function sanitizeConfig(obj) {
   // Do not process special object types like FormData, Blob, etc.
-  if (obj && typeof obj === 'object' && obj.constructor !== Object && !Array.isArray(obj)) {
-    return obj;
+  // We securely check if the object is a plain object (has Object.prototype or null prototype).
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    const proto = Object.getPrototypeOf(obj);
+    if (proto !== Object.prototype && proto !== null) {
+      return obj;
+    }
   }
 
   if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
@@ -67,6 +71,9 @@ export function sanitizeConfig(obj) {
  * @throws {Error} If a value is invalid.
  */
 function _normalizeAndValidateHeaderValue(value, key) {
+  if (value === null || value === undefined) {
+    return '';
+  }
   const strVal = String(value).trim();
 
   if (strVal.length > 4096) {

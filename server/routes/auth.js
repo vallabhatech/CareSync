@@ -52,7 +52,6 @@ router.post('/register', async (req, res) => {
 
     const { isValidEmail } = require('../utils/validation');
     if (!isValidEmail(email)) {
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       await logSecurityEvent({
         eventType: EVENT_TYPES.AUTH_REGISTER_FAILURE,
         severity: SEVERITY.WARNING,
@@ -154,7 +153,6 @@ router.post('/login', async (req, res) => {
 
     const { isValidEmail } = require('../utils/validation');
     if (!isValidEmail(email)) {
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       await logSecurityEvent({
         eventType: EVENT_TYPES.AUTH_LOGIN_FAILURE,
         severity: SEVERITY.WARNING,
@@ -291,6 +289,26 @@ const validateAndGetEmailUpdate = async (email, currentUser) => {
   return email;
 };
 
+// Helper: update simple string fields on a user document
+const updateSimpleFields = (user, body) => {
+  ['phone', 'age', 'bloodGroup', 'allergies'].forEach((field) => {
+    if (body[field] !== undefined) {
+      user[field] = String(body[field]).trim();
+    }
+  });
+
+  if (body.name !== undefined) {
+    const cleanName = String(body.name).trim();
+    if (cleanName) {
+      user.name = cleanName;
+    }
+  }
+
+  if (body.avatar !== undefined) {
+    user.avatar = body.avatar ? String(body.avatar) : null;
+  }
+};
+
 // @route   PUT /api/auth/profile
 // @desc    Update user profile details
 // @access  Private
@@ -325,23 +343,8 @@ router.put('/profile', authMiddleware, async (req, res) => {
       user.email = await validateAndGetEmailUpdate(emailInput, user);
     }
 
-    // Update simple fields
-    ['phone', 'age', 'bloodGroup', 'allergies'].forEach((field) => {
-      if (req.body[field] !== undefined) {
-        user[field] = String(req.body[field]).trim();
-      }
-    });
-
-    if (req.body.name !== undefined) {
-      const cleanName = String(req.body.name).trim();
-      if (cleanName) {
-        user.name = cleanName;
-      }
-    }
-
-    if (req.body.avatar !== undefined) {
-      user.avatar = req.body.avatar ? String(req.body.avatar) : null;
-    }
+    // Update simple fields via helper
+    updateSimpleFields(user, req.body);
 
     await user.save();
 

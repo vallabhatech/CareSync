@@ -1,3 +1,4 @@
+/* global globalThis */
 /**
  * Unit tests for src/utils/notifications.js
  *

@@ -1,0 +1,32 @@
+# Configuration for actions/labeler v5
+# See: https://github.com/actions/labeler
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/**/*'
+          - 'public/**/*'
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'server/**/*'
+
+testing:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/**/*.test.*'
+          - 'src/**/*.spec.*'
+          - 'server/tests/**/*'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'LICENSE'
+
+ui/ux:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/**/*.css'
+          - 'src/components/**/*'
