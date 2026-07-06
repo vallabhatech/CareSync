@@ -8,7 +8,7 @@
     "@emotion/styled": "^11.14.1",
     "@fontsource/fira-mono": "^5.2.7",
     "@fontsource/roboto": "^5.2.10",
-    "@mui/icons-material": "^9.1.1",
+    "@mui/icons-material": "^9.2.0",
     "@mui/lab": "^7.0.0-beta.17",
     "@mui/material": "^9.1.2",
     "@mui/x-date-pickers": "^9.6.0",
