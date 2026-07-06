@@ -67,7 +67,7 @@
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
     "postcss-svgo": "^8.0.1",
-    "svgo": "^3.0.0"
+    "svgo": "^4.0.1"
   },
   "overrides": {
     "form-data": "4.0.6",
