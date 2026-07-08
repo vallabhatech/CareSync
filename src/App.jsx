@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useToast } from './context/ToastContext';
 import {
   AppBar,
   Toolbar,
@@ -32,6 +33,8 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import { ToastContainer } from './components/Toast';
 import Dashboard from './pages/Dashboard';
 import MedicineTracker from './pages/MedicineTracker';
 import SymptomChecker from './pages/SymptomChecker';
@@ -167,9 +170,11 @@ function Navbar() {
   const trigger = useScrollTrigger({ threshold: 80 });
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const handleLogout = () => {
     logout();
+    addToast('Logged out successfully', 'info');
     navigate('/login');
   };
 
@@ -301,24 +306,27 @@ function Navbar() {
 function App() {
   return (
     <AuthProvider>
-      <Navbar />
-      <div style={{ paddingTop: 80, minHeight: '100vh' }}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/medicine-tracker" element={<MedicineTracker />} />
-          <Route path="/symptom-checker" element={<SymptomChecker />} />
-          <Route path="/clinics-nearby" element={<ClinicsNearby />} />
-          <Route path="/dosage-calculator" element={<DosageCalculator />} />
-          <Route path="/health-metrics" element={<HealthMetrics />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
-      <ScrollToTopButton />
-      <Footer />
+      <ToastProvider>
+        <Navbar />
+        <div style={{ paddingTop: 80, minHeight: '100vh' }}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/medicine-tracker" element={<MedicineTracker />} />
+            <Route path="/symptom-checker" element={<SymptomChecker />} />
+            <Route path="/clinics-nearby" element={<ClinicsNearby />} />
+            <Route path="/dosage-calculator" element={<DosageCalculator />} />
+            <Route path="/health-metrics" element={<HealthMetrics />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+        <ScrollToTopButton />
+        <Footer />
+        <ToastContainer />
+      </ToastProvider>
     </AuthProvider>
   );
 }
