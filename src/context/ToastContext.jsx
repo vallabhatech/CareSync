@@ -5,20 +5,19 @@ const ToastContext = createContext(null);
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
+  const removeToast = useCallback((id) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+  }, []);
+
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
     
     setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
 
-    // Auto-dismiss after configured duration
     setTimeout(() => {
       removeToast(id);
     }, duration);
-  }, []);
-
-  const removeToast = useCallback((id) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-  }, []);
+  }, [removeToast]); // Added dependency to clear the hook warning
 
   return (
     <ToastContext.Provider value={{ addToast, removeToast, toasts }}>
