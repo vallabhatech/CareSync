@@ -153,6 +153,7 @@ app.use('/api/medicines', require('./routes/medicines'));
 app.use('/api/symptom-checks', require('./routes/symptomChecks'));
 app.use('/api/clinics', require('./routes/clinics'));
 app.use('/api/health-metrics', require('./routes/healthMetrics'));
+app.use('/api/lab-results', require('./routes/labResults'));
 app.use('/api/medical-documents', require('./routes/medicalDocuments'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/risk-assessment', require('./routes/riskAssessment'));

@@ -41,6 +41,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
+import LabResults from './pages/LabResults';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
@@ -52,9 +53,8 @@ const NAV_LINKS = [
   { key: 'medicineTracker', to: '/medicine-tracker' },
   { key: 'symptomChecker', to: '/symptom-checker' },
   { key: 'clinicsNearby', to: '/clinics-nearby' },
-  { key: 'telehealth', to: '/telehealth' },
+  { key: 'labResults', to: '/lab-results' },
   { key: 'settings', to: '/settings' },
-  { key: 'recommendations', to: '/recommendations' },
 ];
 
 function HideOnScroll(props) {
@@ -311,6 +311,7 @@ function App() {
           <Route path="/clinics-nearby" element={<ClinicsNearby />} />
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/health-metrics" element={<HealthMetrics />} />
+          <Route path="/lab-results" element={<LabResults />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />

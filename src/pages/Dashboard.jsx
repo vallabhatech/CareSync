@@ -7,6 +7,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import SearchIcon from "@mui/icons-material/Search";
 import PlaceIcon from "@mui/icons-material/Place";
 import SettingsIcon from "@mui/icons-material/Settings";
+import BarChartIcon from "@mui/icons-material/BarChart";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -123,6 +124,14 @@ export default function Dashboard() {
       link: "/health-metrics",
       icon: <FavoriteBorderIcon fontSize="large" color="primary" />,
       btn: "View Metrics",
+    },
+    {
+      id: "lab-results",
+      title: t("nav:labResults") || "Lab Results",
+      desc: t("labResults:subtitle") || "Track, view, and analyze your lab test results and biomarkers over time.",
+      link: "/lab-results",
+      icon: <BarChartIcon fontSize="large" color="primary" />,
+      btn: t("nav:labResults") || "View Results",
     },
     {
       id: "nearby-clinics",
