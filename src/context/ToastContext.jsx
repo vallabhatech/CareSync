@@ -15,7 +15,8 @@ export const ToastProvider = ({ children }) => {
   }, []);
 
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
-    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+    // Replaced deprecated .substr() with non-deprecated .slice()
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     
     setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
 

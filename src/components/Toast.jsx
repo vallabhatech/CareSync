@@ -32,9 +32,8 @@ export const ToastContainer = () => {
       {toasts.map((toast) => (
         <Paper
           key={toast.id}
-          role="status"
+          role="alert"
           aria-live="polite"
-          aria-atomic="true"
           elevation={6}
           sx={{
             pointerEvents: 'auto',
