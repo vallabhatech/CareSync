@@ -22,18 +22,19 @@ export const ToastContainer = () => {
         right: 24,
         zIndex: 2000,
         display: 'flex',
-        flexDirection: 'col',
+        flexDirection: 'column',
         gap: 1.5,
         maxWidth: 360,
-        width: '100%',
+        width: 'calc(100% - 48px)',
         pointerEvents: 'none'
       }}
-      aria-live="polite"
     >
       {toasts.map((toast) => (
         <Paper
           key={toast.id}
-          role="alert"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
           elevation={6}
           sx={{
             pointerEvents: 'auto',

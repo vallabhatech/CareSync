@@ -1,12 +1,17 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 
 const ToastContext = createContext(null);
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const timersRef = useRef({});
 
   const removeToast = useCallback((id) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+    if (timersRef.current[id]) {
+      clearTimeout(timersRef.current[id]);
+      delete timersRef.current[id];
+    }
   }, []);
 
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
@@ -14,10 +19,19 @@ export const ToastProvider = ({ children }) => {
     
     setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
 
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       removeToast(id);
     }, duration);
-  }, [removeToast]); // Added dependency to clear the hook warning
+
+    timersRef.current[id] = timer;
+  }, [removeToast]);
+
+  useEffect(() => {
+    return () => {
+      // Clean up all pending timers if the provider unmounts
+      Object.values(timersRef.current).forEach(clearTimeout);
+    };
+  }, []);
 
   return (
     <ToastContext.Provider value={{ addToast, removeToast, toasts }}>

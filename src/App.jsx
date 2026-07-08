@@ -170,11 +170,11 @@ function Navbar() {
   const trigger = useScrollTrigger({ threshold: 80 });
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
-  const { addToast } = useToast(); // Grab the notification trigger
+  const { addToast } = useToast();
 
   const handleLogout = () => {
     logout();
-    addToast('Logged out successfully', 'info'); // Call site integration fulfilled!
+    addToast('Logged out successfully', 'info');
     navigate('/login');
   };
 
