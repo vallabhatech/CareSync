@@ -303,7 +303,16 @@ function Navbar() {
 }
 
 function RequireAuth({ children, requireMod }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
   if (!isAuthenticated) return <Navigate to="/login" />;
   if (requireMod && user?.role !== 'admin' && user?.role !== 'moderator') {
     return <Navigate to="/forums" />;
