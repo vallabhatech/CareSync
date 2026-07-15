@@ -13,7 +13,7 @@ const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
-const { logSecurityEvent, detectSuspiciousLogin } = require('../utils/securityLogger');
+const { logSecurityEvent, detectSuspiciousLogin } = require('../utils/securityAuditLogger');
 const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
 
 const generateToken = (userId) => {
