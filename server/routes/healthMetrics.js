@@ -24,7 +24,7 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 
     const page = Math.max(1, parseInt(reqPage, 10) || 1);
-    const limit = Math.max(1, parseInt(reqLimit, 10) || 50);
+    const limit = Math.min(100, Math.max(1, parseInt(reqLimit, 10) || 50));
     const skip = (page - 1) * limit;
 
     const [metrics, total] = await Promise.all([
@@ -32,6 +32,7 @@ router.get('/', authMiddleware, async (req, res) => {
       HealthMetric.countDocuments(filter)
     ]);
 
+    res.setHeader('Access-Control-Expose-Headers', 'X-Total-Count, X-Total-Pages, X-Current-Page');
     res.setHeader('X-Total-Count', total);
     res.setHeader('X-Total-Pages', Math.ceil(total / limit));
     res.setHeader('X-Current-Page', page);

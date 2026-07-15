@@ -20,7 +20,7 @@ router.get('/centers/nearby', authMiddleware, async (req, res) => {
     const cached = cache.get(cacheKey);
     if (cached) return res.json(cached);
 
-    const centers = await DiagnosticCenter.find({}).sort({ createdAt: -1 }).limit(n);
+    const centers = await DiagnosticCenter.find({}).sort({ createdAt: -1 }).limit(n).lean();
     
     cache.set(cacheKey, centers, 300);
     res.json(centers);
@@ -125,7 +125,7 @@ router.post('/bookings', authMiddleware, async (req, res) => {
 router.get('/bookings', authMiddleware, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.max(1, parseInt(req.query.limit, 10) || 20);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const skip = (page - 1) * limit;
 
     const filter = { user: req.user._id };

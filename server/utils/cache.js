@@ -5,6 +5,19 @@ class Cache {
   constructor(ttlSeconds = 60 * 5) {
     this.cache = new Map();
     this.defaultTtl = ttlSeconds * 1000;
+    
+    this.cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      for (const [key, item] of this.cache.entries()) {
+        if (now > item.expiry) {
+          this.cache.delete(key);
+        }
+      }
+    }, 60000);
+    
+    if (this.cleanupInterval.unref) {
+      this.cleanupInterval.unref();
+    }
   }
 
   get(key) {
@@ -29,6 +42,9 @@ class Cache {
   
   clear() {
     this.cache.clear();
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
   }
 }
 
