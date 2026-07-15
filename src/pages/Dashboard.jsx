@@ -214,18 +214,19 @@ export default function Dashboard() {
           font-size: 2.7rem;
           font-weight: 900;
           margin-bottom: 22px;
-          color: var(--mui-palette-text-primary, #222);
+          color: ${theme.palette.text.primary};
           letter-spacing: 1.5px;
-          text-shadow: 0 2px 16px rgba(255,255,255,0.15);
+          text-shadow: ${theme.palette.mode === 'dark' ? '0 2px 16px rgba(15, 23, 42, 0.45)' : '0 2px 16px rgba(255,255,255,0.15)'};
         }
         .dashboard-header {
           margin-bottom: 24px;
         }
         .dashboard-subtitle {
           font-size: 1.1rem;
-            color: ${theme.palette.text.secondary};
-            margin-top: -10px;
-            margin-bottom: 0;
+          color: ${theme.palette.text.secondary};
+          margin-top: -10px;
+          margin-bottom: 0;
+          font-weight: 500;
         }
         .dashboard-stats {
           display: grid;
@@ -258,16 +259,21 @@ export default function Dashboard() {
           flex-wrap: wrap;
         }
         .dashboard-quote {
-          background: color-mix(in srgb, var(--mui-palette-background-paper, #fff) 92%, transparent);
+          background: ${theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92))'
+            : 'color-mix(in srgb, var(--mui-palette-background-paper, #fff) 92%, transparent)'};
           border-radius: 14px;
           padding: 20px 32px;
           font-style: italic;
           font-size: 1.22rem;
-          box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+          font-weight: 600;
+          box-shadow: ${theme.palette.mode === 'dark' ? '0 10px 24px rgba(2, 8, 23, 0.35)' : '0 2px 16px 0 rgba(0,0,0,0.06)'};
           min-width: 220px;
-          color: ${theme.palette.text.primary};
+          color: ${theme.palette.mode === 'dark' ? '#f8fafc' : theme.palette.text.primary};
           border-left: 4px solid #1976d2;
+          border: ${theme.palette.mode === 'dark' ? '1px solid rgba(148, 163, 184, 0.24)' : '1px solid rgba(25, 118, 210, 0.12)'};
           transition: box-shadow 0.2s;
+          text-shadow: ${theme.palette.mode === 'dark' ? '0 1px 2px rgba(2, 8, 23, 0.45)' : 'none'};
         }
         .dashboard-quote-btn {
           background: linear-gradient(90deg, #1976d2 60%, #43e97b 100%);
