@@ -25,6 +25,16 @@ const modMiddleware = async (req, res, next) => {
   }
 };
 
+// Validate ObjectIds in route parameters to prevent NoSQL injection warnings
+['categoryId', 'topicId', 'postId', 'reportId'].forEach((paramName) => {
+  router.param(paramName, (req, res, next, id) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: `Invalid ${paramName}` });
+    }
+    next();
+  });
+});
+
 // ---------------------------------------------------------
 // CATEGORIES
 // ---------------------------------------------------------
@@ -70,10 +80,12 @@ router.post('/categories', authMiddleware, modMiddleware, async (req, res) => {
 // @access  Public
 router.get('/categories/:categoryId/topics', async (req, res) => {
   try {
-    const cursor = req.query.cursor;
     const query = { categoryId: req.params.categoryId, status: { $ne: 'deleted' } };
-    if (cursor) {
-      query.updatedAt = { $lt: new Date(cursor) };
+    if (typeof req.query.cursor === 'string') {
+      const cursorDate = new Date(req.query.cursor);
+      if (!isNaN(cursorDate)) {
+        query.updatedAt = { $lt: cursorDate };
+      }
     }
     const topics = await ForumTopic.find(query)
       .sort({ updatedAt: -1 })
@@ -97,10 +109,12 @@ router.get('/topics/:topicId', async (req, res) => {
     const topic = await ForumTopic.findOne({ _id: req.params.topicId, status: { $ne: 'deleted' } });
     if (!topic) return res.status(404).json({ message: 'Topic not found' });
 
-    const cursor = req.query.cursor;
     const query = { topicId: topic._id, status: { $ne: 'deleted' } };
-    if (cursor) {
-      query.createdAt = { $gt: new Date(cursor) };
+    if (typeof req.query.cursor === 'string') {
+      const cursorDate = new Date(req.query.cursor);
+      if (!isNaN(cursorDate)) {
+        query.createdAt = { $gt: cursorDate };
+      }
     }
     const posts = await ForumPost.find(query)
       .sort({ createdAt: 1 })
