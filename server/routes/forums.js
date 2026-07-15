@@ -80,7 +80,7 @@ router.post('/categories', authMiddleware, modMiddleware, async (req, res) => {
 // @access  Public
 router.get('/categories/:categoryId/topics', async (req, res) => {
   try {
-    const query = { categoryId: req.params.categoryId, status: { $ne: 'deleted' } };
+    const query = { categoryId: String(req.params.categoryId), status: { $ne: 'deleted' } };
     if (typeof req.query.cursor === 'string') {
       const cursorDate = new Date(req.query.cursor);
       if (!isNaN(cursorDate)) {
@@ -106,7 +106,7 @@ router.get('/categories/:categoryId/topics', async (req, res) => {
 // @access  Public
 router.get('/topics/:topicId', async (req, res) => {
   try {
-    const topic = await ForumTopic.findOne({ _id: req.params.topicId, status: { $ne: 'deleted' } });
+    const topic = await ForumTopic.findOne({ _id: String(req.params.topicId), status: { $ne: 'deleted' } });
     if (!topic) return res.status(404).json({ message: 'Topic not found' });
 
     const query = { topicId: topic._id, status: { $ne: 'deleted' } };
@@ -143,7 +143,7 @@ router.post('/topics', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Invalid category ID' });
     }
     
-    const category = await ForumCategory.findById(categoryId);
+    const category = await ForumCategory.findById(String(categoryId));
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
@@ -173,7 +173,7 @@ router.post('/topics/:topicId/posts', authMiddleware, async (req, res) => {
     const { content, isAnonymous, authorDisplayName } = req.body;
     if (!content) return res.status(400).json({ message: 'Content is required' });
 
-    const topic = await ForumTopic.findById(req.params.topicId);
+    const topic = await ForumTopic.findById(String(req.params.topicId));
     if (!topic || topic.status === 'deleted') {
       return res.status(404).json({ message: 'Topic not found' });
     }
@@ -207,19 +207,19 @@ router.post('/topics/:topicId/posts', authMiddleware, async (req, res) => {
 router.post('/topics/:topicId/upvote', authMiddleware, async (req, res) => {
   try {
     const result = await ForumTopic.updateOne(
-      { _id: req.params.topicId, status: { $ne: 'deleted' }, upvotes: { $ne: req.user._id } },
+      { _id: String(req.params.topicId), status: { $ne: 'deleted' }, upvotes: { $ne: req.user._id } },
       { $push: { upvotes: req.user._id } }
     );
     if (result.modifiedCount === 0) {
       const pullResult = await ForumTopic.updateOne(
-        { _id: req.params.topicId, status: { $ne: 'deleted' }, upvotes: req.user._id },
+        { _id: String(req.params.topicId), status: { $ne: 'deleted' }, upvotes: req.user._id },
         { $pull: { upvotes: req.user._id } }
       );
       if (pullResult.matchedCount === 0) {
         return res.status(404).json({ message: 'Topic not found' });
       }
     }
-    const topic = await ForumTopic.findById(req.params.topicId);
+    const topic = await ForumTopic.findById(String(req.params.topicId));
     res.json(topic);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -232,19 +232,19 @@ router.post('/topics/:topicId/upvote', authMiddleware, async (req, res) => {
 router.post('/posts/:postId/upvote', authMiddleware, async (req, res) => {
   try {
     const result = await ForumPost.updateOne(
-      { _id: req.params.postId, status: { $ne: 'deleted' }, upvotes: { $ne: req.user._id } },
+      { _id: String(req.params.postId), status: { $ne: 'deleted' }, upvotes: { $ne: req.user._id } },
       { $push: { upvotes: req.user._id } }
     );
     if (result.modifiedCount === 0) {
       const pullResult = await ForumPost.updateOne(
-        { _id: req.params.postId, status: { $ne: 'deleted' }, upvotes: req.user._id },
+        { _id: String(req.params.postId), status: { $ne: 'deleted' }, upvotes: req.user._id },
         { $pull: { upvotes: req.user._id } }
       );
       if (pullResult.matchedCount === 0) {
         return res.status(404).json({ message: 'Post not found' });
       }
     }
-    const post = await ForumPost.findById(req.params.postId);
+    const post = await ForumPost.findById(String(req.params.postId));
     res.json(post);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -271,9 +271,9 @@ router.post('/reports', authMiddleware, async (req, res) => {
     
     let target = null;
     if (targetType === 'Topic') {
-      target = await ForumTopic.findOne({ _id: targetId, status: { $ne: 'deleted' } });
+      target = await ForumTopic.findOne({ _id: String(targetId), status: { $ne: 'deleted' } });
     } else if (targetType === 'Post') {
-      target = await ForumPost.findOne({ _id: targetId, status: { $ne: 'deleted' } });
+      target = await ForumPost.findOne({ _id: String(targetId), status: { $ne: 'deleted' } });
     } else {
       return res.status(400).json({ message: 'Invalid target type' });
     }
@@ -314,7 +314,7 @@ router.get('/reports', authMiddleware, modMiddleware, async (req, res) => {
 // @access  Private (Admin/Mod)
 router.delete('/topics/:topicId', authMiddleware, modMiddleware, async (req, res) => {
   try {
-    const topic = await ForumTopic.findById(req.params.topicId);
+    const topic = await ForumTopic.findById(String(req.params.topicId));
     if (!topic) return res.status(404).json({ message: 'Topic not found' });
 
     topic.status = 'deleted';
@@ -334,7 +334,7 @@ router.delete('/topics/:topicId', authMiddleware, modMiddleware, async (req, res
 // @access  Private (Admin/Mod)
 router.delete('/posts/:postId', authMiddleware, modMiddleware, async (req, res) => {
   try {
-    const post = await ForumPost.findById(req.params.postId);
+    const post = await ForumPost.findById(String(req.params.postId));
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
     post.status = 'deleted';
@@ -351,7 +351,7 @@ router.delete('/posts/:postId', authMiddleware, modMiddleware, async (req, res) 
 // @access  Private (Admin/Mod)
 router.put('/reports/:reportId/resolve', authMiddleware, modMiddleware, async (req, res) => {
   try {
-    const report = await ForumReport.findById(req.params.reportId);
+    const report = await ForumReport.findById(String(req.params.reportId));
     if (!report) return res.status(404).json({ message: 'Report not found' });
     
     report.status = 'resolved';
