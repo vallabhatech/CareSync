@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
+const cache = require('../utils/cache');
 
 const DiagnosticCenter = require('../models/DiagnosticCenter');
 const LabTest = require('../models/LabTest');
@@ -14,7 +15,14 @@ router.get('/centers/nearby', authMiddleware, async (req, res) => {
   try {
     const { limit } = req.query;
     const n = limit ? Math.min(Number(limit) || 10, 50) : 10;
+    
+    const cacheKey = `centers_nearby_${n}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json(cached);
+
     const centers = await DiagnosticCenter.find({}).sort({ createdAt: -1 }).limit(n);
+    
+    cache.set(cacheKey, centers, 300);
     res.json(centers);
   } catch (err) {
     console.error('Fetch diagnostic centers error:', err);
@@ -30,6 +38,10 @@ router.get('/tests', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'centerId is required' });
     }
 
+    const cacheKey = `tests_${centerId}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json(cached);
+
     // centerId is DiagnosticCenter._id; match LabTest.availableForCenters by place_id.
     const center = await DiagnosticCenter.findById(centerId);
     if (!center) {
@@ -40,6 +52,7 @@ router.get('/tests', authMiddleware, async (req, res) => {
       availableForCenters: { $in: [String(center.place_id)] },
     }).sort({ createdAt: -1 });
 
+    cache.set(cacheKey, tests, 300);
     res.json(tests);
   } catch (err) {
     console.error('Fetch lab tests error:', err);
@@ -111,11 +124,25 @@ router.post('/bookings', authMiddleware, async (req, res) => {
 // GET /api/lab-tests/bookings
 router.get('/bookings', authMiddleware, async (req, res) => {
   try {
-    const bookings = await LabTestBooking.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .populate('labTest')
-      .populate('center');
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit, 10) || 20);
+    const skip = (page - 1) * limit;
 
+    const filter = { user: req.user._id };
+
+    const [bookings, total] = await Promise.all([
+      LabTestBooking.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('labTest')
+        .populate('center'),
+      LabTestBooking.countDocuments(filter)
+    ]);
+
+    res.setHeader('X-Total-Count', total);
+    res.setHeader('X-Total-Pages', Math.ceil(total / limit));
+    res.setHeader('X-Current-Page', page);
     res.json(bookings);
   } catch (err) {
     console.error('Fetch lab test bookings error:', err);

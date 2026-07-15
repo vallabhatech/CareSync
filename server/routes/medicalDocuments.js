@@ -14,9 +14,22 @@ const ALLOWED_TYPES = [
 // GET /api/medical-documents — list all documents for the logged-in user (no fileData)
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const docs = await MedicalDocument.find({ user: req.user.id })
-      .select('-fileData')
-      .sort({ uploadedAt: -1 });
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit, 10) || 50);
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      MedicalDocument.find({ user: req.user.id })
+        .select('-fileData')
+        .sort({ uploadedAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      MedicalDocument.countDocuments({ user: req.user.id })
+    ]);
+
+    res.setHeader('X-Total-Count', total);
+    res.setHeader('X-Total-Pages', Math.ceil(total / limit));
+    res.setHeader('X-Current-Page', page);
     res.json(docs);
   } catch (err) {
     console.error('Error fetching documents:', err);
