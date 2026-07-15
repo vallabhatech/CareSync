@@ -18,7 +18,7 @@ const ModerationDashboard = () => {
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('caresync_token');
       const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/reports`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -38,13 +38,13 @@ const ModerationDashboard = () => {
 
   const handleResolve = async (reportId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('caresync_token');
       await axios.put(
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/reports/${reportId}/resolve`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setReports(reports.filter(r => r._id !== reportId));
+      setReports(prev => prev.filter(r => r._id !== reportId));
     } catch (err) {
       console.error('Failed to resolve report', err);
       alert('Failed to resolve report');
@@ -54,8 +54,11 @@ const ModerationDashboard = () => {
   const handleDeleteContent = async (targetId, targetType, reportId) => {
     if (!window.confirm(`Are you sure you want to delete this ${targetType}?`)) return;
     try {
-      const token = localStorage.getItem('token');
-      const endpoint = targetType === 'Topic' ? `/api/forums/topics/${targetId}` : `/api/forums/posts/${targetId}`;
+      const token = localStorage.getItem('caresync_token');
+      let endpoint;
+      if (targetType === 'Topic') endpoint = `/api/forums/topics/${targetId}`;
+      else if (targetType === 'Post') endpoint = `/api/forums/posts/${targetId}`;
+      else throw new Error('Unrecognized target type');
       
       await axios.delete(
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${endpoint}`,
@@ -108,7 +111,7 @@ const ModerationDashboard = () => {
                   <TableCell sx={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={report.reason}>
                     {report.reason}
                   </TableCell>
-                  <TableCell>{report.reportedBy ? report.reportedBy.name : 'Unknown'}</TableCell>
+                  <TableCell>{report.reportedBy?.name || 'Unknown'}</TableCell>
                   <TableCell align="right">
                     <Button 
                       size="small" 

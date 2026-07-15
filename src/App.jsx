@@ -24,7 +24,7 @@ import {
   LocalHospital as LocalHospitalIcon,
   ArrowUpward as ArrowUpwardIcon,
 } from '@mui/icons-material';
-import { Link, Routes, Route, useNavigate } from 'react-router-dom';
+import { Link, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import '@fontsource/roboto/900.css';
 import '@fontsource/fira-mono';
 import {
@@ -302,6 +302,15 @@ function Navbar() {
   );
 }
 
+function RequireAuth({ children, requireMod }) {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  if (requireMod && user?.role !== 'admin' && user?.role !== 'moderator') {
+    return <Navigate to="/forums" />;
+  }
+  return children;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -321,7 +330,11 @@ function App() {
           <Route path="/forums" element={<ForumsDashboard />} />
           <Route path="/forums/category/:categoryId" element={<TopicList />} />
           <Route path="/forums/topic/:topicId" element={<TopicView />} />
-          <Route path="/forums/moderation" element={<ModerationDashboard />} />
+          <Route path="/forums/moderation" element={
+            <RequireAuth requireMod>
+              <ModerationDashboard />
+            </RequireAuth>
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

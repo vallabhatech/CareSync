@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const ForumCategory = require('../models/ForumCategory');
@@ -50,6 +51,12 @@ router.post('/categories', authMiddleware, modMiddleware, async (req, res) => {
     await category.save();
     res.status(201).json(category);
   } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation error', error: err.message });
+    }
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'Category already exists' });
+    }
     res.status(500).json({ message: 'Server error creating category' });
   }
 });
@@ -63,9 +70,19 @@ router.post('/categories', authMiddleware, modMiddleware, async (req, res) => {
 // @access  Public
 router.get('/categories/:categoryId/topics', async (req, res) => {
   try {
-    const topics = await ForumTopic.find({ categoryId: req.params.categoryId, status: { $ne: 'deleted' } })
+    const cursor = req.query.cursor;
+    const query = { categoryId: req.params.categoryId, status: { $ne: 'deleted' } };
+    if (cursor) {
+      query.updatedAt = { $lt: new Date(cursor) };
+    }
+    const topics = await ForumTopic.find(query)
       .sort({ updatedAt: -1 })
+      .limit(50)
       .select('-__v');
+      
+    if (topics.length > 0) {
+      res.setHeader('X-Next-Cursor', topics[topics.length - 1].updatedAt.toISOString());
+    }
     res.json(topics);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -80,9 +97,18 @@ router.get('/topics/:topicId', async (req, res) => {
     const topic = await ForumTopic.findOne({ _id: req.params.topicId, status: { $ne: 'deleted' } });
     if (!topic) return res.status(404).json({ message: 'Topic not found' });
 
-    const posts = await ForumPost.find({ topicId: topic._id, status: { $ne: 'deleted' } })
-      .sort({ createdAt: 1 });
+    const cursor = req.query.cursor;
+    const query = { topicId: topic._id, status: { $ne: 'deleted' } };
+    if (cursor) {
+      query.createdAt = { $gt: new Date(cursor) };
+    }
+    const posts = await ForumPost.find(query)
+      .sort({ createdAt: 1 })
+      .limit(50);
 
+    if (posts.length > 0) {
+      res.setHeader('X-Next-Cursor', posts[posts.length - 1].createdAt.toISOString());
+    }
     res.json({ topic, posts });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -97,6 +123,15 @@ router.post('/topics', authMiddleware, async (req, res) => {
     const { categoryId, title, content, isAnonymous, authorDisplayName } = req.body;
     if (!categoryId || !title || !content) {
       return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+    
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      return res.status(400).json({ message: 'Invalid category ID' });
+    }
+    
+    const category = await ForumCategory.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found' });
     }
 
     const topic = new ForumTopic({
@@ -157,18 +192,20 @@ router.post('/topics/:topicId/posts', authMiddleware, async (req, res) => {
 // @access  Private
 router.post('/topics/:topicId/upvote', authMiddleware, async (req, res) => {
   try {
-    const topic = await ForumTopic.findById(req.params.topicId);
-    if (!topic) return res.status(404).json({ message: 'Topic not found' });
-
-    const upvoteIndex = topic.upvotes.indexOf(req.user._id);
-    if (upvoteIndex > -1) {
-      // Remove upvote
-      topic.upvotes.splice(upvoteIndex, 1);
-    } else {
-      // Add upvote
-      topic.upvotes.push(req.user._id);
+    const result = await ForumTopic.updateOne(
+      { _id: req.params.topicId, status: { $ne: 'deleted' }, upvotes: { $ne: req.user._id } },
+      { $push: { upvotes: req.user._id } }
+    );
+    if (result.modifiedCount === 0) {
+      const pullResult = await ForumTopic.updateOne(
+        { _id: req.params.topicId, status: { $ne: 'deleted' }, upvotes: req.user._id },
+        { $pull: { upvotes: req.user._id } }
+      );
+      if (pullResult.matchedCount === 0) {
+        return res.status(404).json({ message: 'Topic not found' });
+      }
     }
-    await topic.save();
+    const topic = await ForumTopic.findById(req.params.topicId);
     res.json(topic);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -180,16 +217,20 @@ router.post('/topics/:topicId/upvote', authMiddleware, async (req, res) => {
 // @access  Private
 router.post('/posts/:postId/upvote', authMiddleware, async (req, res) => {
   try {
-    const post = await ForumPost.findById(req.params.postId);
-    if (!post) return res.status(404).json({ message: 'Post not found' });
-
-    const upvoteIndex = post.upvotes.indexOf(req.user._id);
-    if (upvoteIndex > -1) {
-      post.upvotes.splice(upvoteIndex, 1);
-    } else {
-      post.upvotes.push(req.user._id);
+    const result = await ForumPost.updateOne(
+      { _id: req.params.postId, status: { $ne: 'deleted' }, upvotes: { $ne: req.user._id } },
+      { $push: { upvotes: req.user._id } }
+    );
+    if (result.modifiedCount === 0) {
+      const pullResult = await ForumPost.updateOne(
+        { _id: req.params.postId, status: { $ne: 'deleted' }, upvotes: req.user._id },
+        { $pull: { upvotes: req.user._id } }
+      );
+      if (pullResult.matchedCount === 0) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
     }
-    await post.save();
+    const post = await ForumPost.findById(req.params.postId);
     res.json(post);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -208,6 +249,23 @@ router.post('/reports', authMiddleware, async (req, res) => {
     const { targetId, targetType, reason } = req.body;
     if (!targetId || !targetType || !reason) {
       return res.status(400).json({ message: 'Missing fields' });
+    }
+    
+    if (!mongoose.Types.ObjectId.isValid(targetId)) {
+      return res.status(400).json({ message: 'Invalid target ID' });
+    }
+    
+    let target = null;
+    if (targetType === 'Topic') {
+      target = await ForumTopic.findOne({ _id: targetId, status: { $ne: 'deleted' } });
+    } else if (targetType === 'Post') {
+      target = await ForumPost.findOne({ _id: targetId, status: { $ne: 'deleted' } });
+    } else {
+      return res.status(400).json({ message: 'Invalid target type' });
+    }
+    
+    if (!target) {
+      return res.status(404).json({ message: 'Target not found or already deleted' });
     }
 
     const report = new ForumReport({
@@ -230,7 +288,7 @@ router.get('/reports', authMiddleware, modMiddleware, async (req, res) => {
   try {
     const reports = await ForumReport.find({ status: 'pending' })
       .sort({ createdAt: -1 })
-      .populate('reportedBy', 'name email');
+      .populate('reportedBy', 'name');
     res.json(reports);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

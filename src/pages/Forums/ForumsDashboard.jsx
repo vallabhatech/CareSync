@@ -7,12 +7,19 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaHeartbeat, FaBrain, FaStethoscope, FaLungs } from 'react-icons/fa'; // Some icons
+import { useAuth } from '../../context/AuthContext';
 
 const ForumsDashboard = () => {
+  const { isAuthenticated, user } = useAuth();
+  // Get token if AuthContext exposes it, otherwise fallback to localStorage caresync_token
+  const token = localStorage.getItem('caresync_token');
+  
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const isModerator = isAuthenticated && user && (user.role === 'admin' || user.role === 'moderator');
 
   // For Mod/Admin creating categories
   const [openCreate, setOpenCreate] = useState(false);
@@ -38,7 +45,6 @@ const ForumsDashboard = () => {
 
   const handleCreateCategory = async () => {
     try {
-      const token = localStorage.getItem('token');
       await axios.post(
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/categories`,
         newCat,
@@ -70,9 +76,11 @@ const ForumsDashboard = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Community Health Forums
         </Typography>
-        <Button variant="outlined" onClick={() => navigate('/forums/moderation')}>
-          Moderation Dashboard
-        </Button>
+        {isModerator && (
+          <Button variant="outlined" onClick={() => navigate('/forums/moderation')}>
+            Moderation Dashboard
+          </Button>
+        )}
       </Box>
 
       <Typography variant="body1" color="text.secondary" paragraph>
@@ -89,7 +97,7 @@ const ForumsDashboard = () => {
 
       <Grid container spacing={3}>
         {categories.map((cat) => (
-          <Grid item xs={12} sm={6} md={4} key={cat._id}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={cat._id}>
             <Card elevation={2} sx={{ height: '100%' }}>
               <CardActionArea onClick={() => navigate(`/forums/category/${cat._id}`)} sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', p: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -109,12 +117,13 @@ const ForumsDashboard = () => {
         ))}
       </Grid>
 
-      {/* Hidden button for admins to create categories - checking role isn't strictly necessary on UI if backend enforces it, but this allows creation if token permits */}
-      <Box sx={{ mt: 5, textAlign: 'center' }}>
-        <Button variant="text" color="primary" onClick={() => setOpenCreate(true)}>
-          Create New Category (Admin Only)
-        </Button>
-      </Box>
+      {isModerator && (
+        <Box sx={{ mt: 5, textAlign: 'center' }}>
+          <Button variant="text" color="primary" onClick={() => setOpenCreate(true)}>
+            Create New Category (Admin Only)
+          </Button>
+        </Box>
+      )}
 
       <Dialog open={openCreate} onClose={() => setOpenCreate(false)}>
         <DialogTitle>Create Category</DialogTitle>

@@ -9,6 +9,8 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { FaArrowLeft, FaThumbsUp, FaRegThumbsUp, FaExclamationTriangle } from 'react-icons/fa';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const TopicView = () => {
   const { topicId } = useParams();
   const navigate = useNavigate();
@@ -35,15 +37,21 @@ const TopicView = () => {
     const fetchTopicData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/topics/${topicId}`);
+        const res = await axios.get(`${API_BASE_URL}/api/forums/topics/${topicId}`);
         setTopic(res.data.topic);
         setPosts(res.data.posts);
         
         // Simple way to get user ID from JWT (not secure, just for UI hints)
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('caresync_token');
         if (token) {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          setUserId(payload.id);
+          try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const payload = JSON.parse(atob(base64));
+            setUserId(payload.id);
+          } catch (e) {
+            console.warn('Failed to parse token payload', e);
+          }
         }
       } catch (err) {
         setError('Failed to load topic');
@@ -58,9 +66,9 @@ const TopicView = () => {
   const handleReply = async () => {
     if (!replyContent.trim()) return;
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('caresync_token');
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/topics/${topicId}/posts`,
+        `${API_BASE_URL}/api/forums/topics/${topicId}/posts`,
         {
           content: replyContent,
           isAnonymous,
@@ -78,9 +86,9 @@ const TopicView = () => {
 
   const handleUpvoteTopic = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('caresync_token');
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/topics/${topicId}/upvote`,
+        `${API_BASE_URL}/api/forums/topics/${topicId}/upvote`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -92,9 +100,9 @@ const TopicView = () => {
 
   const handleUpvotePost = async (postId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('caresync_token');
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/posts/${postId}/upvote`,
+        `${API_BASE_URL}/api/forums/posts/${postId}/upvote`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -111,9 +119,9 @@ const TopicView = () => {
 
   const submitReport = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('caresync_token');
       await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/reports`,
+        `${API_BASE_URL}/api/forums/reports`,
         {
           targetId: reportTarget.id,
           targetType: reportTarget.type,

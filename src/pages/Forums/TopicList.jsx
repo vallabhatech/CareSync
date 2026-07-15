@@ -6,10 +6,13 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { format } from 'date-fns';
-import { FaArrowLeft, FaComment } from 'react-icons/fa';
+import { FaArrowLeft, FaThumbsUp } from 'react-icons/fa';
 import CreateTopicDialog from '../../components/Forums/CreateTopicDialog';
+import { useAuth } from '../../context/AuthContext';
+import { ListItemButton } from '@mui/material';
 
 const TopicList = () => {
+  const { isAuthenticated } = useAuth();
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const [topics, setTopics] = useState([]);
@@ -50,9 +53,11 @@ const TopicList = () => {
         <Typography variant="h5" sx={{ flexGrow: 1 }}>
           Topics
         </Typography>
-        <Button variant="contained" color="primary" onClick={() => setOpenCreateDialog(true)}>
-          New Topic
-        </Button>
+        {isAuthenticated && (
+          <Button variant="contained" color="primary" onClick={() => setOpenCreateDialog(true)}>
+            New Topic
+          </Button>
+        )}
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
@@ -65,12 +70,14 @@ const TopicList = () => {
             {topics.map((topic, index) => (
               <ListItem 
                 key={topic._id} 
-                button 
-                onClick={() => navigate(`/forums/topic/${topic._id}`)}
                 divider={index !== topics.length - 1}
-                sx={{ p: 3, '&:hover': { backgroundColor: '#f5f5f5' } }}
+                disablePadding
               >
-                <ListItemText
+                <ListItemButton 
+                  onClick={() => navigate(`/forums/topic/${topic._id}`)}
+                  sx={{ p: 3, '&:hover': { backgroundColor: '#f5f5f5' } }}
+                >
+                  <ListItemText
                   primary={
                     <Typography variant="h6" color="primary">
                       {topic.title}
@@ -86,12 +93,13 @@ const TopicList = () => {
                         Updated: {format(new Date(topic.updatedAt), 'MMM dd, yyyy HH:mm')}
                       </Typography>
                       <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
-                        <FaComment style={{ marginRight: '4px' }} />
+                        <FaThumbsUp style={{ marginRight: '4px' }} />
                         <Typography variant="caption">{topic.upvotes?.length || 0} Upvotes</Typography>
                       </Box>
                     </Box>
                   }
                 />
+                </ListItemButton>
               </ListItem>
             ))}
           </List>

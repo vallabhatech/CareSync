@@ -43,6 +43,8 @@ const ForumPostSchema = new mongoose.Schema({
   }
 });
 
+ForumPostSchema.index({ topicId: 1, createdAt: 1 });
+
 ForumPostSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();

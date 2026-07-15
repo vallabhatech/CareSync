@@ -4,8 +4,10 @@ import {
   TextField, Button, FormControlLabel, Switch, Box, Typography 
 } from '@mui/material';
 import axios from 'axios';
+import { useAuth } from '../../../context/AuthContext';
 
 const CreateTopicDialog = ({ open, onClose, categoryId, onTopicCreated }) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -18,16 +20,22 @@ const CreateTopicDialog = ({ open, onClose, categoryId, onTopicCreated }) => {
       setError('Title and Content are required.');
       return;
     }
-    
-    // If anonymous is false and display name is empty, we let backend handle default 'Anonymous User' or use real name
-    // Actually, if it's not anonymous, we usually want real name or pseudonym. 
-    // The backend uses authorDisplayName if provided.
+    let finalDisplayName = authorDisplayName.trim();
+    if (isAnonymous) {
+      finalDisplayName = finalDisplayName || 'Anonymous User';
+    } else {
+      finalDisplayName = finalDisplayName || user?.name;
+      if (!finalDisplayName) {
+        setError('A display name is required for non-anonymous posts.');
+        return;
+      }
+    }
     
     setLoading(true);
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('caresync_token');
       const res = await axios.post(
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/forums/topics`,
         {
@@ -35,7 +43,7 @@ const CreateTopicDialog = ({ open, onClose, categoryId, onTopicCreated }) => {
           title,
           content,
           isAnonymous,
-          authorDisplayName: authorDisplayName || 'Anonymous User'
+          authorDisplayName: finalDisplayName
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );

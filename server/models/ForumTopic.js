@@ -48,9 +48,14 @@ const ForumTopicSchema = new mongoose.Schema({
   }
 });
 
+ForumTopicSchema.index({ categoryId: 1, updatedAt: -1 });
+
 // Update the updatedAt field on save
 ForumTopicSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
+  const modified = this.modifiedPaths();
+  if (modified.length > 0 && !(modified.length === 1 && modified[0] === 'upvotes')) {
+    this.updatedAt = Date.now();
+  }
   next();
 });
 
