@@ -9,6 +9,7 @@ import PlaceIcon from "@mui/icons-material/Place";
 import SettingsIcon from "@mui/icons-material/Settings";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
+import WearablesWidget from "../components/WearablesWidget";
 
 const healthQuotes = [
   "Health is the greatest wealth.",
@@ -185,6 +186,12 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+        
+        {isAuthenticated && (
+          <div className="dashboard-wearables-section">
+            <WearablesWidget />
+          </div>
+        )}
       </div>
       <style>{`
         .dashboard-bg {
