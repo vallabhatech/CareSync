@@ -63,9 +63,13 @@ const WearablesWidget = () => {
       const dayStr = format(new Date(m.recordedAt), 'MMM dd');
       const target = grouped.find(g => g.date === dayStr);
       if (target) {
-        if (m.steps) target.steps = m.steps;
-        if (m.heartRate) target.heartRate = m.heartRate;
-        if (m.sleepHours) target.sleepHours = m.sleepHours;
+        if (m.steps) target.steps += m.steps;
+        if (m.heartRate) {
+          target.heartRate = target.heartRate ? Math.round((target.heartRate + m.heartRate) / 2) : m.heartRate;
+        }
+        if (m.sleepHours) {
+          target.sleepHours = target.sleepHours ? Math.max(target.sleepHours, parseFloat(m.sleepHours)) : parseFloat(m.sleepHours);
+        }
       }
     });
 
@@ -201,6 +205,13 @@ const WearablesWidget = () => {
           border: 1px solid rgba(227, 242, 253, 0.8);
           font-family: 'Segoe UI', Arial, sans-serif;
           backdrop-filter: blur(10px);
+        }
+        .wearables-loading {
+          text-align: center;
+          padding: 40px;
+          color: #64748b;
+          font-size: 1.1rem;
+          font-weight: 500;
         }
         .wearables-header {
           display: flex;

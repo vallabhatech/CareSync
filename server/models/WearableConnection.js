@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 const WearableConnectionSchema = new mongoose.Schema({
   user: {
@@ -14,9 +15,13 @@ const WearableConnectionSchema = new mongoose.Schema({
   accessToken: {
     type: String,
     required: true,
+    get: decrypt,
+    set: encrypt,
   },
   refreshToken: {
     type: String,
+    get: decrypt,
+    set: encrypt,
   },
   expiresAt: {
     type: Date,
@@ -33,5 +38,9 @@ const WearableConnectionSchema = new mongoose.Schema({
 
 // Ensure a user can only have one connection per provider
 WearableConnectionSchema.index({ user: 1, provider: 1 }, { unique: true });
+
+// Ensure getters run when transforming to JSON
+WearableConnectionSchema.set('toJSON', { getters: true });
+WearableConnectionSchema.set('toObject', { getters: true });
 
 module.exports = mongoose.model('WearableConnection', WearableConnectionSchema);

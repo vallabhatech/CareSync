@@ -21,7 +21,7 @@ router.get('/status', authMiddleware, async (req, res) => {
 router.post('/connect/:provider', authMiddleware, async (req, res) => {
   const { provider } = req.params;
   
-  if (!['google-fit', 'apple-health'].includes(provider)) {
+  if (!['google-fit', 'apple-health', 'fitbit'].includes(provider)) {
     return res.status(400).json({ message: 'Invalid provider' });
   }
 
@@ -82,7 +82,7 @@ router.post('/sync', authMiddleware, async (req, res) => {
     // Simulate data generation for each connection
     for (const connection of connections) {
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setUTCHours(0, 0, 0, 0);
 
       const existingMetric = await HealthMetric.findOne({
         user: req.user.id,

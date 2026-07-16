@@ -10,33 +10,37 @@ cron.schedule('0 0 * * *', async () => {
     
     let syncedCount = 0;
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     for (const connection of connections) {
-      const existingMetric = await HealthMetric.findOne({
-        user: connection.user,
-        source: connection.provider,
-        recordedAt: { $gte: today }
-      });
-
-      if (!existingMetric) {
-        // Generate realistic mock data
-        const steps = Math.floor(Math.random() * (12000 - 3000 + 1) + 3000);
-        const sleepHours = (Math.random() * (9 - 5) + 5).toFixed(1);
-        const heartRate = Math.floor(Math.random() * (90 - 60 + 1) + 60);
-
-        await HealthMetric.create({
+      try {
+        const existingMetric = await HealthMetric.findOne({
           user: connection.user,
           source: connection.provider,
-          steps,
-          sleepHours,
-          heartRate,
-          recordedAt: new Date()
+          recordedAt: { $gte: today }
         });
-        
-        syncedCount++;
-        connection.lastSyncAt = new Date();
-        await connection.save();
+
+        if (!existingMetric) {
+          // Generate realistic mock data
+          const steps = Math.floor(Math.random() * (12000 - 3000 + 1) + 3000);
+          const sleepHours = (Math.random() * (9 - 5) + 5).toFixed(1);
+          const heartRate = Math.floor(Math.random() * (90 - 60 + 1) + 60);
+
+          await HealthMetric.create({
+            user: connection.user,
+            source: connection.provider,
+            steps,
+            sleepHours,
+            heartRate,
+            recordedAt: new Date()
+          });
+          
+          syncedCount++;
+          connection.lastSyncAt = new Date();
+          await connection.save();
+        }
+      } catch (innerError) {
+        console.error(`Error syncing data for user ${connection.user} on ${connection.provider}:`, innerError);
       }
     }
     console.log(`Daily wearable sync complete. Added ${syncedCount} records.`);
