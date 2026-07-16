@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sanitize';
 import httpConfig from './httpConfig';
+import { getOfflineQueue, setOfflineQueue, enqueueOfflineRequest } from './indexedDB';
 
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
@@ -61,10 +62,9 @@ API.interceptors.request.use(
 // Response interceptor for offline queueing
 API.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (!error.response && error.message === 'Network Error') {
       if (error.config && ['post', 'put', 'delete', 'patch'].includes(error.config.method?.toLowerCase())) {
-        const offlineQueue = JSON.parse(localStorage.getItem('caresync_offline_queue') || '[]');
         
         // Validate/sanitize headers and remove stale authorization header before saving to queue
         const headers = validateAndNormalizeHeaders(error.config.headers || {});        
@@ -73,16 +73,14 @@ API.interceptors.response.use(
         if (authKey) {
           delete headers[authKey];
         }
-
         
-        offlineQueue.push({
+        await enqueueOfflineRequest({
           url: error.config.url,
           method: error.config.method,
           data: sanitizeConfig(error.config.data),
-          headers: headers,
-          retryCount: 0
+          headers: headers
         });
-        localStorage.setItem('caresync_offline_queue', JSON.stringify(offlineQueue));
+        
         return Promise.reject(new Error('Device is offline. Action queued for sync when connection is restored.'));
       }
     }
@@ -98,7 +96,7 @@ window.addEventListener('online', async () => {
   isSyncing = true;
   
   try {
-    const queue = JSON.parse(localStorage.getItem('caresync_offline_queue') || '[]');
+    const queue = await getOfflineQueue();
     if (queue.length === 0) return;
     
     const remainingQueue = [];
@@ -132,7 +130,7 @@ window.addEventListener('online', async () => {
         }
       }
     }
-    localStorage.setItem('caresync_offline_queue', JSON.stringify(remainingQueue));
+    await setOfflineQueue(remainingQueue);
     // Optionally reload page to show synced data
     window.location.reload();
   } finally {

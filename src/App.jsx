@@ -43,6 +43,7 @@ import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
+import OfflineBanner from './components/OfflineBanner';
 
 
 // Navigation targets. Labels are resolved at render time via i18n keys
@@ -302,6 +303,7 @@ function App() {
   return (
     <AuthProvider>
       <Navbar />
+      <OfflineBanner />
       <div style={{ paddingTop: 80, minHeight: '100vh' }}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
