@@ -27,8 +27,9 @@ router.post('/connect/:provider', authMiddleware, async (req, res) => {
 
   try {
     // Mock tokens
-    const mockAccessToken = `mock_access_token_${provider}_${Date.now()}`;
-    const mockRefreshToken = `mock_refresh_token_${provider}_${Date.now()}`;
+    const crypto = require('crypto');
+    const mockAccessToken = `mock_access_token_${provider}_${crypto.randomBytes(16).toString('hex')}`;
+    const mockRefreshToken = `mock_refresh_token_${provider}_${crypto.randomBytes(16).toString('hex')}`;
     
     // Create or update connection
     const connection = await WearableConnection.findOneAndUpdate(
@@ -92,9 +93,10 @@ router.post('/sync', authMiddleware, async (req, res) => {
 
       if (!existingMetric) {
         // Generate mock data
-        const steps = Math.floor(Math.random() * (12000 - 3000 + 1) + 3000);
-        const sleepHours = (Math.random() * (9 - 5) + 5).toFixed(1);
-        const heartRate = Math.floor(Math.random() * (90 - 60 + 1) + 60);
+        const crypto = require('crypto');
+        const steps = crypto.randomInt(3000, 12001);
+        const sleepHours = (crypto.randomInt(50, 91) / 10).toFixed(1);
+        const heartRate = crypto.randomInt(60, 91);
 
         await HealthMetric.create({
           user: req.user.id,

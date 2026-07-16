@@ -22,9 +22,10 @@ cron.schedule('0 0 * * *', async () => {
 
         if (!existingMetric) {
           // Generate realistic mock data
-          const steps = Math.floor(Math.random() * (12000 - 3000 + 1) + 3000);
-          const sleepHours = (Math.random() * (9 - 5) + 5).toFixed(1);
-          const heartRate = Math.floor(Math.random() * (90 - 60 + 1) + 60);
+          const crypto = require('crypto');
+          const steps = crypto.randomInt(3000, 12001);
+          const sleepHours = (crypto.randomInt(50, 91) / 10).toFixed(1);
+          const heartRate = crypto.randomInt(60, 91);
 
           await HealthMetric.create({
             user: connection.user,
