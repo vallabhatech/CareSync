@@ -2,7 +2,7 @@ import {
   isLoopbackAlias, // eslint-disable-line import/no-unresolved
   normalizeIPv4,
   normalizeIPv6,
-} from './hostNormalize';
+} from './hostNormalizer';
 
 /**
  * Deep sanitizes an object by removing prototype pollution vectors.
