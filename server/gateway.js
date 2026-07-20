@@ -16,6 +16,7 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
 
 const GATEWAY_PORT = process.env.GATEWAY_PORT || 4000;
 
@@ -70,7 +71,7 @@ app.use(cors({
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false);
     }
   },
   optionsSuccessStatus: 200,
@@ -111,19 +112,21 @@ app.get('/health', (req, res) => {
 
 // Service health aggregation
 app.get('/health/services', async (req, res) => {
-  const results = {};
-  for (const [name, config] of Object.entries(SERVICE_REGISTRY)) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3000);
-      const response = await fetch(`${config.target}/`, { signal: controller.signal });
-      clearTimeout(timeout);
-      results[name] = { status: response.ok ? 'healthy' : 'degraded', code: response.status };
-    } catch {
-      results[name] = { status: 'unreachable' };
-    }
-  }
-  res.json({ services: results });
+  const entries = Object.entries(SERVICE_REGISTRY);
+  const checks = await Promise.all(
+    entries.map(async ([name, config]) => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+        const response = await fetch(`${config.target}/`, { signal: controller.signal });
+        clearTimeout(timeout);
+        return [name, { status: response.ok ? 'healthy' : 'degraded', code: response.status }];
+      } catch {
+        return [name, { status: 'unreachable' }];
+      }
+    })
+  );
+  res.json({ services: Object.fromEntries(checks) });
 });
 
 // Circuit breaker state per service
@@ -139,7 +142,7 @@ function getCircuitBreaker(serviceName) {
 
   if (circuit.open && Date.now() - circuit.lastFailure > CIRCUIT_RESET_MS) {
     circuit.open = false;
-    circuit.failures = 0;
+    circuit.failures = CIRCUIT_THRESHOLD - 1;
   }
   return circuit;
 }
@@ -174,7 +177,13 @@ for (const [serviceName, config] of Object.entries(SERVICE_REGISTRY)) {
     target: config.target,
     changeOrigin: true,
     on: {
-      proxyRes: () => recordSuccess(serviceName),
+      proxyRes: (proxyRes) => {
+        if (proxyRes.statusCode >= 500) {
+          recordFailure(serviceName);
+        } else {
+          recordSuccess(serviceName);
+        }
+      },
       error: (err, req, res) => {
         recordFailure(serviceName);
         if (!res.headersSent) {
@@ -228,7 +237,13 @@ app.use('/api', coreLimiter, (req, res, next) => {
   target: coreConfig.target,
   changeOrigin: true,
   on: {
-    proxyRes: () => recordSuccess('core'),
+    proxyRes: (proxyRes) => {
+      if (proxyRes.statusCode >= 500) {
+        recordFailure('core');
+      } else {
+        recordSuccess('core');
+      }
+    },
     error: (err, req, res) => {
       recordFailure('core');
       if (!res.headersSent) {
