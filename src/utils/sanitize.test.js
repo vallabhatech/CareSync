@@ -4,7 +4,7 @@ import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sani
 describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   test('removes simple prototype pollution keys', () => {
     const payload = JSON.parse(`{
-      safeKey: 'safeValue',
+      "safeKey": "safeValue",
       "__proto__": { "polluted": true },
       "constructor": { "polluted": true },
       "prototype": { "polluted": true }
@@ -23,7 +23,7 @@ describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
 
   test('removes keys case-insensitively and handles spaces', () => {
     const payload = JSON.parse(`{
-      safeKey: 'safeValue',
+      "safeKey": "safeValue",
       "__PROTO__": { "polluted": true },
       "  __proto__  ": { "polluted": true },
       "Constructor": { "polluted": true },
@@ -41,8 +41,8 @@ describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
 
   test('recursively sanitizes nested objects', () => {
     const payload = JSON.parse(`{
-      safeKey: {
-        nestedSafe: 'nestedVal',
+      "safeKey": {
+        "nestedSafe": "nestedVal",
         "__proto__": { "polluted": true },
         "nestedObject": {
           "constructor": { "polluted": true },
