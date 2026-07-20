@@ -71,7 +71,11 @@ export function parseNoProxyEntry(entry) {
   // Using \d instead of [0-9] for conciseness.
   // This regex avoids matching the colons in IPv6 addresses.
   const portRegex = /^(.*):(\d{1,5})$/;
-  const portMatch = !raw.includes(':') || raw.includes(']:') ? portRegex.exec(raw) : null;
+  let portMatch = null;
+  const colonCount = (raw.match(/:/g) || []).length;
+  if (colonCount === 1 || raw.includes(']:')) {
+    portMatch = portRegex.exec(raw);
+  }
 
   let hostPart = raw;
   let port;
