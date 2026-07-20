@@ -28,8 +28,8 @@ router.post('/conversations', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     const { providerId } = req.body;
     
-    if (!providerId) {
-      return res.status(400).json({ message: 'Provider ID is required' });
+    if (!providerId || typeof providerId !== 'string') {
+      return res.status(400).json({ message: 'Provider ID is required and must be a string' });
     }
     
     // Validate provider
@@ -112,8 +112,8 @@ router.post('/:conversationId/messages', authMiddleware, async (req, res) => {
     const { content } = req.body;
     const userId = req.user.id;
     
-    if (!content) {
-      return res.status(400).json({ message: 'Message content is required' });
+    if (!content || typeof content !== 'string') {
+      return res.status(400).json({ message: 'Message content is required and must be a string' });
     }
     
     const conversation = await Conversation.findById(conversationId);

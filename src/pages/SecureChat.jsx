@@ -21,7 +21,6 @@ const SecureChat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [isTyping, setIsTyping] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
   
   const { user } = useAuth();
@@ -53,6 +52,7 @@ const SecureChat = () => {
     setSocket(newSocket);
 
     return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (newSocket) newSocket.disconnect();
     };
   }, []);
@@ -61,8 +61,18 @@ const SecureChat = () => {
     if (!socket) return;
 
     const handleNewMessage = (message) => {
+      // Update conversations state for every incoming message
+      setConversations(prevConvs => {
+        return prevConvs.map(conv => {
+          if (conv._id === message.conversationId) {
+            return { ...conv, lastMessage: message };
+          }
+          return conv;
+        });
+      });
+
       // Only append if the message is for the currently active conversation
-      if (activeConversation && message.conversationId !== activeConversation._id) return;
+      if (!activeConversation || message.conversationId !== activeConversation._id) return;
 
       setMessages((prevMessages) => {
         // Prevent duplicates
@@ -71,8 +81,8 @@ const SecureChat = () => {
       });
     };
 
-    const handleUserTyping = ({ senderId, isTyping }) => {
-      if (activeConversation && activeConversation.participants.some(p => p._id === senderId)) {
+    const handleUserTyping = ({ conversationId, senderId, isTyping }) => {
+      if (activeConversation && activeConversation._id === conversationId && activeConversation.participants.some(p => p._id === senderId)) {
         setPartnerTyping(isTyping);
       }
     };
@@ -86,34 +96,60 @@ const SecureChat = () => {
     };
   }, [socket, activeConversation]);
 
+  const activeConvIdRef = useRef(null);
+  
   useEffect(() => {
+    activeConvIdRef.current = activeConversation?._id || null;
+  }, [activeConversation]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMessages = async () => {
+      try {
+        const msgs = await getMessages(activeConversation._id);
+        if (isActive) {
+          setMessages(prev => {
+            const combined = [...msgs, ...prev];
+            const uniqueIds = new Set();
+            return combined.filter(m => {
+              if (uniqueIds.has(m._id)) return false;
+              uniqueIds.add(m._id);
+              return true;
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching messages', error);
+      }
+    };
+
     if (activeConversation && socket) {
+      setMessages([]);
       setPartnerTyping(false); // Reset typing indicator on conversation switch
       socket.emit('joinRoom', { conversationId: activeConversation._id });
-      fetchMessages(activeConversation._id);
+      loadMessages();
     }
+
+    return () => {
+      isActive = false;
+    };
   }, [activeConversation, socket]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, partnerTyping]);
 
-  const fetchMessages = async (conversationId) => {
-    try {
-      const msgs = await getMessages(conversationId);
-      setMessages(msgs);
-    } catch (error) {
-      console.error('Error fetching messages', error);
-    }
-  };
-
   const handleSelectProvider = async (providerId) => {
     try {
       const conv = await startConversation(providerId);
       // Add to list if new
-      if (!conversations.find(c => c._id === conv._id)) {
-        setConversations([conv, ...conversations]);
-      }
+      setConversations(prev => {
+        if (!prev.find(c => c._id === conv._id)) {
+          return [conv, ...prev];
+        }
+        return prev;
+      });
       setActiveConversation(conv);
     } catch (error) {
       console.error('Error starting conversation', error);
@@ -130,10 +166,14 @@ const SecureChat = () => {
       
       // Stop typing
       socket.emit('typing', { conversationId: activeConversation._id, senderId: user?._id || user?.id, isTyping: false });
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
       
       // The socket will broadcast it back to us, but we can also optimistically add it
       setMessages(prev => {
+        if (activeConvIdRef.current && activeConvIdRef.current !== savedMessage.conversationId) return prev;
         if (prev.some(m => m._id === savedMessage._id)) return prev;
         return [...prev, savedMessage];
       });
@@ -149,19 +189,22 @@ const SecureChat = () => {
     setNewMessage(e.target.value);
     
     if (socket && activeConversation) {
-      socket.emit('typing', { conversationId: activeConversation._id, senderId: user?._id || user?.id, isTyping: true });
-      
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (!typingTimeoutRef.current) {
+        socket.emit('typing', { conversationId: activeConversation._id, senderId: user?._id || user?.id, isTyping: true });
+      } else {
+        clearTimeout(typingTimeoutRef.current);
+      }
       
       typingTimeoutRef.current = setTimeout(() => {
         socket.emit('typing', { conversationId: activeConversation._id, senderId: user?._id || user?.id, isTyping: false });
+        typingTimeoutRef.current = null;
       }, 2000);
     }
   };
 
   const getPartner = (conv) => {
     const currentId = user?._id || user?.id;
-    return conv.participants.find(p => p._id !== currentId) || conv.participants[0];
+    return conv?.participants?.find(p => p._id !== currentId) || conv?.participants?.[0];
   };
 
   if (loading) {
