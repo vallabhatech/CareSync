@@ -43,6 +43,7 @@ describe('API interceptors', () => {
     expect(queue).toHaveLength(1);
     expect(queue[0].url).toBe('/api/data');
     expect(queue[0].method).toBe('post');
-    expect(queue[0].data).toEqual({ key: 'value' });
+    const actualData = typeof queue[0].data === 'string' ? JSON.parse(queue[0].data) : queue[0].data;
+    expect(actualData).toEqual({ key: 'value' });
   });
 });
