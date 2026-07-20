@@ -56,6 +56,7 @@ export function sanitizeRedirect(raw, defaultPath = '/') {
       return defaultPath;
     }
   } catch (err) {
+    // Ignore invalid URLs and fallback
     return defaultPath;
   }
 
