@@ -158,6 +158,16 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/risk-assessment', require('./routes/riskAssessment'));
 app.use('/api/family', require('./routes/family'));
 app.use('/api/security', require('./routes/security'));
+app.use('/api/hospitals', require('./routes/hospitals'));
+app.use('/api/pharmacies', require('./routes/pharmacies'));
+app.use('/api/wellness', require('./routes/wellness'));
+app.use('/api/health-apis', require('./routes/healthApis'));
+app.use('/api/ambulances', require('./routes/ambulances'));
+app.use('/api/forums', require('./routes/forums'));
+app.use('/api/doctor-reviews', require('./routes/doctorReviews'));
+app.use('/api/payments', require('./routes/payments'));
+app.use('/api/appointments', require('./routes/appointments'));
+app.use('/api/mobile/config', require('./routes/mobileConfig'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
