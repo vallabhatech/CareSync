@@ -158,6 +158,7 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/risk-assessment', require('./routes/riskAssessment'));
 app.use('/api/family', require('./routes/family'));
 app.use('/api/security', require('./routes/security'));
+app.use('/api/chat', require('./routes/chat'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
@@ -173,9 +174,41 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal Server Error' });
 });
 
+const http = require('http');
+const { Server } = require('socket.io');
+
 let server;
 if (require.main === module) {
-  server = app.listen(PORT, () => {
+  server = http.createServer(app);
+  
+  const io = new Server(server, {
+    cors: corsOptions
+  });
+
+  io.on('connection', (socket) => {
+    console.log('New client connected', socket.id);
+    
+    // User joins their own conversation rooms
+    socket.on('joinRoom', ({ conversationId }) => {
+      socket.join(conversationId);
+      console.log(`Socket ${socket.id} joined room ${conversationId}`);
+    });
+    
+    socket.on('sendMessage', (messageData) => {
+      // Broadcast to the specific conversation room
+      io.to(messageData.conversationId).emit('newMessage', messageData);
+    });
+    
+    socket.on('typing', ({ conversationId, senderId, isTyping }) => {
+      socket.to(conversationId).emit('userTyping', { senderId, isTyping });
+    });
+    
+    socket.on('disconnect', () => {
+      console.log('Client disconnected', socket.id);
+    });
+  });
+
+  server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
 }

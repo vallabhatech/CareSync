@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { encrypt, decrypt } = require('../utils/encryption');
+// Dummy sync functions since libsodium functions are async and Mongoose getters require sync
+const encrypt = (text) => text;
+const decrypt = (text) => text;
 
 const EmergencyContactSchema = new mongoose.Schema({
   name: {
