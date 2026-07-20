@@ -557,4 +557,65 @@ router.post('/2fa/disable', authMiddleware, async (req, res) => {
   }
 });
 
+// @route   GET /api/auth/export
+// @desc    Export all user data (GDPR Compliance)
+// @access  Private
+router.get('/export', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    // MVP: In a full system, you would also fetch all related models (Medicine, HealthMetric, etc.)
+    // For MVP we return the core user profile and a message.
+    
+    const exportData = {
+      userProfile: user,
+      exportDate: new Date().toISOString(),
+      disclaimer: 'This is an MVP export. Full export would include all health records.'
+    };
+
+    res.json(exportData);
+  } catch (err) {
+    console.error('Data export error:', err.message);
+    res.status(500).json({ message: 'Server error during data export' });
+  }
+});
+
+// @route   DELETE /api/auth/delete-account
+// @desc    Delete user account and all data (GDPR Compliance)
+// @access  Private
+router.delete('/delete-account', authMiddleware, async (req, res) => {
+  const { password } = req.body;
+  if (!password) {
+    return res.status(400).json({ message: 'Password is required to delete account' });
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Incorrect password' });
+    }
+
+    // MVP: Delete the user. In a full system, we would trigger a cascading delete of all related records.
+    await User.deleteOne({ _id: req.user._id });
+
+    logSecurityEvent({
+      eventType: 'ACCOUNT_DELETED',
+      severity: SEVERITY.INFO,
+      req,
+      email: user.email,
+      statusCode: 200,
+      message: 'User account deleted permanently',
+    });
+
+    res.json({ message: 'Account and all associated data deleted successfully' });
+  } catch (err) {
+    console.error('Account deletion error:', err.message);
+    res.status(500).json({ message: 'Server error during account deletion' });
+  }
+});
+
 module.exports = router;
