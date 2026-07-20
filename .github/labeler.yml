@@ -1,0 +1,12 @@
+server:
+  - server/**/*
+client:
+  - src/**/*
+  - public/**/*
+docs:
+  - '**/*.md'
+config:
+  - package.json
+  - package-lock.json
+  - postcss.config.js
+  - .github/**/*
