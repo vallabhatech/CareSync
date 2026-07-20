@@ -10,11 +10,12 @@ const medicinesLimiter = rateLimit({
 router.use(medicinesLimiter);
 const Medicine = require('../models/Medicine');
 const authMiddleware = require('../middleware/authMiddleware');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
 
 // @route   GET /api/medicines
 // @desc    Get all medicines for the logged-in user
 // @access  Private
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, cacheMiddleware(30), async (req, res) => {
   try {
     const medicines = await Medicine.find({ user: { $eq: req.user._id } }).sort({ createdAt: 1 });
     
@@ -84,6 +85,41 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Delete medicine error:', err.message);
     res.status(500).json({ message: 'Server error deleting medicine reminder' });
+  }
+});
+
+// @route   GET /api/medicines/interactions
+// @desc    Check for potential interactions between user's medicines
+// @access  Private
+router.get('/interactions', authMiddleware, async (req, res) => {
+  try {
+    const medicines = await Medicine.find({ user: { $eq: req.user._id } });
+    const medNames = medicines.map(m => m.name.toLowerCase());
+    
+    // MVP interaction database
+    const knownInteractions = [
+      { drugs: ['aspirin', 'ibuprofen'], warning: 'May increase risk of bleeding and reduce the cardioprotective effects of aspirin.' },
+      { drugs: ['aspirin', 'warfarin'], warning: 'High risk of severe bleeding. Do not combine without doctor supervision.' },
+      { drugs: ['lisinopril', 'potassium'], warning: 'May lead to high potassium levels in the blood (hyperkalemia).' },
+      { drugs: ['simvastatin', 'amiodarone'], warning: 'Increases risk of liver damage and muscle breakdown (rhabdomyolysis).' },
+      { drugs: ['metformin', 'iodine contrast'], warning: 'Can increase risk of lactic acidosis. Temporarily stop metformin.' }
+    ];
+
+    const interactionsFound = [];
+
+    knownInteractions.forEach(interaction => {
+      const isInteracting = interaction.drugs.every(drug => 
+        medNames.some(med => med.includes(drug))
+      );
+      if (isInteracting) {
+        interactionsFound.push(interaction);
+      }
+    });
+
+    res.json({ interactions: interactionsFound });
+  } catch (err) {
+    console.error('Interaction check error:', err.message);
+    res.status(500).json({ message: 'Server error checking medicine interactions' });
   }
 });
 
