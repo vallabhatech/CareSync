@@ -24,9 +24,7 @@ const SecureChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
   
-  // Try to get user from local storage directly for now
-  const storedUserStr = localStorage.getItem('user');
-  const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+  const { user } = useAuth();
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -47,8 +45,11 @@ const SecureChat = () => {
     };
     fetchInitialData();
 
-    // Initialize socket connection
-    const newSocket = io(API_URL);
+    // Initialize socket connection with JWT
+    const token = localStorage.getItem('token');
+    const newSocket = io(API_URL, {
+      auth: { token }
+    });
     setSocket(newSocket);
 
     return () => {
@@ -57,25 +58,37 @@ const SecureChat = () => {
   }, []);
 
   useEffect(() => {
-    if (socket) {
-      socket.on('newMessage', (message) => {
-        setMessages((prevMessages) => {
-          // Prevent duplicates
-          if (prevMessages.some(m => m._id === message._id)) return prevMessages;
-          return [...prevMessages, message];
-        });
-      });
+    if (!socket) return;
 
-      socket.on('userTyping', ({ senderId, isTyping }) => {
-        if (activeConversation && activeConversation.participants.some(p => p._id === senderId)) {
-          setPartnerTyping(isTyping);
-        }
+    const handleNewMessage = (message) => {
+      // Only append if the message is for the currently active conversation
+      if (activeConversation && message.conversationId !== activeConversation._id) return;
+
+      setMessages((prevMessages) => {
+        // Prevent duplicates
+        if (prevMessages.some(m => m._id === message._id)) return prevMessages;
+        return [...prevMessages, message];
       });
-    }
+    };
+
+    const handleUserTyping = ({ senderId, isTyping }) => {
+      if (activeConversation && activeConversation.participants.some(p => p._id === senderId)) {
+        setPartnerTyping(isTyping);
+      }
+    };
+
+    socket.on('newMessage', handleNewMessage);
+    socket.on('userTyping', handleUserTyping);
+
+    return () => {
+      socket.off('newMessage', handleNewMessage);
+      socket.off('userTyping', handleUserTyping);
+    };
   }, [socket, activeConversation]);
 
   useEffect(() => {
     if (activeConversation && socket) {
+      setPartnerTyping(false); // Reset typing indicator on conversation switch
       socket.emit('joinRoom', { conversationId: activeConversation._id });
       fetchMessages(activeConversation._id);
     }

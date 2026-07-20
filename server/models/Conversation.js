@@ -6,6 +6,11 @@ const ConversationSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   }],
+  participantKey: {
+    type: String,
+    unique: true,
+    required: true
+  },
   lastMessage: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Message'

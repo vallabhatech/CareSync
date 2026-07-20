@@ -32,17 +32,37 @@ router.post('/conversations', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Provider ID is required' });
     }
     
+    // Validate provider
+    const provider = await User.findOne({ _id: providerId, role: { $in: ['doctor', 'provider'] } });
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found or invalid role' });
+    }
+    
+    // Create canonical sorted key
+    const sortedIds = [userId.toString(), providerId.toString()].sort();
+    const participantKey = `${sortedIds[0]}_${sortedIds[1]}`;
+    
     // Check if conversation already exists
-    let conversation = await Conversation.findOne({
-      participants: { $all: [userId, providerId] }
-    }).populate('participants', 'name role avatar');
+    let conversation = await Conversation.findOne({ participantKey })
+      .populate('participants', 'name role avatar');
     
     if (!conversation) {
-      conversation = new Conversation({
-        participants: [userId, providerId]
-      });
-      await conversation.save();
-      conversation = await conversation.populate('participants', 'name role avatar');
+      try {
+        conversation = new Conversation({
+          participants: [userId, providerId],
+          participantKey
+        });
+        await conversation.save();
+        conversation = await conversation.populate('participants', 'name role avatar');
+      } catch (saveError) {
+        // Catch E11000 duplicate key error in case of concurrent creation
+        if (saveError.code === 11000) {
+          conversation = await Conversation.findOne({ participantKey })
+            .populate('participants', 'name role avatar');
+        } else {
+          throw saveError;
+        }
+      }
     }
     
     res.json(conversation);
@@ -64,7 +84,7 @@ router.get('/:conversationId/messages', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Conversation not found' });
     }
     
-    if (!conversation.participants.includes(userId)) {
+    if (!conversation.participants.some(p => p._id?.toString() === userId.toString() || p.toString() === userId.toString())) {
       return res.status(403).json({ message: 'Not authorized to view this conversation' });
     }
     
@@ -101,7 +121,7 @@ router.post('/:conversationId/messages', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Conversation not found' });
     }
     
-    if (!conversation.participants.includes(userId)) {
+    if (!conversation.participants.some(p => p._id?.toString() === userId.toString() || p.toString() === userId.toString())) {
       return res.status(403).json({ message: 'Not authorized to send messages to this conversation' });
     }
     

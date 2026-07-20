@@ -176,6 +176,8 @@ app.use((err, req, res, next) => {
 
 const http = require('http');
 const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
+const Conversation = require('./models/Conversation');
 
 let server;
 if (require.main === module) {
@@ -185,22 +187,61 @@ if (require.main === module) {
     cors: corsOptions
   });
 
+  // Socket.IO Authentication Middleware
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) {
+      return next(new Error('Authentication error: Token missing'));
+    }
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.user = decoded;
+      next();
+    } catch (err) {
+      next(new Error('Authentication error: Invalid token'));
+    }
+  });
+
   io.on('connection', (socket) => {
-    console.log('New client connected', socket.id);
+    console.log('New client connected', socket.id, 'User ID:', socket.user.id);
     
     // User joins their own conversation rooms
-    socket.on('joinRoom', ({ conversationId }) => {
-      socket.join(conversationId);
-      console.log(`Socket ${socket.id} joined room ${conversationId}`);
+    socket.on('joinRoom', async ({ conversationId }) => {
+      try {
+        const conversation = await Conversation.findById(conversationId);
+        if (conversation && conversation.participants.some(p => p.toString() === socket.user.id.toString())) {
+          socket.join(conversationId);
+          console.log(`Socket ${socket.id} joined room ${conversationId}`);
+        } else {
+          console.warn(`Unauthorized join attempt for room ${conversationId} by user ${socket.user.id}`);
+        }
+      } catch (err) {
+        console.error('Error joining room:', err);
+      }
     });
     
-    socket.on('sendMessage', (messageData) => {
-      // Broadcast to the specific conversation room
-      io.to(messageData.conversationId).emit('newMessage', messageData);
+    socket.on('sendMessage', async (messageData) => {
+      try {
+        const conversationId = messageData.conversationId;
+        const conversation = await Conversation.findById(conversationId);
+        if (conversation && conversation.participants.some(p => p.toString() === socket.user.id.toString())) {
+          // Broadcast to the specific conversation room
+          socket.to(conversationId).emit('newMessage', messageData);
+        }
+      } catch (err) {
+        console.error('Error sending message via socket:', err);
+      }
     });
     
-    socket.on('typing', ({ conversationId, senderId, isTyping }) => {
-      socket.to(conversationId).emit('userTyping', { senderId, isTyping });
+    socket.on('typing', async ({ conversationId, senderId, isTyping }) => {
+      try {
+        const conversation = await Conversation.findById(conversationId);
+        if (conversation && conversation.participants.some(p => p.toString() === socket.user.id.toString())) {
+          socket.to(conversationId).emit('userTyping', { senderId, isTyping });
+        }
+      } catch (err) {
+        console.error('Error sending typing event:', err);
+      }
     });
     
     socket.on('disconnect', () => {

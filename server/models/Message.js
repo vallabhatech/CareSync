@@ -1,12 +1,16 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
-const ALGORITHM = 'aes-256-cbc';
-// Ensure the encryption key is exactly 32 bytes long.
-// If process.env.ENCRYPTION_KEY is not set or not 32 chars, we fallback for safety in this feature phase.
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY 
-  ? crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32) 
-  : crypto.scryptSync('caresync-default-secure-key-2024', 'salt', 32); 
+const ALGORITHM = 'aes-256-gcm';
+// Ensure the encryption key is provided and exactly 32 bytes long.
+if (!process.env.ENCRYPTION_KEY) {
+  throw new Error('FATAL: ENCRYPTION_KEY environment variable is required');
+}
+const keyBuffer = Buffer.from(process.env.ENCRYPTION_KEY, 'utf-8');
+if (keyBuffer.length !== 32) {
+  throw new Error('FATAL: ENCRYPTION_KEY must be exactly 32 bytes long');
+}
+const ENCRYPTION_KEY = keyBuffer;
 
 const IV_LENGTH = 16;
 
@@ -14,22 +18,29 @@ function encryptText(text) {
   if (!text) return text;
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
-  let encrypted = cipher.update(text);
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
-  return iv.toString('hex') + ':' + encrypted.toString('hex');
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+  return iv.toString('hex') + ':' + encrypted + ':' + authTag;
 }
 
 function decryptText(text) {
   if (!text) return text;
   try {
     const textParts = text.split(':');
-    if (textParts.length !== 2) return text; // Probably unencrypted
+    if (textParts.length !== 3) {
+      // Backwards compatibility with aes-256-cbc if needed
+      if (textParts.length === 2) return text; // Needs CBC logic or just return unencrypted
+      return text;
+    }
     const iv = Buffer.from(textParts[0], 'hex');
-    const encryptedText = Buffer.from(textParts[1], 'hex');
+    const encryptedText = textParts[1];
+    const authTag = Buffer.from(textParts[2], 'hex');
     const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
   } catch (err) {
     console.error('Error decrypting message:', err);
     return 'Error: Could not decrypt message';
