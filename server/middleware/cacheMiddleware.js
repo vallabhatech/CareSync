@@ -11,7 +11,8 @@ const cacheMiddleware = (durationSeconds) => {
       return next();
     }
 
-    const key = `__express__${req.originalUrl || req.url}`;
+    const userId = req.user ? req.user._id : 'public';
+    const key = `__express__${userId}_${req.originalUrl || req.url}`;
     const cachedResponse = cache.get(key);
 
     if (cachedResponse && cachedResponse.expiry > Date.now()) {
