@@ -6,7 +6,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 // @desc    Process a payment for a consultation/service (MVP for Issue 133)
 // @access  Private
 router.post('/checkout', authMiddleware, async (req, res) => {
-  const { amount, serviceId } = req.body;
+  const { amount } = req.body;
   try {
     // MVP: simulate processing a payment
     if (!amount) {
