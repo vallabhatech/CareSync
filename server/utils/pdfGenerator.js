@@ -213,13 +213,52 @@ function renderFooter(doc) {
 }
 
 /**
+ * Render symptoms section.
+ */
+function renderSymptoms(doc, symptoms) {
+  if (doc.y > 680) { doc.addPage(); renderHeader(doc, 'Health Report — Symptoms'); }
+
+  doc
+    .fontSize(12)
+    .font('Helvetica-Bold')
+    .fillColor('#1976d2')
+    .text('Symptom History', 50, doc.y);
+
+  drawHRule(doc, doc.y + 4);
+  doc.moveDown(0.8);
+  doc.fillColor('#000000');
+
+  if (!symptoms || symptoms.length === 0) {
+    doc.fontSize(10).font('Helvetica').text('No symptom history recorded.');
+    doc.moveDown(1);
+    return;
+  }
+
+  symptoms.slice(0, 20).forEach((check) => {
+    if (doc.y > 720) { doc.addPage(); renderHeader(doc, 'Health Report — Symptoms (continued)'); }
+    
+    doc.fontSize(10).font('Helvetica-Bold').text(new Date(check.checkedAt).toLocaleString('en-US'));
+    doc.fontSize(9).font('Helvetica').text(`Symptoms: ${check.symptoms.join(', ')}`);
+    
+    if (check.results && check.results.length > 0) {
+      const res = check.results[0];
+      doc.text(`Probable Condition: ${res.condition} (${Math.round(res.probability * 100)}%) - Risk: ${res.risk.toUpperCase()}`);
+    }
+    doc.moveDown(0.5);
+  });
+  
+  doc.moveDown(1);
+}
+
+/**
  * Generate a comprehensive health report PDF.
  * @param {Object} user - User document
  * @param {Array}  metrics - HealthMetric documents
  * @param {Array}  medicines - Medicine documents
+ * @param {Array}  symptoms - SymptomCheck documents
  * @returns {Promise<Buffer>}
  */
-function generateHealthReportPDF(user, metrics, medicines = []) {
+function generateHealthReportPDF(user, metrics, medicines = [], symptoms = []) {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50, size: 'A4', autoFirstPage: true });
@@ -232,6 +271,7 @@ function generateHealthReportPDF(user, metrics, medicines = []) {
       renderPatientInfo(doc, user);
       renderHealthMetrics(doc, metrics);
       renderMedicines(doc, medicines);
+      renderSymptoms(doc, symptoms);
       renderFooter(doc);
 
       doc.end();

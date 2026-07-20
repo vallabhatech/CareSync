@@ -7,6 +7,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import SearchIcon from "@mui/icons-material/Search";
 import PlaceIcon from "@mui/icons-material/Place";
 import SettingsIcon from "@mui/icons-material/Settings";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -139,6 +140,14 @@ export default function Dashboard() {
       link: "/settings",
       icon: <SettingsIcon fontSize="large" color="primary" />,
       btn: t("dashboard:goToSettings"),
+    },
+    {
+      id: "export-health-report",
+      title: "Export Health Report",
+      desc: "Download a PDF summary of your health data to share with a provider.",
+      link: "/export-report",
+      icon: <PictureAsPdfIcon fontSize="large" color="primary" />,
+      btn: "Export PDF",
     },
   ];
 

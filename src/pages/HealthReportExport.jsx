@@ -9,6 +9,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import MedicationIcon from '@mui/icons-material/Medication';
 import PersonIcon from '@mui/icons-material/Person';
+import SickIcon from '@mui/icons-material/Sick';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,6 +17,7 @@ export default function HealthReportExport() {
   const { isAuthenticated, user } = useAuth();
   const [metrics, setMetrics] = useState([]);
   const [medicines, setMedicines] = useState([]);
+  const [symptoms, setSymptoms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
@@ -25,12 +27,14 @@ export default function HealthReportExport() {
     if (!isAuthenticated) return;
     setLoading(true);
     try {
-      const [metricsRes, medRes] = await Promise.all([
+      const [metricsRes, medRes, symptomRes] = await Promise.all([
         API.get('/api/health-metrics'),
         API.get('/api/medicines'),
+        API.get('/api/symptom-checks'),
       ]);
       setMetrics(metricsRes.data);
       setMedicines(medRes.data);
+      setSymptoms(symptomRes.data);
     } catch (err) {
       setError('Failed to load health summary data.');
     } finally {
@@ -87,7 +91,7 @@ export default function HealthReportExport() {
               Your PDF report will include the following sections:
             </Typography>
 
-            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' } }}>
+            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' } }}>
               {/* Patient Info */}
               <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                 <PersonIcon color="primary" fontSize="large" />
@@ -119,6 +123,18 @@ export default function HealthReportExport() {
                 </Typography>
                 {loading ? <CircularProgress size={16} /> : (
                   <Chip label={`${medicines.length} medicines`} size="small" color="warning" variant="outlined" />
+                )}
+              </Box>
+
+              {/* Symptoms */}
+              <Box sx={{ p: 2, bgcolor: '#fce4ec', borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <SickIcon color="error" fontSize="large" />
+                <Typography fontWeight={600} variant="body2">Symptom History</Typography>
+                <Typography variant="caption" color="text.secondary" textAlign="center">
+                  Recent symptom assessments and results
+                </Typography>
+                {loading ? <CircularProgress size={16} /> : (
+                  <Chip label={`${symptoms.length} records`} size="small" color="error" variant="outlined" />
                 )}
               </Box>
             </Box>
@@ -172,7 +188,7 @@ export default function HealthReportExport() {
           <CardContent sx={{ p: 3 }}>
             <Typography variant="subtitle2" fontWeight={700} mb={1}>ℹ️ About This Report</Typography>
             <Typography variant="body2" color="text.secondary">
-              The exported PDF includes up to 100 recent health metric records and up to 100 medicine entries.
+              The exported PDF includes up to 100 recent health metric records, up to 100 medicine entries, and up to 100 symptom checks.
               This report is intended for informational purposes and to share with your healthcare provider.
               It is not a substitute for professional medical advice.
             </Typography>
