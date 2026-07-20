@@ -16,7 +16,7 @@ import {
  */
 export function sanitizeConfig(obj) {
   // Do not process special object types like FormData, Blob, etc.
-  if (obj && typeof obj === 'object' && obj.constructor !== Object && !Array.isArray(obj)) {
+  if (obj && typeof obj === 'object' && Object.prototype.toString.call(obj) !== '[object Object]' && !Array.isArray(obj)) {
     return obj;
   }
 
@@ -67,6 +67,7 @@ export function sanitizeConfig(obj) {
  * @throws {Error} If a value is invalid.
  */
 function _normalizeAndValidateHeaderValue(value, key) {
+  if (value == null) return '';
   const strVal = String(value).trim();
 
   if (strVal.length > 4096) {

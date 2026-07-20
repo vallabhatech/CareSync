@@ -60,4 +60,34 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+// @route   GET /api/symptom-checks/trends
+// @desc    Get trend analysis for symptoms over time (MVP)
+// @access  Private
+router.get('/trends', authMiddleware, async (req, res) => {
+  try {
+    const history = await SymptomCheck.find({ user: { $eq: req.user._id } }).sort({ checkedAt: 1 });
+    
+    // MVP: Group by symptom and count frequency, also tracking timeline
+    const trends = {};
+    
+    history.forEach(check => {
+      const date = new Date(check.checkedAt).toISOString().split('T')[0];
+      
+      check.symptoms.forEach(symptom => {
+        const lowerSymptom = symptom.toLowerCase().trim();
+        if (!trends[lowerSymptom]) {
+          trends[lowerSymptom] = { count: 0, timeline: [] };
+        }
+        trends[lowerSymptom].count += 1;
+        trends[lowerSymptom].timeline.push(date);
+      });
+    });
+
+    res.json({ trends });
+  } catch (err) {
+    console.error('Fetch symptom trends error:', err.message);
+    res.status(500).json({ message: 'Server error fetching symptom trends' });
+  }
+});
+
 module.exports = router;
