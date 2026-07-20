@@ -41,6 +41,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
+import HealthReportExport from './pages/HealthReportExport';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
@@ -314,6 +315,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/export-report" element={<HealthReportExport />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
