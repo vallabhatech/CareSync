@@ -48,6 +48,18 @@ export function sanitizeRedirect(raw, defaultPath = '/') {
   // This prevents weird control characters and HTML-ish payloads.
   if (!SAFE_INTERNAL_PATH_REGEX.test(value)) return defaultPath;
 
+  // Final SSRF/Open-Redirect protection: parse via URL and ensure origin matches
+  try {
+    const base = typeof window !== 'undefined' && window.location ? window.location.origin : 'http://localhost';
+    const parsed = new URL(value, base);
+    if (parsed.origin !== base) {
+      return defaultPath;
+    }
+  } catch (err) {
+    // Ignore invalid URLs and fallback
+    return defaultPath;
+  }
+
   return value;
 }
 
