@@ -1,6 +1,14 @@
+:root {
+  --primary-color: #1976d2;
+  --bg-light: #f4f8fb;
+  --bg-dark: #18181a;
+  --text-light: #ffffff;
+  --text-dark: #333333;
+}
+
 body {
   font-family: 'Open Sans', Arial, sans-serif;
-  background: #f4f8fb;
+  background: var(--bg-light);
   margin: 0;
   padding: 0;
 }
