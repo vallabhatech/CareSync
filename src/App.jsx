@@ -43,6 +43,7 @@ import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
+import SecureChat from './pages/SecureChat';
 
 
 // Navigation targets. Labels are resolved at render time via i18n keys
@@ -53,6 +54,7 @@ const NAV_LINKS = [
   { key: 'symptomChecker', to: '/symptom-checker' },
   { key: 'clinicsNearby', to: '/clinics-nearby' },
   { key: 'telehealth', to: '/telehealth' },
+  { key: 'secureChat', to: '/chat' },
   { key: 'settings', to: '/settings' },
   { key: 'recommendations', to: '/recommendations' },
 ];
@@ -311,6 +313,7 @@ function App() {
           <Route path="/clinics-nearby" element={<ClinicsNearby />} />
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/health-metrics" element={<HealthMetrics />} />
+          <Route path="/chat" element={<SecureChat />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />

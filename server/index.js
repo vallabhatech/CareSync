@@ -158,6 +158,7 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/risk-assessment', require('./routes/riskAssessment'));
 app.use('/api/family', require('./routes/family'));
 app.use('/api/security', require('./routes/security'));
+app.use('/api/chat', require('./routes/chat'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
@@ -173,9 +174,94 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal Server Error' });
 });
 
+const http = require('http');
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
+const Conversation = require('./models/Conversation');
+
 let server;
 if (require.main === module) {
-  server = app.listen(PORT, () => {
+  server = http.createServer(app);
+  
+  const io = new Server(server, {
+    cors: corsOptions
+  });
+
+  // Socket.IO Authentication Middleware
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) {
+      return next(new Error('Authentication error: Token missing'));
+    }
+    try {
+      if (!process.env.JWT_SECRET) {
+        return next(new Error('Authentication error: Server misconfigured'));
+      }
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.isTemp) {
+        return next(new Error('Authentication error: Temporary tokens are not allowed'));
+      }
+      socket.user = decoded;
+      next();
+    } catch (err) {
+      next(new Error('Authentication error: Invalid token'));
+    }
+  });
+
+  io.on('connection', (socket) => {
+    console.log('New client connected', socket.id, 'User ID:', socket.user.id);
+    
+    // User joins their own conversation rooms
+    socket.on('joinRoom', async (data) => {
+      try {
+        if (!data || !data.conversationId) return;
+        const { conversationId } = data;
+        const conversation = await Conversation.findById(conversationId);
+        if (conversation && socket.user && socket.user.id && conversation.participants.some(p => p.toString() === socket.user.id.toString())) {
+          socket.join(conversationId);
+          console.log(`Socket ${socket.id} joined room ${conversation._id}`);
+        } else {
+          const safeId = String(conversationId).replace(/[\r\n]/g, '');
+          console.warn(`Unauthorized join attempt for room ${safeId} by user ${socket.user?.id}`);
+        }
+      } catch (err) {
+        console.error('Error joining room:', err);
+      }
+    });
+    
+    socket.on('sendMessage', async (data) => {
+      try {
+        if (!data || !data.conversationId) return;
+        const { conversationId } = data;
+        const conversation = await Conversation.findById(conversationId);
+        if (conversation && socket.user && socket.user.id && conversation.participants.some(p => p.toString() === socket.user.id.toString())) {
+          // Broadcast to the specific conversation room
+          socket.to(conversationId).emit('newMessage', data);
+        }
+      } catch (err) {
+        console.error('Error sending message via socket:', err);
+      }
+    });
+    
+    socket.on('typing', async (data) => {
+      try {
+        if (!data || !data.conversationId) return;
+        const { conversationId, senderId, isTyping } = data;
+        const conversation = await Conversation.findById(conversationId);
+        if (conversation && socket.user && socket.user.id && conversation.participants.some(p => p.toString() === socket.user.id.toString())) {
+          socket.to(conversationId).emit('userTyping', { senderId, isTyping });
+        }
+      } catch (err) {
+        console.error('Error sending typing event:', err);
+      }
+    });
+    
+    socket.on('disconnect', () => {
+      console.log('Client disconnected', socket.id);
+    });
+  });
+
+  server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
 }
