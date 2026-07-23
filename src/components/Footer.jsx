@@ -2,11 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import '../index.css';
+import { useTheme } from '@mui/material/styles';
 
 export default function Footer() {
   const { t } = useTranslation();
+  const theme = useTheme();
   return (
-    <footer className="footer">
+    <footer className="footer" style={{ background: theme.palette.mode === 'dark' ? '#0f172a' : '#18181a', color: theme.palette.mode === 'dark' ? '#f3f4f6' : '#e0e0e0' }}>
       <div className="footer-content">
         <h3 className="footer-title">{t('common:appName')}</h3>
 

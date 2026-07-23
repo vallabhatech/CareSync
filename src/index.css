@@ -1,8 +1,22 @@
 body {
   font-family: 'Open Sans', Arial, sans-serif;
   background: #f4f8fb;
+  color: #111827;
   margin: 0;
   padding: 0;
+}
+
+:root[data-theme='dark'] body {
+  background: #0f172a;
+  color: #f3f4f6;
+}
+
+:root[data-theme='dark'] ::-webkit-scrollbar {
+  background: #111827;
+}
+
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #5b7cff;
 }
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Montserrat', Arial, sans-serif;

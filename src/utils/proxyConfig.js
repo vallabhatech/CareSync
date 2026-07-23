@@ -68,10 +68,10 @@ export function parseNoProxyEntry(entry) {
     throw new Error(`NO_PROXY entry too long: "${raw.slice(0, 64)}..."`);
   }
   // Regex to capture host and port from entries like "example.com:8080".
-  // Using \d instead of [0-9] for conciseness.
-  // This regex avoids matching the colons in IPv6 addresses.
-  const portRegex = /^(.*):(\d{1,5})$/;
-  const portMatch = !raw.includes(':') || raw.includes(']:') ? portRegex.exec(raw) : null;
+  // Bracketed IPv6 literals such as "[::1]:8080" are supported separately.
+  const bracketedPortMatch = /^\[(.+)\]:(\d{1,5})$/.exec(raw);
+  const hostPortMatch = !raw.startsWith('[') ? /^([^:]+):(\d{1,5})$/.exec(raw) : null;
+  const portMatch = bracketedPortMatch || hostPortMatch;
 
   let hostPart = raw;
   let port;
@@ -121,7 +121,7 @@ export function matchesNoProxyEntry(requestHost, requestPort, entry) {
     return true;
   }
 
-  if (entry.port && entry.port !== requestPort) {
+  if (entry.port !== undefined && entry.port !== requestPort) {
     return false;
   }
 
