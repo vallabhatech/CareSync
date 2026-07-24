@@ -1,4 +1,4 @@
-import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sanitize';
+import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl, escapeCssForHtml } from './sanitize';
 
 function defineOwnProperty(obj, key, value) {
   Object.defineProperty(obj, key, {
@@ -422,5 +422,77 @@ describe('validateUrl utility (SSRF prevention)', () => {
     test('throws on malformed URL', () => {
       expect(() => validateUrl('not-a-url')).toThrow(/Malformed URL/);
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// escapeCssForHtml – PostCSS/CSS-stringify XSS prevention
+// ─────────────────────────────────────────────────────────────────────────────
+describe('escapeCssForHtml utility (CSS-to-HTML XSS prevention)', () => {
+  test('leaves normal CSS output unchanged', () => {
+    const css = '.card { color: red; margin: 0 auto; font-family: Arial, sans-serif; }';
+    expect(escapeCssForHtml(css)).toBe(css);
+  });
+
+  test('escapes double and single quotes', () => {
+    expect(escapeCssForHtml(`content: "hello";`)).toBe('content: &quot;hello&quot;;');
+    expect(escapeCssForHtml(`font-family: 'Comic Sans';`)).toBe("font-family: &#39;Comic Sans&#39;;");
+  });
+
+  test('escapes angle brackets', () => {
+    expect(escapeCssForHtml('content: "<tag>";')).toBe('content: &quot;&lt;tag&gt;&quot;;');
+  });
+
+  test('escapes ampersands without double-escaping introduced entities', () => {
+    expect(escapeCssForHtml('content: "a & b";')).toBe('content: &quot;a &amp; b&quot;;');
+  });
+
+  test('handles null and undefined gracefully', () => {
+    expect(escapeCssForHtml(null)).toBe('');
+    expect(escapeCssForHtml(undefined)).toBe('');
+  });
+
+  test('escapes malicious </style> breakout payloads', () => {
+    const payload = '} </style><script>alert(1)</script><style>a{color:red';
+    const escaped = escapeCssForHtml(payload);
+
+    expect(escaped).not.toContain('</style>');
+    expect(escaped).not.toContain('<script>');
+    expect(escaped).toBe(
+      '} &lt;/style&gt;&lt;script&gt;alert(1)&lt;/script&gt;&lt;style&gt;a{color:red'
+    );
+  });
+
+  test('escapes javascript: url() breakout attempts', () => {
+    const payload = 'background: url("javascript:alert(1)");';
+    const escaped = escapeCssForHtml(payload);
+    expect(escaped).toBe('background: url(&quot;javascript:alert(1)&quot;);');
+  });
+
+  // ── Regression: proves the escaped output cannot execute as markup ────────
+  test('regression: escaped payload does not create a <script> or <style> element when injected as HTML', () => {
+    const payload = '</style><img src=x onerror=alert(1)>';
+    const escaped = escapeCssForHtml(payload);
+
+    const container = document.createElement('div');
+    container.innerHTML = `<style>${escaped}</style>`;
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('script')).toBeNull();
+    // The <style> element remains intact and contains the escaped text as data.
+    const styleEl = container.querySelector('style');
+    expect(styleEl).not.toBeNull();
+    expect(styleEl.textContent).toContain('&lt;img');
+  });
+
+  test('regression: unescaped payload would have broken out (sanity check for the test itself)', () => {
+    const payload = '</style><img src=x onerror=alert(1)>';
+
+    const container = document.createElement('div');
+    container.innerHTML = `<style>${payload}</style>`;
+
+    // Demonstrates the vulnerability this fix prevents: without escaping,
+    // the <img> tag escapes the <style> context and becomes real markup.
+    expect(container.querySelector('img')).not.toBeNull();
   });
 });
