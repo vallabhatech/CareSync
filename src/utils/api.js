@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sanitize';
-import { getOfflineQueue, setOfflineQueue, enqueueOfflineRequest } from './indexedDB';
+import { getOfflineQueue, removeOfflineRequest, updateOfflineRequest, enqueueOfflineRequest } from './indexedDB';
 
 
 
@@ -100,7 +100,6 @@ window.addEventListener('online', async () => {
     const queue = await getOfflineQueue();
     if (queue.length === 0) return;
     
-    const remainingQueue = [];
     for (const req of queue) {
       try {
         // Re-validate URL before replaying — the environment may have changed
@@ -119,19 +118,22 @@ window.addEventListener('online', async () => {
           headers: req.headers
         });
 
+        // Atomically remove the request since it succeeded
+        await removeOfflineRequest(req._id);
+
       } catch (err) {
         // Distinguish retryable network errors/5xx from permanent 4xx failures
         const isRetryable = !err.response || err.response.status >= 500;
-        req.retryCount = (req.retryCount || 0) + 1;
+        const newRetryCount = (req.retryCount || 0) + 1;
         
-        if (isRetryable && req.retryCount < 3) {
-          remainingQueue.push(req);
+        if (isRetryable && newRetryCount < 3) {
+          await updateOfflineRequest(req._id, { retryCount: newRetryCount });
         } else {
           console.warn('Dropping permanently failed offline request:', req, err);
+          await removeOfflineRequest(req._id);
         }
       }
     }
-    await setOfflineQueue(remainingQueue);
     // Optionally reload page to show synced data
     window.location.reload();
   } finally {

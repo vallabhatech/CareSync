@@ -33,7 +33,7 @@ export default function OfflineBanner() {
   }, []);
 
   return (
-    <Slide direction="down" in={isOffline} mountOnEnter unmountOnExit>
+    <Slide direction="down" in={isOffline || queueCount > 0} mountOnEnter unmountOnExit>
       <Paper
         elevation={4}
         sx={{

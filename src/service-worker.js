@@ -35,13 +35,22 @@ registerRoute(
   createHandlerBoundToURL(process.env.PUBLIC_URL + '/index.html')
 );
 
-// Cache API GET requests
+const SAFE_API_ENDPOINTS = ['/api/clinics', '/api/public'];
+
+// Cache explicit safe public API GET requests
 registerRoute(
-  ({ request }) => request.url.includes('/api/') && request.method === 'GET',
+  ({ request, url }) => request.method === 'GET' && SAFE_API_ENDPOINTS.some(endpoint => url.pathname.startsWith(endpoint)),
   new NetworkFirst({
     cacheName: 'caresync-api-cache',
+    networkTimeoutSeconds: 3,
   })
 );
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CLEAR_USER_CACHE') {
+    caches.delete('caresync-api-cache');
+  }
+});
 
 // Any other static assets, images, etc.
 registerRoute(
