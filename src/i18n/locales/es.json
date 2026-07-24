@@ -181,6 +181,8 @@
     "email": "Email",
     "preferences": "Preferences",
     "enableEmailNotifications": "Enable Email Notifications",
+    "darkMode": "Enable Dark Mode",
+    "darkModeHint": "Reduce eye strain in low light and improve contrast in the interface.",
     "enablePushNotifications": "Enable Medicine Push Notifications",
     "pushNotificationsHint": "Receive browser notifications when a medicine reminder is due.",
     "saveChanges": "Save Changes",

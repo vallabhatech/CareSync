@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import IconButton from "@mui/material/IconButton";
 import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
 import {
   scheduleNotifications,
   requestNotificationPermission,
@@ -63,6 +64,7 @@ function createMedicine(med) {
 export default function MedicineTracker() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const theme = useTheme();
   const [medicines, setMedicines] = useState([]);
   const [name, setName] = useState("");
   const [time, setTime] = useState("");
@@ -323,14 +325,14 @@ export default function MedicineTracker() {
       <style>{`
         .medtracker-bg {
           min-height: 100vh;
-          background: linear-gradient(135deg, #f4f8fb 0%, #e3f2fd 100%);
-          color: #222;
+          background: linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.mode === 'dark' ? '#1e293b' : '#e3f2fd'} 100%);
+          color: ${theme.palette.text.primary};
           padding: 40px 0;
         }
         .medtracker-container {
           max-width: 600px;
           margin: 0 auto;
-          background: #fff;
+          background: ${theme.palette.background.paper};
           border-radius: 18px;
           box-shadow: 0 4px 32px 0 rgba(25, 118, 210, 0.08);
           padding: 36px 22px 28px;
@@ -343,19 +345,20 @@ export default function MedicineTracker() {
           text-align: center;
         }
         .medtracker-reminder-section {
-          background: #e3fcec;
+          background: ${theme.palette.mode === 'dark' ? 'rgba(76, 175, 80, 0.18)' : '#e3fcec'};
+          border: 1px solid ${theme.palette.mode === 'dark' ? 'rgba(129, 199, 132, 0.28)' : 'rgba(67, 160, 71, 0.16)'};
           border-radius: 12px;
           padding: 18px 16px 12px;
           margin-bottom: 28px;
-          box-shadow: 0 2px 12px #43e97b22;
+          box-shadow: 0 2px 12px ${theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.22)' : '#43e97b22'};
         }
         .medtracker-reminder-section h3 {
           margin: 0 0 8px;
-          color: #43a047;
+          color: ${theme.palette.mode === 'dark' ? '#81c784' : '#43a047'};
           font-size: 1.15rem;
         }
         .medtracker-reminder-empty {
-          color: #888;
+          color: ${theme.palette.text.secondary};
           font-size: 1rem;
         }
         .medtracker-reminder-list,
@@ -369,7 +372,7 @@ export default function MedicineTracker() {
           display: flex;
           align-items: center;
           gap: 12px;
-          background: #f4f8fb;
+          background: ${theme.palette.mode === 'dark' ? '#1f2937' : '#f4f8fb'};
           margin-bottom: 10px;
           padding: 10px 14px;
           border-radius: 8px;
@@ -411,9 +414,9 @@ export default function MedicineTracker() {
   min-width: 0;
   height: 40px;
   box-sizing: border-box;
-  background: #f4f8fb;
-  color: #222;
-  border: 1px solid #b0bec5;
+  background: ${theme.palette.background.default};
+  color: ${theme.palette.text.primary};
+  border: 1px solid ${theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#b0bec5'};
   border-radius: 8px;
   padding: 0 12px;
   font-size: 1rem;
@@ -456,7 +459,7 @@ export default function MedicineTracker() {
           font-size: 1.1rem;
         }
         .medtracker-list-empty {
-          color: #888;
+          color: var(--mui-palette-text-secondary, #888);
           font-size: 1rem;
           padding: 8px 0;
         }
@@ -472,7 +475,7 @@ export default function MedicineTracker() {
           flex: 0 0 auto;
           position: relative;
           overflow: hidden;
-          background: #dbe7f0;
+          background: ${theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#dbe7f0'};
           border-radius: 8px;
         }
         .skeleton::after {
@@ -541,7 +544,7 @@ export default function MedicineTracker() {
           opacity: 1;
         }
         .interaction-warning {
-          background: #fff3cd;
+          background: ${theme.palette.mode === 'dark' ? '#4a3a15' : '#fff3cd'};
           color: #856404;
           border-radius: 8px;
           padding: 10px;
