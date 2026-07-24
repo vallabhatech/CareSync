@@ -1,0 +1,15 @@
+diff --git a/node_modules/serialize-javascript/index.js b/node_modules/serialize-javascript/index.js
+index 156f8f9..06ebf9e 100644
+--- a/node_modules/serialize-javascript/index.js
++++ b/node_modules/serialize-javascript/index.js
+@@ -109,8 +109,8 @@ module.exports = function serialize(obj, options) {
+                 return '@__S-' + UID + '-' + (sets.push(origValue) - 1) + '__@';
+             }
+ 
+-            if(origValue instanceof Array) {
+-                var isSparse = origValue.filter(function(){return true}).length !== origValue.length;
++            if(Array.isArray(origValue)) {
++                var isSparse = Object.keys(origValue).length !== origValue.length;
+                 if (isSparse) {
+                     return '@__A-' + UID + '-' + (arrays.push(origValue) - 1) + '__@';
+                 }
