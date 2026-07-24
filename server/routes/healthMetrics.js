@@ -8,7 +8,7 @@ const { generateHealthReportPDF } = require('../utils/pdfGenerator');
 // Get all health metrics for a user (optional: filter by date range)
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, page: reqPage, limit: reqLimit } = req.query;
     const filter = { user: req.user.id };
 
     if (startDate || endDate) {
@@ -23,7 +23,19 @@ router.get('/', authMiddleware, async (req, res) => {
       }
     }
 
-    const metrics = await HealthMetric.find(filter).sort({ recordedAt: -1 }).limit(500);
+    const page = Math.max(1, parseInt(reqPage, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(reqLimit, 10) || 50));
+    const skip = (page - 1) * limit;
+
+    const [metrics, total] = await Promise.all([
+      HealthMetric.find(filter).sort({ recordedAt: -1 }).skip(skip).limit(limit),
+      HealthMetric.countDocuments(filter)
+    ]);
+
+    res.setHeader('Access-Control-Expose-Headers', 'X-Total-Count, X-Total-Pages, X-Current-Page');
+    res.setHeader('X-Total-Count', total);
+    res.setHeader('X-Total-Pages', Math.ceil(total / limit));
+    res.setHeader('X-Current-Page', page);
     res.json(metrics);
   } catch (err) {
     console.error('Error fetching health metrics:', err);
