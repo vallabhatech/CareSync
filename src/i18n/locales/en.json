@@ -21,7 +21,8 @@
     "viewProfile": "View Profile",
     "logOut": "Log Out",
     "logIn": "Log In",
-    "telehealth": "Telehealth"
+    "telehealth": "Telehealth",
+    "ambulance": "Ambulance Booking"
   },
   "dashboard": {
     "greetingMorning": "Good Morning",
