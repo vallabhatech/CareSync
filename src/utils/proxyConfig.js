@@ -1,4 +1,4 @@
-import { hostnamesMatch, normalizeHostname, normalizeIPv4, normalizeIPv6 } from './hostNormalize';
+import { hostnamesMatch, normalizeHostname, normalizeIPv4, normalizeIPv6 } from './hostNormalizer';
 
 const DEFAULT_PORTS = {
   ftp: 21,
