@@ -10,6 +10,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useTheme } from "@mui/material/styles";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
+import { getDashboardSettings } from "../utils/settingsPreferences";
 
 const healthQuotes = [
   "Health is the greatest wealth.",
@@ -24,23 +25,6 @@ const healthQuotes = [
   "Wellness is a journey, not a destination.",
 ];
 
-/**
- * Dashboard — the app landing/overview page.
- *
- * Displays a time-based greeting (morning/afternoon/evening), a randomly
- * rotated health quote, and a grid of feature cards linking to the main
- * sections. On mount it reads `caresync_medicines` from localStorage to show
- * how many medicines are scheduled for today.
- *
- * Rendered as a route; takes no props and manages its own state
- * (`quote`, `todayCount`) internally.
- *
- * @component
- * @returns {JSX.Element} The dashboard overview page.
- *
- * @example
- * <Route path="/dashboard" element={<Dashboard />} />
- */
 export default function Dashboard() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
@@ -48,10 +32,22 @@ export default function Dashboard() {
   const [quote, setQuote] = useState(healthQuotes[0]);
   const [todayCount, setTodayCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
+  const [dashboardSettings, setDashboardSettingsState] = useState(() => getDashboardSettings());
 
   useEffect(() => {
     setQuote(healthQuotes[Math.floor(Math.random() * healthQuotes.length)]);
-    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    const handleSettingsUpdate = () => {
+      setDashboardSettingsState(getDashboardSettings());
+    };
+    window.addEventListener("storage", handleSettingsUpdate);
+    window.addEventListener("caresync_settings_updated", handleSettingsUpdate);
+    return () => {
+      window.removeEventListener("storage", handleSettingsUpdate);
+      window.removeEventListener("caresync_settings_updated", handleSettingsUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -67,8 +63,7 @@ export default function Dashboard() {
           API.get("/api/clinics/favorites"),
         ]);
 
-        // Count today's reminders (using local date string comparison)
-        const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
+        const todayStr = new Date().toLocaleDateString("en-CA");
         const todays = medRes.data.filter((med) => med.date === todayStr);
         setTodayCount(todays.length);
         setFavCount(favRes.data.length);
@@ -95,7 +90,7 @@ export default function Dashboard() {
 
   const dynamicFeatures = [
     {
-      id: "today's-medicines",
+      id: "todaysMedicines",
       title: t("dashboard:todaysMedicinesTitle"),
       desc: t("dashboard:todaysMedicines", { count: todayCount }),
       link: "/medicine-tracker",
@@ -103,7 +98,7 @@ export default function Dashboard() {
       btn: t("dashboard:medicineTracker"),
     },
     {
-      id: "recent-symptom-checks",
+      id: "recentSymptomChecks",
       title: t("dashboard:recentSymptomChecksTitle"),
       desc: t("dashboard:recentSymptomChecksDesc"),
       link: "/symptom-checker",
@@ -111,7 +106,7 @@ export default function Dashboard() {
       btn: t("dashboard:checkSymptoms"),
     },
     {
-      id: "dosage-calculator",
+      id: "dosageCalculator",
       title: "Dosage Calculator",
       desc: "Estimate appropriate medicine doses based on your weight, age, and frequency.",
       link: "/dosage-calculator",
@@ -119,7 +114,7 @@ export default function Dashboard() {
       btn: "Open Calculator",
     },
     {
-      id: "health-metrics",
+      id: "healthMetrics",
       title: "Health Metrics",
       desc: "Track and analyze vital signs including weight, BP, heart rate, and more.",
       link: "/health-metrics",
@@ -127,7 +122,7 @@ export default function Dashboard() {
       btn: "View Metrics",
     },
     {
-      id: "nearby-clinics",
+      id: "nearbyClinics",
       title: t("dashboard:nearbyClinicsTitle"),
       desc: t("dashboard:nearbyClinicsDesc"),
       link: "/clinics-nearby",
@@ -135,7 +130,7 @@ export default function Dashboard() {
       btn: t("dashboard:findClinics"),
     },
     {
-      id: "profile-settings",
+      id: "profileSettings",
       title: t("dashboard:profileSettingsTitle"),
       desc: t("dashboard:profileSettingsDesc"),
       link: "/settings",
@@ -144,44 +139,65 @@ export default function Dashboard() {
     },
   ];
 
+  const visibleMap = dashboardSettings.visibleCards || {};
+  const visibleFeatures = dynamicFeatures.filter(
+    (feature) => visibleMap[feature.id] !== false
+  );
+
   return (
     <div className="dashboard-bg">
       <div className="dashboard-overlay"></div>
       <div className="dashboard-container">
-        <div className="dashboard-header">
-          <h1 className="dashboard-title">{getGreeting()} 👋</h1>
-          <p className="dashboard-subtitle"> {t("dashboard:subtitle")} </p>
-        </div>
-        <div className="dashboard-stats">
-          <div className="stat-card">
-            <h2>{todayCount}</h2>
-            <p>{t("dashboard:statMedicinesToday")}</p>
+        {dashboardSettings.showGreeting !== false && (
+          <div className="dashboard-header">
+            <h1 className="dashboard-title">{getGreeting()} 👋</h1>
+            <p className="dashboard-subtitle"> {t("dashboard:subtitle")} </p>
           </div>
+        )}
 
-          <div className="stat-card">
-            <h2>{favCount}</h2>
-            <p>{t("dashboard:statClinicsNearby")}</p>
-          </div>
+        {dashboardSettings.showStatsRow !== false && (
+          <div className="dashboard-stats">
+            <div className="stat-card">
+              <h2>{todayCount}</h2>
+              <p>{t("dashboard:statMedicinesToday")}</p>
+            </div>
 
-          <div className="stat-card">
-            <h2>✓</h2>
-            <p>{t("dashboard:statHealthStatus")}</p>
+            <div className="stat-card">
+              <h2>{favCount}</h2>
+              <p>{t("dashboard:statClinicsNearby")}</p>
+            </div>
+
+            <div className="stat-card">
+              <h2>✓</h2>
+              <p>{t("dashboard:statHealthStatus")}</p>
+            </div>
           </div>
-        </div>
-        <div className="dashboard-quote-section">
-          <div className="dashboard-quote">{quote}</div>
-          <button className="dashboard-quote-btn" onClick={generateQuote}>
-            {t("dashboard:newQuote")}
-          </button>
-        </div>
-        <div className="dashboard-features" role="navigation"
-  aria-label="Dashboard features">
-          {dynamicFeatures.map((feature) => (
+        )}
+
+        {dashboardSettings.showHealthQuote !== false && (
+          <div className="dashboard-quote-section">
+            <div className="dashboard-quote">{quote}</div>
+            <button className="dashboard-quote-btn" onClick={generateQuote}>
+              {t("dashboard:newQuote")}
+            </button>
+          </div>
+        )}
+
+        <div
+          className="dashboard-features"
+          role="navigation"
+          aria-label="Dashboard features"
+        >
+          {visibleFeatures.map((feature) => (
             <div className="dashboard-card" key={feature.id}>
               <div className="dashboard-icon">{feature.icon}</div>
               <div className="dashboard-card-title">{feature.title}</div>
               <div className="dashboard-card-desc">{feature.desc}</div>
-              <Link to={feature.link} className="dashboard-card-btn" aria-label={`Go to ${feature.title}`}>
+              <Link
+                to={feature.link}
+                className="dashboard-card-btn"
+                aria-label={`Go to ${feature.title}`}
+              >
                 {feature.btn}
               </Link>
             </div>
@@ -230,16 +246,16 @@ export default function Dashboard() {
         }
         .dashboard-stats {
           display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 20px;
+          margin-bottom: 32px;
         }
         .stat-card {
           background: color-mix(in srgb, var(--mui-palette-background-paper, #fff) 92%, transparent);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+          border-radius: 16px;
+          padding: 20px;
+          text-align: center;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
         .stat-card h2 {
           margin: 0;
@@ -356,10 +372,10 @@ export default function Dashboard() {
           color: #fff;
         }
         .dashboard-card-btn:focus-visible {
-  outline: 3px solid #43e97b;
-  outline-offset: 3px;
-  box-shadow: 0 0 0 4px rgba(67, 233, 123, 0.3);
-}
+          outline: 3px solid #43e97b;
+          outline-offset: 3px;
+          box-shadow: 0 0 0 4px rgba(67, 233, 123, 0.3);
+        }
         @media (max-width: 700px) {
           .dashboard-container { padding: 24px 4px; }
           .dashboard-title { font-size: 2rem; }
