@@ -1,5 +1,5 @@
 const { logSecurityEvent } = require('../utils/securityLogger');
-const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
+const { EVENT_TYPES, SEVERITY } = require('../utils/securityEventTypes');
 
 // Must run AFTER authMiddleware (which sets req.user).
 // An admin is any user whose `role` is 'admin'.
