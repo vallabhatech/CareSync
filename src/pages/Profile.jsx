@@ -217,8 +217,11 @@ function Profile() {
             <Typography variant="body2" color="text.secondary">
               {t('profile:memberSince', { date: user.loggedInAt ? new Date(user.loggedInAt).toLocaleDateString() : t('profile:notAvailable') })}
             </Typography>
-            <Button variant="outlined" color="error" onClick={logout}>
+            <Button variant="outlined" color="error" onClick={logout} sx={{ mr: 2 }}>
               {t('profile:logOut')}
+            </Button>
+            <Button variant="contained" color="error" onClick={() => { if(window.confirm('Are you sure you want to delete your account permanently? This action cannot be undone.')) { logout(); } }}>
+              Delete Account
             </Button>
           </Box>
         </CardContent>

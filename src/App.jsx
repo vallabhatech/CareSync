@@ -46,6 +46,7 @@ import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
+import CookieConsent from './components/CookieConsent';
 
 
 // Navigation targets. Labels are resolved at render time via i18n keys
@@ -354,6 +355,7 @@ function App() {
       </div>
       <ScrollToTopButton />
       <Footer />
+      <CookieConsent />
     </AuthProvider>
   );
 }
