@@ -44,8 +44,10 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
+import PersonalizedRecommendations from './pages/PersonalizedRecommendations';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
+import OfflineBanner from './components/OfflineBanner';
 
 
 // Navigation targets. Labels are resolved at render time via i18n keys
@@ -337,6 +339,7 @@ function App() {
   return (
     <AuthProvider>
       <Navbar />
+      <OfflineBanner />
       <div style={{ paddingTop: 80, minHeight: '100vh' }}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -349,6 +352,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/recommendations" element={<PersonalizedRecommendations />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

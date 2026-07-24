@@ -21,6 +21,9 @@ export function AuthProvider({ children }) {
         } catch (error) {
           console.error('Session restore failed:', error);
           localStorage.removeItem('caresync_token');
+          if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_USER_CACHE' });
+          }
           setUser(null);
           setIsAuthenticated(false);
         }
@@ -59,6 +62,9 @@ export function AuthProvider({ children }) {
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('caresync_token');
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_USER_CACHE' });
+    }
   }, []);
 
   const updateProfile = useCallback(async (updates) => {
