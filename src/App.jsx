@@ -23,6 +23,8 @@ import {
   Menu as MenuIcon,
   LocalHospital as LocalHospitalIcon,
   ArrowUpward as ArrowUpwardIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
 } from '@mui/icons-material';
 import { Link, Routes, Route, useNavigate } from 'react-router-dom';
 import '@fontsource/roboto/900.css';
@@ -32,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useThemeMode } from './context/ThemeContext';
 import Dashboard from './pages/Dashboard';
 import MedicineTracker from './pages/MedicineTracker';
 import SymptomChecker from './pages/SymptomChecker';
@@ -167,7 +170,9 @@ function Navbar() {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const trigger = useScrollTrigger({ threshold: 80 });
   const { isAuthenticated, user, logout } = useAuth();
+  const { mode, toggleTheme } = useThemeMode();
   const navigate = useNavigate();
+  const isDarkMode = mode === 'dark';
 
   const handleLogout = () => {
     logout();
@@ -220,6 +225,16 @@ function Navbar() {
               {t(`nav:${link.key}`)}
             </Button>
           ))}
+          <Tooltip title={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}>
+            <IconButton
+              color="inherit"
+              onClick={toggleTheme}
+              aria-label={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+              sx={{ color: 'inherit' }}
+            >
+              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+          </Tooltip>
           {isAuthenticated && user ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Tooltip title={t('nav:viewProfile')}>
@@ -267,6 +282,26 @@ function Navbar() {
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Box sx={{ width: 220 }}>
           <List>
+            <ListItem>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                <Tooltip title={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}>
+                  <IconButton
+                    color="inherit"
+                    onClick={() => {
+                      toggleTheme();
+                      setDrawerOpen(false);
+                    }}
+                    aria-label={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+                    sx={{ color: 'primary.main' }}
+                  >
+                    {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                  </IconButton>
+                </Tooltip>
+                <Typography variant="body2" fontWeight={600}>
+                  {isDarkMode ? 'Light mode' : 'Dark mode'}
+                </Typography>
+              </Box>
+            </ListItem>
             {NAV_LINKS.map(link => (
               <ListItem
                 key={link.key}

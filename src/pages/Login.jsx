@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../context/AuthContext';
 import { getRedirectFromParams } from '../utils/routeRedirects';
 
@@ -20,6 +21,7 @@ function Login() {
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const { login, signup } = useAuth();
+  const theme = useTheme();
   const [tab, setTab] = useState(0);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,7 +95,7 @@ function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f4f8fb 0%, #e3eafc 100%)',
+        background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.mode === 'dark' ? '#1e293b' : '#e3eafc'} 100%)`,
         p: 2,
       }}
     >

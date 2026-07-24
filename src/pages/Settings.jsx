@@ -27,6 +27,7 @@ import {
   setEmailNotificationsEnabled,
 } from '../utils/settingsPreferences';
 import { SUPPORTED_LANGUAGES } from '../i18n';
+import { useThemeMode } from '../context/ThemeContext';
 
 /**
  * Settings — user profile and preferences page.
@@ -52,6 +53,7 @@ import { SUPPORTED_LANGUAGES } from '../i18n';
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { user, isAuthenticated, updateProfile } = useAuth();
+  const { mode, toggleTheme } = useThemeMode();
 
   // Initialise the editable form from the authenticated user, mirroring the
   // pattern used in Profile.jsx (optional-chained with sensible fallbacks).
@@ -257,6 +259,20 @@ export default function Settings() {
           }
           label={t('settings:enableEmailNotifications')}
         />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={mode === 'dark'}
+              onChange={toggleTheme}
+              color="secondary"
+              id="theme-mode-toggle"
+            />
+          }
+          label={t('settings:darkMode')}
+        />
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 4, mt: -0.5, mb: 1 }}>
+          {t('settings:darkModeHint')}
+        </Typography>
         <FormControlLabel
           control={
             <Switch

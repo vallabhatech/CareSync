@@ -119,7 +119,7 @@ export default function HealthRiskAssessment() {
   const riskBg = result ? RISK_BG[result.overallRisk] : '#e3f2fd';
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f4f8fb', py: 6, px: 2 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6, px: 2 }}>
       <Box sx={{ maxWidth: 900, mx: 'auto' }}>
         <Button component={Link} to="/dashboard" startIcon={<ArrowBackIcon />} variant="outlined" sx={{ mb: 3 }}>
           Back to Dashboard

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sanitize';
-import httpConfig from './httpConfig';
 import { getOfflineQueue, setOfflineQueue, enqueueOfflineRequest } from './indexedDB';
+
 
 
 const apiBaseURL = process.env.REACT_APP_API_BASE_URL;
@@ -43,7 +43,8 @@ API.interceptors.request.use(
     if (config.params) {
       config.params = sanitizeConfig(config.params);
     }
-    if (config.data) {
+    if (config.data !== undefined) {
+      config.__caresyncRawData = config.data;
       config.data = sanitizeConfig(config.data);
     }
 
@@ -77,7 +78,7 @@ API.interceptors.response.use(
         await enqueueOfflineRequest({
           url: error.config.url,
           method: error.config.method,
-          data: sanitizeConfig(error.config.data),
+          data: sanitizeConfig(error.config.__caresyncRawData ?? error.config.data),
           headers: headers
         });
         
