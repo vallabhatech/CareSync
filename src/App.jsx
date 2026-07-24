@@ -46,6 +46,7 @@ import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
+import AmbulanceBooking from './pages/AmbulanceBooking';
 
 
 // Navigation targets. Labels are resolved at render time via i18n keys
@@ -56,6 +57,7 @@ const NAV_LINKS = [
   { key: 'symptomChecker', to: '/symptom-checker' },
   { key: 'clinicsNearby', to: '/clinics-nearby' },
   { key: 'telehealth', to: '/telehealth' },
+  { key: 'ambulance', to: '/ambulance-booking' },
   { key: 'settings', to: '/settings' },
   { key: 'recommendations', to: '/recommendations' },
 ];
@@ -345,6 +347,7 @@ function App() {
           <Route path="/symptom-checker" element={<SymptomChecker />} />
           <Route path="/clinics-nearby" element={<ClinicsNearby />} />
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
+          <Route path="/ambulance-booking" element={<AmbulanceBooking />} />
           <Route path="/health-metrics" element={<HealthMetrics />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
