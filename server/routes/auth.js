@@ -14,7 +14,7 @@ const qrcode = require('qrcode');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 const { logSecurityEvent, detectSuspiciousLogin } = require('../utils/securityLogger');
-const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
+const { EVENT_TYPES, SEVERITY } = require('../utils/securityEventTypes');
 
 const generateToken = (userId) => {
   const jwtSecret = process.env.JWT_SECRET;

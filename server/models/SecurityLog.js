@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { EVENT_TYPE_VALUES, SEVERITY, SEVERITY_VALUES } = require('../utils/securityEvents');
+const { EVENT_TYPE_VALUES, SEVERITY, SEVERITY_VALUES } = require('../utils/securityEventTypes');
 
 const SecurityLogSchema = new mongoose.Schema({
   eventType: {

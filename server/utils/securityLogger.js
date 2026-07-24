@@ -2,7 +2,7 @@ const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
 const SecurityLog = require('../models/SecurityLog');
-const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
+const { EVENT_TYPES, SEVERITY } = require('../utils/securityEventTypes');
 
 // ---------------------------------------------------------------------------
 // winston logger (real-time visibility)

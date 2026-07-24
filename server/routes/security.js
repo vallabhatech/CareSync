@@ -3,7 +3,7 @@ const router = express.Router();
 const SecurityLog = require('../models/SecurityLog');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
-const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
+const { EVENT_TYPES, SEVERITY } = require('../utils/securityEventTypes');
 
 // Every route below requires an authenticated admin.
 router.use(authMiddleware, adminMiddleware);
