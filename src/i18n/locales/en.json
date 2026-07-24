@@ -21,7 +21,8 @@
     "viewProfile": "View Profile",
     "logOut": "Log Out",
     "logIn": "Log In",
-    "telehealth": "Telehealth"
+    "telehealth": "Telehealth",
+    "reviews": "Doctor Reviews"
   },
   "dashboard": {
     "greetingMorning": "Good Morning",
