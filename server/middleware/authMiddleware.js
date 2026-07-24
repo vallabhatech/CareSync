@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { logSecurityEvent } = require('../utils/securityLogger');
+const { logSecurityEvent } = require('../utils/securityAuditLogger');
 const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
 
 const authMiddleware = async (req, res, next) => {
