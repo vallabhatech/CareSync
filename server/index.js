@@ -140,7 +140,11 @@ if (!dbUri) {
   process.exit(1);
 }
 mongoose.connect(dbUri)
-  .then(() => console.log('MongoDB connected successfully'))
+  .then(() => {
+    console.log('MongoDB connected successfully');
+    // Initialize background workers
+    require('./services/wearableSyncWorker');
+  })
   .catch((err) => {
     console.error('MongoDB connection error:', err.message);
     console.log('Ensure MongoDB service is running locally or check MONGODB_URI in server/.env');
@@ -158,6 +162,7 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/risk-assessment', require('./routes/riskAssessment'));
 app.use('/api/family', require('./routes/family'));
 app.use('/api/security', require('./routes/security'));
+app.use('/api/wearables', require('./routes/wearables'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {

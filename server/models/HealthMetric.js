@@ -34,6 +34,19 @@ const HealthMetricSchema = new mongoose.Schema({
     type: Number, // SpO2 percentage
     default: null,
   },
+  steps: {
+    type: Number,
+    default: null,
+  },
+  sleepHours: {
+    type: Number,
+    default: null,
+  },
+  source: {
+    type: String,
+    enum: ['manual', 'google-fit', 'apple-health', 'fitbit'],
+    default: 'manual',
+  },
   notes: {
     type: String,
     default: '',
