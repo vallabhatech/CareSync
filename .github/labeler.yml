@@ -1,0 +1,34 @@
+# Labeler configuration for CareSync
+# Automatically adds labels to PRs based on changed file paths
+
+# Backend
+backend:
+- changed-files:
+  - any-glob-to-any-file: server/**/*
+
+# Frontend
+frontend:
+- changed-files:
+  - any-glob-to-any-file: src/**/*
+
+# Documentation
+documentation:
+- changed-files:
+  - any-glob-to-any-file:
+    - '**/*.md'
+    - docs/**/*
+
+# Testing
+testing:
+- changed-files:
+  - any-glob-to-any-file:
+    - '**/*.test.*'
+    - '**/*.spec.*'
+    - '**/__tests__/**'
+
+# Dependencies
+dependencies:
+- changed-files:
+  - any-glob-to-any-file:
+    - package.json
+    - package-lock.json
