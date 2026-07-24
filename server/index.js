@@ -158,6 +158,7 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/risk-assessment', require('./routes/riskAssessment'));
 app.use('/api/family', require('./routes/family'));
 app.use('/api/security', require('./routes/security'));
+app.use('/api/forums', require('./routes/forums'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
