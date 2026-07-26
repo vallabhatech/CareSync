@@ -18,17 +18,23 @@ const sanitizeUserForStorage = (userObj) => {
   if (!userObj || typeof userObj !== 'object') return null;
   const rawRole = String(userObj.role || 'Patient');
   const safeRole = ALLOWED_ROLES.includes(rawRole) ? rawRole : 'Patient';
+
+  const cleanAvatar = String(userObj.avatar || '');
+  const safeAvatar = cleanAvatar.startsWith('data:image/')
+    ? cleanAvatar
+    : cleanAvatar.replace(/[^\w.:/_-]/g, '');
+
   return {
-    id: String(userObj.id || userObj._id || ''),
-    name: String(userObj.name || ''),
-    email: String(userObj.email || ''),
+    id: String(userObj.id || userObj._id || '').replace(/[^\w-]/g, ''),
+    name: String(userObj.name || '').replace(/[^\w\s.-]/g, ''),
+    email: String(userObj.email || '').replace(/[^\w@.-]/g, ''),
     role: safeRole,
-    avatar: String(userObj.avatar || ''),
-    phone: String(userObj.phone || ''),
-    age: userObj.age ? String(userObj.age) : '',
-    bloodGroup: String(userObj.bloodGroup || ''),
-    allergies: String(userObj.allergies || ''),
-    createdAt: String(userObj.createdAt || ''),
+    avatar: safeAvatar,
+    phone: String(userObj.phone || '').replace(/[^\d+()\s-]/g, ''),
+    age: String(userObj.age || '').replace(/\D/g, ''),
+    bloodGroup: String(userObj.bloodGroup || '').replace(/[^\w+-]/g, ''),
+    allergies: String(userObj.allergies || '').replace(/[^\w\s,.-]/g, ''),
+    createdAt: String(userObj.createdAt || '').replace(/[^\w.:-]/g, ''),
   };
 };
 
