@@ -11,6 +11,7 @@ import {
   Alert,
   Grid,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import FamilyMembers from '../components/FamilyMembers';
@@ -205,9 +206,14 @@ function Profile() {
                 </Button>
               </>
             ) : (
-              <Button variant="contained" onClick={() => setEditing(true)}>
-                {t('profile:editProfile')}
-              </Button>
+              <>
+                <Button variant="contained" onClick={() => setEditing(true)}>
+                  {t('profile:editProfile')}
+                </Button>
+                <Button variant="outlined" component={Link} to="/export-report" color="secondary">
+                  Export Health Report
+                </Button>
+              </>
             )}
           </Box>
 
