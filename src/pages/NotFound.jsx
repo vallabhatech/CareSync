@@ -165,7 +165,7 @@ function NotFound() {
                 fontWeight: 600,
               }}
             >
-              {t('common:appName', 'CareSync')} {t('nav:dashboard', 'Home')}
+              {t('notfound:backToHome', 'Back to Home')}
             </Button>
           </Stack>
         </Box>

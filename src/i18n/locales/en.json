@@ -219,7 +219,13 @@
     "languageHint": "Choose the language CareSync is displayed in. Your choice is saved for next time.",
     "pushPermissionDenied": "Notification permission was denied. Please enable it in your browser settings.",
     "pushEnabledMsg": "Push notifications enabled! You will be reminded when your medicines are due.",
-    "pushDisabledMsg": "Push notifications disabled."
+    "pushDisabledMsg": "Push notifications disabled.",
+    "heroSubtitle": "Customize your account, dashboard layout, notifications, and preferences.",
+    "layoutBannersTitle": "Layout Banners & Sections",
+    "dataPrivacyDesc": "Manage your personal health data backups and cached storage preferences.",
+    "downloadBackup": "Download Data Backup",
+    "resetAppData": "Reset App Data",
+    "backupSuccess": "Personal data backup downloaded successfully."
   },
   "footer": {
     "description": "Helping users manage medications, monitor symptoms, and locate nearby healthcare services through a simple and accessible platform.",
@@ -294,6 +300,7 @@
     "symptomLabel": "Symptom Checker",
     "symptomDesc": "AI assessment of symptoms and risk levels",
     "clinicsLabel": "Clinics Nearby",
-    "clinicsDesc": "Find hospitals and doctors in your area"
+    "clinicsDesc": "Find hospitals and doctors in your area",
+    "backToHome": "Back to Home"
   }
 }

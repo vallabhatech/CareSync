@@ -4,14 +4,25 @@ import API from '../utils/api';
 
 const AuthContext = createContext(null);
 
-// Helper to sanitize user object fields before storing in browser localStorage
+/** Allowed user roles for the application. */
+const ALLOWED_ROLES = ['Patient', 'Doctor', 'Admin', 'Caregiver'];
+
+/**
+ * Sanitize a user object before storing in browser localStorage.
+ * Ensures all fields are coerced to safe string primitives and the
+ * role is validated against a known whitelist.
+ * @param {Object|null} userObj - The raw user object to sanitize.
+ * @returns {Object|null} A sanitized copy, or null if input is invalid.
+ */
 const sanitizeUserForStorage = (userObj) => {
   if (!userObj || typeof userObj !== 'object') return null;
+  const rawRole = String(userObj.role || 'Patient');
+  const safeRole = ALLOWED_ROLES.includes(rawRole) ? rawRole : 'Patient';
   return {
     id: String(userObj.id || userObj._id || ''),
     name: String(userObj.name || ''),
     email: String(userObj.email || ''),
-    role: String(userObj.role || 'Patient'),
+    role: safeRole,
     avatar: String(userObj.avatar || ''),
     phone: String(userObj.phone || ''),
     age: userObj.age ? String(userObj.age) : '',
@@ -30,7 +41,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem('caresync_token');
-      const storedUser = JSON.parse(localStorage.getItem('caresync_user') || 'null');
+      let storedUser = null;
+      try {
+        storedUser = JSON.parse(localStorage.getItem('caresync_user') || 'null');
+      } catch (e) {
+        console.warn('Corrupt caresync_user in localStorage, clearing:', e.message);
+        localStorage.removeItem('caresync_user');
+      }
 
       if (token === 'local_demo_token' || (!token && storedUser)) {
         setUser(storedUser || { name: 'Demo User', email: 'user@caresync.local', role: 'Patient' });
@@ -45,12 +62,15 @@ export function AuthProvider({ children }) {
           setUser(res.data.user);
           setIsAuthenticated(true);
         } catch (error) {
-          console.warn('Session restore via API failed, checking local backup:', error.message);
-          if (storedUser) {
+          const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error');
+          if (isNetworkError && storedUser) {
+            console.warn('Network unavailable, restoring cached session:', error.message);
             setUser(storedUser);
             setIsAuthenticated(true);
           } else {
+            console.warn('Session restore failed (server rejected token):', error.message);
             localStorage.removeItem('caresync_token');
+            localStorage.removeItem('caresync_user');
             setUser(null);
             setIsAuthenticated(false);
           }
@@ -76,8 +96,13 @@ export function AuthProvider({ children }) {
       return loggedUser;
     } catch (err) {
       if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
-        const storedUser = JSON.parse(localStorage.getItem('caresync_user') || 'null');
-        const localUser = storedUser || {
+        let cachedUser = null;
+        try {
+          cachedUser = JSON.parse(localStorage.getItem('caresync_user') || 'null');
+        } catch (e) {
+          cachedUser = null;
+        }
+        const localUser = (cachedUser && cachedUser.email === email) ? cachedUser : {
           name: email.split('@')[0] || 'User',
           email,
           role: 'Patient',
@@ -139,16 +164,14 @@ export function AuthProvider({ children }) {
       return updatedUser;
     } catch (err) {
       if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
-        setUser((prev) => {
-          const updated = prev ? { ...prev, ...updates } : { ...updates };
-          localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(updated)));
-          return updated;
-        });
-        return updates;
+        const mergedUser = user ? { ...user, ...updates } : { ...updates };
+        localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(mergedUser)));
+        setUser(mergedUser);
+        return mergedUser;
       }
       throw err;
     }
-  }, []);
+  }, [user]);
 
   const value = useMemo(() => ({
     user,

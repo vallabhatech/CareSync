@@ -227,11 +227,20 @@ export default function Settings() {
     }
   };
 
+  /** Export all CareSync user data as a downloadable JSON backup file. */
   const handleExportData = () => {
+    const safeParse = (key, fallback) => {
+      try {
+        return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+      } catch {
+        return fallback;
+      }
+    };
+
     const backupData = {
-      user: JSON.parse(localStorage.getItem('caresync_user') || '{}'),
-      medicines: JSON.parse(localStorage.getItem('caresync_medicines') || '[]'),
-      emergencyContacts: JSON.parse(localStorage.getItem('caresync_emergency_contacts') || '[]'),
+      user: safeParse('caresync_user', {}),
+      medicines: safeParse('caresync_medicines', []),
+      emergencyContacts: safeParse('caresync_emergency_contacts', []),
       dashboardSettings: getDashboardSettings(),
       emailNotifications: getEmailNotificationsEnabled(),
       pushEnabled: localStorage.getItem(PUSH_ENABLED_KEY) === 'true',
@@ -248,13 +257,20 @@ export default function Settings() {
 
     setSnackbar({
       open: true,
-      message: 'Personal data backup downloaded successfully.',
+      message: t('settings:backupSuccess', 'Personal data backup downloaded successfully.'),
       severity: 'success',
     });
   };
 
+  /** Remove only CareSync-owned localStorage keys, preserving data from other apps on this origin. */
   const handleResetConfirm = () => {
-    localStorage.clear();
+    const CARESYNC_KEYS = [
+      'caresync_token', 'caresync_user', 'caresync_medicines',
+      'caresync_emergency_contacts', 'caresync_email_notifications',
+      'caresync_sound_enabled', 'caresync_dashboard_settings',
+      'caresync_push_enabled', 'caresync_theme_mode',
+    ];
+    CARESYNC_KEYS.forEach((key) => localStorage.removeItem(key));
     setResetDialogOpen(false);
     window.location.reload();
   };
@@ -267,7 +283,7 @@ export default function Settings() {
             {t('settings:profileSettings', 'Application & Profile Settings')}
           </Typography>
           <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-            Customize your account, dashboard layout, notifications, and preferences.
+            {t('settings:heroSubtitle', 'Customize your account, dashboard layout, notifications, and preferences.')}
           </Typography>
         </Box>
 
@@ -374,7 +390,7 @@ export default function Settings() {
 
               <Card variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
                 <Typography variant="subtitle1" fontWeight={700} mb={1}>
-                  Layout Banners & Sections
+                  {t('settings:layoutBannersTitle', 'Layout Banners & Sections')}
                 </Typography>
                 <Stack spacing={1}>
                   <FormControlLabel
@@ -512,7 +528,7 @@ export default function Settings() {
                   {t('settings:tabData', 'Data & Privacy')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Manage your personal health data backups and cached storage preferences.
+                  {t('settings:dataPrivacyDesc', 'Manage your personal health data backups and cached storage preferences.')}
                 </Typography>
               </Box>
 
@@ -524,7 +540,7 @@ export default function Settings() {
                   {t('settings:exportDataHint', 'Download a backup of your profile, medicines, emergency contacts, and settings.')}
                 </Typography>
                 <Button variant="contained" color="primary" startIcon={<DownloadIcon />} onClick={handleExportData}>
-                  Download Data Backup
+                  {t('settings:downloadBackup', 'Download Data Backup')}
                 </Button>
               </Card>
 
@@ -536,7 +552,7 @@ export default function Settings() {
                   {t('settings:resetDataHint', 'Clear stored preferences and reset to default application state.')}
                 </Typography>
                 <Button variant="outlined" color="error" startIcon={<RestartIcon />} onClick={() => setResetDialogOpen(true)}>
-                  Reset App Data
+                  {t('settings:resetAppData', 'Reset App Data')}
                 </Button>
               </Card>
             </Stack>

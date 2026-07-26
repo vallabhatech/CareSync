@@ -75,7 +75,7 @@ export function setSoundNotificationsEnabled(enabled) {
 export function getDashboardSettings() {
   try {
     const stored = localStorage.getItem(DASHBOARD_SETTINGS_KEY);
-    if (!stored) return DEFAULT_DASHBOARD_SETTINGS;
+    if (!stored) return { ...DEFAULT_DASHBOARD_SETTINGS, visibleCards: { ...DEFAULT_DASHBOARD_SETTINGS.visibleCards } };
     const parsed = JSON.parse(stored);
     const parsedCards = parsed.visibleCards;
     return {
@@ -87,7 +87,7 @@ export function getDashboardSettings() {
     };
   } catch (err) {
     console.warn('Failed to parse dashboard settings:', err);
-    return DEFAULT_DASHBOARD_SETTINGS;
+    return { ...DEFAULT_DASHBOARD_SETTINGS, visibleCards: { ...DEFAULT_DASHBOARD_SETTINGS.visibleCards } };
   }
 }
 
@@ -110,6 +110,6 @@ export function setDashboardSettings(settings) {
     return updated;
   } catch (err) {
     console.error('Failed to save dashboard settings:', err);
-    return DEFAULT_DASHBOARD_SETTINGS;
+    return { ...DEFAULT_DASHBOARD_SETTINGS, visibleCards: { ...DEFAULT_DASHBOARD_SETTINGS.visibleCards } };
   }
 }
