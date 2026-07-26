@@ -7,6 +7,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import SearchIcon from "@mui/icons-material/Search";
 import PlaceIcon from "@mui/icons-material/Place";
 import SettingsIcon from "@mui/icons-material/Settings";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { useTheme } from "@mui/material/styles";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
@@ -133,6 +134,14 @@ export default function Dashboard() {
       link: "/clinics-nearby",
       icon: <PlaceIcon fontSize="large" color="primary" />,
       btn: t("dashboard:findClinics"),
+    },
+    {
+      id: "export-report",
+      title: "Health Report Export",
+      desc: "Generate and download a comprehensive PDF report of your health data.",
+      link: "/export-report",
+      icon: <PictureAsPdfIcon fontSize="large" color="primary" />,
+      btn: "Export Report",
     },
     {
       id: "profile-settings",

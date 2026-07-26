@@ -44,8 +44,10 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
+import HealthReportExport from './pages/HealthReportExport';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
+import AmbulanceBooking from './pages/AmbulanceBooking';
 
 
 // Navigation targets. Labels are resolved at render time via i18n keys
@@ -344,8 +346,10 @@ function App() {
           <Route path="/medicine-tracker" element={<MedicineTracker />} />
           <Route path="/symptom-checker" element={<SymptomChecker />} />
           <Route path="/clinics-nearby" element={<ClinicsNearby />} />
+          <Route path="/ambulance-booking" element={<AmbulanceBooking />} />
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/health-metrics" element={<HealthMetrics />} />
+          <Route path="/export-report" element={<HealthReportExport />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
