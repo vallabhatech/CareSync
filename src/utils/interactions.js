@@ -2,36 +2,109 @@
 // Matches medicine names case-insensitively and by substring.
 
 const INTERACTIONS = [
+  // High Severity Interactions
   {
     drugs: ['warfarin', 'ibuprofen'],
     severity: 'high',
-    description:
-      'Concurrent use of NSAIDs like ibuprofen with warfarin increases bleeding risk. Consult a clinician or pharmacist before combining.',
+    description: 'Concurrent use of NSAIDs like ibuprofen with warfarin significantly increases bleeding risk. Immediate consultation required.',
   },
   {
     drugs: ['aspirin', 'warfarin'],
     severity: 'high',
-    description:
-      'Aspirin can potentiate anticoagulant effects of warfarin and increase bleeding risk.',
+    description: 'Aspirin potentiates the anticoagulant effects of warfarin, massively increasing bleeding risk.',
   },
+  {
+    drugs: ['sildenafil', 'nitroglycerin'],
+    severity: 'high',
+    description: 'Combination can cause a severe, life-threatening drop in blood pressure.',
+  },
+  {
+    drugs: ['simvastatin', 'erythromycin'],
+    severity: 'high',
+    description: 'Macrolides can increase statin levels in the blood, leading to muscle toxicity and rhabdomyolysis.',
+  },
+  {
+    drugs: ['fluoxetine', 'phenelzine'],
+    severity: 'high',
+    description: 'Combining SSRIs with MAOIs can lead to a potentially fatal condition called serotonin syndrome.',
+  },
+  {
+    drugs: ['amiodarone', 'levofloxacin'],
+    severity: 'high',
+    description: 'Concurrent use may increase the risk of QT prolongation and life-threatening cardiac arrhythmias.',
+  },
+  {
+    drugs: ['methotrexate', 'ibuprofen'],
+    severity: 'high',
+    description: 'NSAIDs can decrease the renal clearance of methotrexate, causing severe toxicity.',
+  },
+  {
+    drugs: ['clonidine', 'propranolol'],
+    severity: 'high',
+    description: 'Can cause a dangerous paradoxical hypertensive response, especially if clonidine is suddenly withdrawn.',
+  },
+  // Moderate Severity Interactions
   {
     drugs: ['lisinopril', 'spironolactone'],
     severity: 'moderate',
-    description:
-      'Combination can increase potassium levels; monitor electrolytes and kidney function.',
+    description: 'Combination can increase potassium levels. Monitor electrolytes and kidney function carefully.',
   },
   {
     drugs: ['acetaminophen', 'alcohol'],
     severity: 'moderate',
-    description:
-      'Chronic alcohol use with acetaminophen increases risk of liver toxicity.',
+    description: 'Chronic alcohol use with acetaminophen increases the risk of severe liver toxicity.',
   },
+  {
+    drugs: ['omeprazole', 'clopidogrel'],
+    severity: 'moderate',
+    description: 'Omeprazole may reduce the antiplatelet effect of clopidogrel, increasing cardiovascular risk.',
+  },
+  {
+    drugs: ['levothyroxine', 'calcium'],
+    severity: 'moderate',
+    description: 'Calcium supplements can decrease the absorption of levothyroxine. Separate doses by at least 4 hours.',
+  },
+  {
+    drugs: ['ciprofloxacin', 'tizanidine'],
+    severity: 'moderate',
+    description: 'Ciprofloxacin can significantly increase tizanidine levels, leading to severe hypotension and sedation.',
+  },
+  {
+    drugs: ['lithium', 'hydrochlorothiazide'],
+    severity: 'moderate',
+    description: 'Thiazide diuretics can increase lithium levels and the risk of lithium toxicity.',
+  },
+  {
+    drugs: ['digoxin', 'amiodarone'],
+    severity: 'moderate',
+    description: 'Amiodarone increases serum digoxin concentrations. Digoxin dose reduction may be required.',
+  },
+  // Low Severity Interactions
   {
     drugs: ['metformin', 'contrast'],
     severity: 'low',
-    description:
-      'Iodinated contrast can affect kidney function; check guidance for metformin around imaging procedures.',
+    description: 'Iodinated contrast can temporarily affect kidney function; check guidance for metformin around imaging procedures.',
   },
+  {
+    drugs: ['ibuprofen', 'citalopram'],
+    severity: 'low',
+    description: 'May slightly increase the risk of gastrointestinal bleeding. Monitor for signs of unusual bruising or bleeding.',
+  },
+  {
+    drugs: ['diphenhydramine', 'alcohol'],
+    severity: 'low',
+    description: 'Combination can enhance CNS depression, causing increased drowsiness and impaired motor skills.',
+  },
+  {
+    drugs: ['vitamin c', 'iron'],
+    severity: 'low',
+    description: 'Beneficial interaction: Vitamin C actually enhances the absorption of iron supplements.',
+  },
+  {
+    drugs: ['grapefruit', 'atorvastatin'],
+    severity: 'low',
+    description: 'Grapefruit juice may increase statin levels slightly, though usually not clinically significant in small amounts.',
+  }
 ];
 
 function normalize(name) {
