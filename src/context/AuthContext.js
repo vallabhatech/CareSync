@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
           setUser(res.data.user);
           setIsAuthenticated(true);
         } catch (error) {
-          const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error');
+          const isNetworkError = error.code === 'ERR_NETWORK' || error.message?.includes('Network Error');
           if (isNetworkError && storedUser) {
             console.warn('Network unavailable, restoring cached session:', error.message);
             setUser(storedUser);
@@ -86,16 +86,16 @@ export function AuthProvider({ children }) {
     try {
       const res = await API.post('/api/auth/login', { email, password });
       const { token, user: loggedUser } = res.data;
-      const cleanToken = typeof token === 'string' ? token.replace(/[^\w.-]/g, '') : '';
-      if (cleanToken && /^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(cleanToken)) {
-        localStorage.setItem('caresync_token', cleanToken);
+      if (typeof token !== 'string' || !/^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(token)) {
+        throw new Error('Server returned an invalid or missing authentication token.');
       }
+      localStorage.setItem('caresync_token', token);
       setUser(loggedUser);
       localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(loggedUser)));
       setIsAuthenticated(true);
       return loggedUser;
     } catch (err) {
-      if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+      if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
         let cachedUser = null;
         try {
           cachedUser = JSON.parse(localStorage.getItem('caresync_user') || 'null');
@@ -122,16 +122,16 @@ export function AuthProvider({ children }) {
     try {
       const res = await API.post('/api/auth/register', { name, email, password });
       const { token, user: loggedUser } = res.data;
-      const cleanToken = typeof token === 'string' ? token.replace(/[^\w.-]/g, '') : '';
-      if (cleanToken && /^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(cleanToken)) {
-        localStorage.setItem('caresync_token', cleanToken);
+      if (typeof token !== 'string' || !/^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(token)) {
+        throw new Error('Server returned an invalid or missing authentication token.');
       }
+      localStorage.setItem('caresync_token', token);
       setUser(loggedUser);
       localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(loggedUser)));
       setIsAuthenticated(true);
       return loggedUser;
     } catch (err) {
-      if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+      if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
         const localUser = {
           name,
           email,
@@ -163,7 +163,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(updatedUser)));
       return updatedUser;
     } catch (err) {
-      if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+      if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
         const mergedUser = user ? { ...user, ...updates } : { ...updates };
         localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(mergedUser)));
         setUser(mergedUser);
