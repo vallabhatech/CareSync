@@ -32,7 +32,7 @@ export default function Dashboard() {
   const [quote, setQuote] = useState(healthQuotes[0]);
   const [todayCount, setTodayCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
-  const [dashboardSettings, setDashboardSettingsState] = useState(() => getDashboardSettings());
+  const [dashboardSettings, setDashboardSettings] = useState(() => getDashboardSettings());
 
   useEffect(() => {
     setQuote(healthQuotes[Math.floor(Math.random() * healthQuotes.length)]);
@@ -40,7 +40,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const handleSettingsUpdate = () => {
-      setDashboardSettingsState(getDashboardSettings());
+      setDashboardSettings(getDashboardSettings());
     };
     window.addEventListener("storage", handleSettingsUpdate);
     window.addEventListener("caresync_settings_updated", handleSettingsUpdate);
@@ -183,9 +183,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div
+        <nav
           className="dashboard-features"
-          role="navigation"
           aria-label="Dashboard features"
         >
           {visibleFeatures.map((feature) => (
@@ -202,7 +201,7 @@ export default function Dashboard() {
               </Link>
             </div>
           ))}
-        </div>
+        </nav>
       </div>
       <style>{`
         .dashboard-bg {

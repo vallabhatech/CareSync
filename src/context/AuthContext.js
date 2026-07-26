@@ -4,6 +4,23 @@ import API from '../utils/api';
 
 const AuthContext = createContext(null);
 
+// Helper to sanitize user object fields before storing in browser localStorage
+const sanitizeUserForStorage = (userObj) => {
+  if (!userObj || typeof userObj !== 'object') return null;
+  return {
+    id: String(userObj.id || userObj._id || ''),
+    name: String(userObj.name || ''),
+    email: String(userObj.email || ''),
+    role: String(userObj.role || 'Patient'),
+    avatar: String(userObj.avatar || ''),
+    phone: String(userObj.phone || ''),
+    age: userObj.age ? String(userObj.age) : '',
+    bloodGroup: String(userObj.bloodGroup || ''),
+    allergies: String(userObj.allergies || ''),
+    createdAt: String(userObj.createdAt || ''),
+  };
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -54,7 +71,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem('caresync_token', cleanToken);
       }
       setUser(loggedUser);
-      localStorage.setItem('caresync_user', JSON.stringify(loggedUser));
+      localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(loggedUser)));
       setIsAuthenticated(true);
       return loggedUser;
     } catch (err) {
@@ -67,7 +84,7 @@ export function AuthProvider({ children }) {
           createdAt: new Date().toISOString(),
         };
         localStorage.setItem('caresync_token', 'local_demo_token');
-        localStorage.setItem('caresync_user', JSON.stringify(localUser));
+        localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(localUser)));
         setUser(localUser);
         setIsAuthenticated(true);
         return localUser;
@@ -85,7 +102,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem('caresync_token', cleanToken);
       }
       setUser(loggedUser);
-      localStorage.setItem('caresync_user', JSON.stringify(loggedUser));
+      localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(loggedUser)));
       setIsAuthenticated(true);
       return loggedUser;
     } catch (err) {
@@ -97,7 +114,7 @@ export function AuthProvider({ children }) {
           createdAt: new Date().toISOString(),
         };
         localStorage.setItem('caresync_token', 'local_demo_token');
-        localStorage.setItem('caresync_user', JSON.stringify(localUser));
+        localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(localUser)));
         setUser(localUser);
         setIsAuthenticated(true);
         return localUser;
@@ -118,13 +135,13 @@ export function AuthProvider({ children }) {
       const res = await API.put('/api/auth/profile', updates);
       const { user: updatedUser } = res.data;
       setUser(updatedUser);
-      localStorage.setItem('caresync_user', JSON.stringify(updatedUser));
+      localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(updatedUser)));
       return updatedUser;
     } catch (err) {
       if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
         setUser((prev) => {
-          const updated = { ...(prev || {}), ...updates };
-          localStorage.setItem('caresync_user', JSON.stringify(updated));
+          const updated = prev ? { ...prev, ...updates } : { ...updates };
+          localStorage.setItem('caresync_user', JSON.stringify(sanitizeUserForStorage(updated)));
           return updated;
         });
         return updates;

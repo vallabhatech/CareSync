@@ -77,13 +77,13 @@ export function getDashboardSettings() {
     const stored = localStorage.getItem(DASHBOARD_SETTINGS_KEY);
     if (!stored) return DEFAULT_DASHBOARD_SETTINGS;
     const parsed = JSON.parse(stored);
+    const parsedCards = parsed.visibleCards;
     return {
       ...DEFAULT_DASHBOARD_SETTINGS,
       ...parsed,
-      visibleCards: {
-        ...DEFAULT_DASHBOARD_SETTINGS.visibleCards,
-        ...(parsed.visibleCards || {}),
-      },
+      visibleCards: parsedCards
+        ? { ...DEFAULT_DASHBOARD_SETTINGS.visibleCards, ...parsedCards }
+        : DEFAULT_DASHBOARD_SETTINGS.visibleCards,
     };
   } catch (err) {
     console.warn('Failed to parse dashboard settings:', err);
@@ -98,13 +98,13 @@ export function getDashboardSettings() {
  */
 export function setDashboardSettings(settings) {
   try {
+    const customCards = settings?.visibleCards;
     const updated = {
       ...DEFAULT_DASHBOARD_SETTINGS,
       ...settings,
-      visibleCards: {
-        ...DEFAULT_DASHBOARD_SETTINGS.visibleCards,
-        ...(settings?.visibleCards || {}),
-      },
+      visibleCards: customCards
+        ? { ...DEFAULT_DASHBOARD_SETTINGS.visibleCards, ...customCards }
+        : DEFAULT_DASHBOARD_SETTINGS.visibleCards,
     };
     localStorage.setItem(DASHBOARD_SETTINGS_KEY, JSON.stringify(updated));
     return updated;

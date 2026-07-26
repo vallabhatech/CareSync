@@ -76,7 +76,7 @@ export default function Settings() {
   const [pushEnabled, setPushEnabled] = useState(
     () => localStorage.getItem(PUSH_ENABLED_KEY) === 'true'
   );
-  const [soundEnabled, setSoundEnabledState] = useState(() =>
+  const [soundEnabled, setSoundEnabled] = useState(() =>
     getSoundNotificationsEnabled()
   );
 
@@ -126,7 +126,7 @@ export default function Settings() {
 
   const handleSoundToggle = () => {
     const newValue = !soundEnabled;
-    setSoundEnabledState(newValue);
+    setSoundEnabled(newValue);
     setSoundNotificationsEnabled(newValue);
   };
 
