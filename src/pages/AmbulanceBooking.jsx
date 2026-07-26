@@ -6,16 +6,41 @@ export default function AmbulanceBooking() {
   const [address, setAddress] = useState('');
   const [emergencyType, setEmergencyType] = useState('');
   const [bookingStatus, setBookingStatus] = useState('idle');
+  const [driverData, setDriverData] = useState(null);
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!address) {
       alert('Please enter your pickup address.');
       return;
     }
     setBookingStatus('loading');
-    setTimeout(() => {
-      setBookingStatus('confirmed');
-    }, 1500);
+    
+    try {
+      // Simulated dispatch-service request
+      const response = await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            ok: true,
+            data: {
+              driverName: 'John Doe',
+              vehicleNumber: 'AP-12-CD-5678',
+              etaMinutes: 12,
+              status: 'On the way'
+            }
+          });
+        }, 1500);
+      });
+      
+      if (response.ok) {
+        setDriverData(response.data);
+        setBookingStatus('confirmed');
+      } else {
+        throw new Error('Failed to dispatch ambulance');
+      }
+    } catch (error) {
+      alert('Error: Unable to dispatch ambulance. Please try again or call emergency services immediately.');
+      setBookingStatus('idle');
+    }
   };
 
   return (
@@ -28,10 +53,29 @@ export default function AmbulanceBooking() {
         Book an ambulance immediately. Our nearest driver will be dispatched.
       </Typography>
 
-      {bookingStatus === 'confirmed' ? (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          Ambulance Dispatched! The driver will arrive at <strong>{address}</strong> shortly.
-        </Alert>
+      {bookingStatus === 'confirmed' && driverData ? (
+        <Card sx={{ p: 2, boxShadow: 3, mb: 2, textAlign: 'left' }}>
+          <CardContent>
+            <Alert severity="success" sx={{ mb: 3 }}>
+              Ambulance Dispatched! The driver will arrive at <strong>{address}</strong> shortly.
+            </Alert>
+            <Typography variant="h6" gutterBottom>
+              Live Tracking Details
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 1 }}>
+              <strong>Driver Name:</strong> {driverData.driverName}
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 1 }}>
+              <strong>Vehicle Number:</strong> {driverData.vehicleNumber}
+            </Typography>
+            <Typography variant="body1" color="error" sx={{ mt: 1 }}>
+              <strong>Estimated Time of Arrival (ETA):</strong> {driverData.etaMinutes} minutes
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 1 }}>
+              <strong>Status:</strong> {driverData.status}
+            </Typography>
+          </CardContent>
+        </Card>
       ) : (
         <Card sx={{ p: 2, boxShadow: 3 }}>
           <CardContent>
