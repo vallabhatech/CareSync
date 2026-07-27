@@ -50,8 +50,10 @@ export default function Dashboard() {
   const [todayCount, setTodayCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
 
+  const getSecureRandom = () => window.crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
+
   useEffect(() => {
-    setQuote(healthQuotes[Math.floor(Math.random() * healthQuotes.length)]);
+    setQuote(healthQuotes[Math.floor(getSecureRandom() * healthQuotes.length)]);
     // eslint-disable-next-line
   }, []);
 
@@ -82,7 +84,7 @@ export default function Dashboard() {
   }, [isAuthenticated]);
 
   const generateQuote = () => {
-    let idx = Math.floor(Math.random() * healthQuotes.length);
+    let idx = Math.floor(getSecureRandom() * healthQuotes.length);
     setQuote(healthQuotes[idx]);
   };
 
