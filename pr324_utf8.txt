@@ -1,0 +1,226 @@
+﻿author:	vercel
+association:	none
+edited:	false
+status:	none
+--
+@rohitkumarnaidu is attempting to deploy a commit to the **vallabhatech's projects** Team on [Vercel](https://vercel.com).
+
+A member of the Team first needs to [authorize it](https://vercel.com/git/authorize?team=vallabhatech's%20projects&slug=vallabhatechs-projects&teamId=team_XEvLqU3kloqiTS3SEQgSVKnM&type=github&job=%7B%22headInfo%22%3A%7B%22sha%22%3A%2279c23057d3a4b999c00f5195f6e8d293258792ab%22%7D%2C%22id%22%3A%22QmPrkzwRHGPMqfeoBb19DfA5TQFvuTSJuoy858dGZT1bKF%22%2C%22org%22%3A%22vallabhatech%22%2C%22prId%22%3A324%2C%22repo%22%3A%22CareSync%22%7D).
+
+
+--
+author:	Copilot (AI)
+association:	none
+edited:	false
+status:	commented
+--
+Copilot was unable to review this pull request because the user who requested the review has reached their quota limit.
+--
+author:	coderabbitai
+association:	none
+edited:	true
+status:	none
+--
+<!-- This is an auto-generated comment: summarize by coderabbit.ai -->
+<!-- review_stack_entry_start -->
+
+[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/vallabhatech/CareSync/pull/324?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)
+
+<!-- review_stack_entry_end -->
+<!-- walkthrough_start -->
+
+<details>
+<summary>📝 Walkthrough</summary>
+
+## Walkthrough
+
+Adds an ambulance booking page with address validation, loading and confirmation states, plus localized navigation and a React Router route at `/ambulance-booking`.
+
+### Changes
+
+**Ambulance booking**
+
+|Layer / File(s)|Summary|
+|---|---|
+|**Ambulance booking form and status flow** <br> `src/pages/AmbulanceBooking.jsx`|Adds pickup address and emergency detail fields, validates the address, transitions booking status from idle to loading to confirmed, and renders the corresponding form or dispatch alert.|
+|**Navigation and route integration** <br> `src/i18n/locales/en.json`, `src/App.jsx`|Adds the “Ambulance Booking” navigation label, `/ambulance-booking` navigation target, page import, and route.|
+
+**Estimated code review effort:** 2 (Simple) | ~10 minutes
+
+**Suggested reviewers:** `copilot`
+
+### Sequence Diagram(s)
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant ReactRouter
+  participant AmbulanceBooking
+  participant BookingTimer
+  User->>ReactRouter: Navigate to /ambulance-booking
+  ReactRouter->>AmbulanceBooking: Render booking page
+  User->>AmbulanceBooking: Submit pickup address and emergency details
+  AmbulanceBooking->>BookingTimer: Schedule confirmation transition
+  BookingTimer->>AmbulanceBooking: Set status to confirmed
+  AmbulanceBooking-->>User: Display dispatch confirmation
+```
+
+</details>
+
+<!-- walkthrough_end -->
+<!-- pre_merge_checks_walkthrough_start -->
+
+<details>
+<summary>🚥 Pre-merge checks | ✅ 4 | ❌ 1</summary>
+
+### ❌ Failed checks (1 warning)
+
+|      Check name     | Status     | Explanation                                                                                                                | Resolution                                                                                                                          |
+| :-----------------: | :--------- | :------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| Linked Issues check | ⚠️ Warning | The PR adds an ambulance booking page and route, but it does not implement the real-time tracking requested in issue `#157`. | Add real-time ambulance tracking to the booking flow, or clarify that tracking is handled elsewhere if this PR only covers booking. |
+
+<details>
+<summary>✅ Passed checks (4 passed)</summary>
+
+|         Check name         | Status   | Explanation                                                                                                    |
+| :------------------------: | :------- | :------------------------------------------------------------------------------------------------------------- |
+|      Description Check     | ✅ Passed | Check skipped - CodeRabbit’s high-level summary is enabled.                                                    |
+|         Title check        | ✅ Passed | The title is concise and accurately reflects the main change: adding ambulance booking.                        |
+| Out of Scope Changes check | ✅ Passed | The changes stay focused on ambulance booking UI, routing, and localization with no clear unrelated additions. |
+|     Docstring Coverage     | ✅ Passed | No functions found in the changed files to evaluate docstring coverage. Skipping docstring coverage check.     |
+
+</details>
+
+</details>
+
+<!-- pre_merge_checks_walkthrough_end -->
+<!-- finishing_touch_checkbox_start -->
+
+<details>
+<summary>✨ Finishing Touches</summary>
+
+<details>
+<summary>🧪 Generate unit tests (beta)</summary>
+
+- [ ] <!-- {"checkboxId": "f47ac10b-58cc-4372-a567-0e02b2c3d479", "radioGroupId": "utg-output-choice-group-unknown_comment_id"} -->   Create PR with unit tests
+
+</details>
+
+</details>
+
+<!-- finishing_touch_checkbox_end -->
+<!-- tips_start -->
+
+---
+
+Thanks for using [CodeRabbit](https://coderabbit.ai?utm_source=oss&utm_medium=github&utm_campaign=vallabhatech/CareSync&utm_content=324)! It's free for OSS, and your support helps us grow. If you like it, consider giving us a shout-out.
+
+<details>
+<summary>❤️ Share</summary>
+
+- [X](https://twitter.com/intent/tweet?text=I%20just%20used%20%40coderabbitai%20for%20my%20code%20review%2C%20and%20it%27s%20fantastic%21%20It%27s%20free%20for%20OSS%20and%20offers%20a%20free%20trial%20for%20the%20proprietary%20code.%20Check%20it%20out%3A&url=https%3A//coderabbit.ai)
+- [Mastodon](https://mastodon.social/share?text=I%20just%20used%20%40coderabbitai%20for%20my%20code%20review%2C%20and%20it%27s%20fantastic%21%20It%27s%20free%20for%20OSS%20and%20offers%20a%20free%20trial%20for%20the%20proprietary%20code.%20Check%20it%20out%3A%20https%3A%2F%2Fcoderabbit.ai)
+- [Reddit](https://www.reddit.com/submit?title=Great%20tool%20for%20code%20review%20-%20CodeRabbit&text=I%20just%20used%20CodeRabbit%20for%20my%20code%20review%2C%20and%20it%27s%20fantastic%21%20It%27s%20free%20for%20OSS%20and%20offers%20a%20free%20trial%20for%20proprietary%20code.%20Check%20it%20out%3A%20https%3A//coderabbit.ai)
+- [LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcoderabbit.ai&mini=true&title=Great%20tool%20for%20code%20review%20-%20CodeRabbit&summary=I%20just%20used%20CodeRabbit%20for%20my%20code%20review%2C%20and%20it%27s%20fantastic%21%20It%27s%20free%20for%20OSS%20and%20offers%20a%20free%20trial%20for%20proprietary%20code)
+
+</details>
+
+
+<sub>Comment `@coderabbitai help` to get the list of available commands.</sub>
+
+<!-- tips_end -->
+--
+author:	coderabbitai
+association:	none
+edited:	false
+status:	commented
+--
+**Actionable comments posted: 1**
+
+<details>
+<summary>🤖 Prompt for all review comments with AI agents</summary>
+
+```
+Verify each finding against current code. Fix only still-valid issues, skip the
+rest with a brief reason, keep changes minimal, and validate.
+
+Inline comments:
+In `@src/pages/AmbulanceBooking.jsx`:
+- Around line 10-18: Replace the simulated setTimeout confirmation in
+handleBooking with a dispatch-service request that submits the validated address
+and emergencyType. Set booking status to confirmed only after a successful
+response, retain the returned booking and driver data, and use that data as the
+source for real-time ambulance tracking; handle request failures without
+reporting a false dispatch.
+```
+
+</details>
+
+<details>
+<summary>🪄 Autofix (Beta)</summary>
+
+Fix all unresolved CodeRabbit comments on this PR:
+
+- [ ] <!-- {"checkboxId": "4b0d0e0a-96d7-4f10-b296-3a18ea78f0b9"} --> Push a commit to this branch (recommended)
+- [ ] <!-- {"checkboxId": "ff5b1114-7d8c-49e6-8ac1-43f82af23a33"} --> Create a new PR with the fixes
+
+</details>
+
+---
+
+<details>
+<summary>ℹ️ Review info</summary>
+
+<details>
+<summary>⚙️ Run configuration</summary>
+
+**Configuration used**: defaults
+
+**Review profile**: CHILL
+
+**Plan**: Pro Plus
+
+**Run ID**: `bd911c20-c1d2-4bec-9c80-a6fe3b6131cc`
+
+</details>
+
+<details>
+<summary>📥 Commits</summary>
+
+Reviewing files that changed from the base of the PR and between 1045be3a59b6f62d8d32d0ac747eb0a6b291afb8 and 79c23057d3a4b999c00f5195f6e8d293258792ab.
+
+</details>
+
+<details>
+<summary>📒 Files selected for processing (3)</summary>
+
+* `src/App.jsx`
+* `src/i18n/locales/en.json`
+* `src/pages/AmbulanceBooking.jsx`
+
+</details>
+
+</details>
+
+<!-- This is an auto-generated comment by CodeRabbit for review status -->
+--
+author:	sonarqubecloud
+association:	none
+edited:	false
+status:	none
+--
+## [![Quality Gate Passed](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/checks/QualityGateBadge/qg-passed-20px.png 'Quality Gate Passed')](https://sonarcloud.io/dashboard?id=vallabhatech_CareSync&pullRequest=324) **Quality Gate passed**  
+Issues  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed-16px.png '') [0 New issues](https://sonarcloud.io/project/issues?id=vallabhatech_CareSync&pullRequest=324&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/accepted-16px.png '') [0 Accepted issues](https://sonarcloud.io/project/issues?id=vallabhatech_CareSync&pullRequest=324&issueStatuses=ACCEPTED)
+
+Measures  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed-16px.png '') [0 Security Hotspots](https://sonarcloud.io/project/security_hotspots?id=vallabhatech_CareSync&pullRequest=324&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed-16px.png '') [0.0% Coverage on New Code](https://sonarcloud.io/component_measures?id=vallabhatech_CareSync&pullRequest=324&metric=new_coverage&view=list)  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed-16px.png '') [0.0% Duplication on New Code](https://sonarcloud.io/component_measures?id=vallabhatech_CareSync&pullRequest=324&metric=new_duplicated_lines_density&view=list)  
+  
+<!-- sqra-placement-anchor -->
+[See analysis details on SonarQube Cloud](https://sonarcloud.io/dashboard?id=vallabhatech_CareSync&pullRequest=324)
+
+
+--
