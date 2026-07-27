@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useToast } from './context/ToastContext';
 import {
   AppBar,
   Toolbar,
@@ -23,6 +24,8 @@ import {
   Menu as MenuIcon,
   LocalHospital as LocalHospitalIcon,
   ArrowUpward as ArrowUpwardIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
 } from '@mui/icons-material';
 import { Link, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import '@fontsource/roboto/900.css';
@@ -32,6 +35,7 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useThemeMode } from './context/ThemeContext';
 import Dashboard from './pages/Dashboard';
 import MedicineTracker from './pages/MedicineTracker';
 import SymptomChecker from './pages/SymptomChecker';
@@ -170,10 +174,13 @@ function Navbar() {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const trigger = useScrollTrigger({ threshold: 80 });
   const { isAuthenticated, user, logout } = useAuth();
+  const { mode, toggleTheme } = useThemeMode();
   const navigate = useNavigate();
+  const isDarkMode = mode === 'dark';
 
   const handleLogout = () => {
     logout();
+    addToast('Logged out successfully', 'info');
     navigate('/login');
   };
 
@@ -223,6 +230,16 @@ function Navbar() {
               {t(`nav:${link.key}`)}
             </Button>
           ))}
+          <Tooltip title={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}>
+            <IconButton
+              color="inherit"
+              onClick={toggleTheme}
+              aria-label={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+              sx={{ color: 'inherit' }}
+            >
+              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+          </Tooltip>
           {isAuthenticated && user ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Tooltip title={t('nav:viewProfile')}>
@@ -270,6 +287,26 @@ function Navbar() {
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Box sx={{ width: 220 }}>
           <List>
+            <ListItem>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                <Tooltip title={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}>
+                  <IconButton
+                    color="inherit"
+                    onClick={() => {
+                      toggleTheme();
+                      setDrawerOpen(false);
+                    }}
+                    aria-label={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+                    sx={{ color: 'primary.main' }}
+                  >
+                    {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                  </IconButton>
+                </Tooltip>
+                <Typography variant="body2" fontWeight={600}>
+                  {isDarkMode ? 'Light mode' : 'Dark mode'}
+                </Typography>
+              </Box>
+            </ListItem>
             {NAV_LINKS.map(link => (
               <ListItem
                 key={link.key}
@@ -323,32 +360,27 @@ function RequireAuth({ children, requireMod }) {
 function App() {
   return (
     <AuthProvider>
-      <Navbar />
-      <div style={{ paddingTop: 80, minHeight: '100vh' }}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/medicine-tracker" element={<MedicineTracker />} />
-          <Route path="/symptom-checker" element={<SymptomChecker />} />
-          <Route path="/clinics-nearby" element={<ClinicsNearby />} />
-          <Route path="/dosage-calculator" element={<DosageCalculator />} />
-          <Route path="/health-metrics" element={<HealthMetrics />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/forums" element={<ForumsDashboard />} />
-          <Route path="/forums/category/:categoryId" element={<TopicList />} />
-          <Route path="/forums/topic/:topicId" element={<TopicView />} />
-          <Route path="/forums/moderation" element={
-            <RequireAuth requireMod>
-              <ModerationDashboard />
-            </RequireAuth>
-          } />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
-      <ScrollToTopButton />
-      <Footer />
+      <ToastProvider>
+        <Navbar />
+        <div style={{ paddingTop: 80, minHeight: '100vh' }}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/medicine-tracker" element={<MedicineTracker />} />
+            <Route path="/symptom-checker" element={<SymptomChecker />} />
+            <Route path="/clinics-nearby" element={<ClinicsNearby />} />
+            <Route path="/dosage-calculator" element={<DosageCalculator />} />
+            <Route path="/health-metrics" element={<HealthMetrics />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+        <ScrollToTopButton />
+        <Footer />
+        <ToastContainer />
+      </ToastProvider>
     </AuthProvider>
   );
 }

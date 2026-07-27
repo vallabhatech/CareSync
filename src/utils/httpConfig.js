@@ -9,7 +9,9 @@ const parseEnvLimit = (envVar, fallback) => {
 export const DEFAULT_MAX_CONTENT_LENGTH = parseEnvLimit('REACT_APP_MAX_CONTENT_LENGTH', 5 * 1024 * 1024); // 5 MB
 export const DEFAULT_MAX_BODY_LENGTH = parseEnvLimit('REACT_APP_MAX_BODY_LENGTH', 5 * 1024 * 1024); // 5 MB
 
-export default {
+const httpConfig = {
   DEFAULT_MAX_CONTENT_LENGTH,
   DEFAULT_MAX_BODY_LENGTH,
 };
+
+export default httpConfig;

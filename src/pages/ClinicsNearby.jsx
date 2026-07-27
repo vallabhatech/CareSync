@@ -571,8 +571,8 @@ export default function ClinicsNearby() {
                   size="small"
                   color="primary"
                   sx={{
-                    background: '#fff',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    background: theme.palette.background.paper,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                     borderRadius: 2,
                   }}
                 >
@@ -674,9 +674,9 @@ export default function ClinicsNearby() {
                     sx={{
                       mb: 3,
                       borderRadius: 3,
-                      background: '#f5f6fa',
+                      background: theme.palette.mode === 'dark' ? theme.palette.grey[900] : '#f5f6fa',
                       borderLeft: '6px solid #1976d2',
-                      boxShadow: '0 2px 12px #1976d222',
+                      boxShadow: '0 2px 12px rgba(25, 118, 210, 0.16)',
                     }}
                   >
                     <ListItem
@@ -731,7 +731,7 @@ export default function ClinicsNearby() {
                           fontWeight: 600,
                           borderColor: '#1976d2',
                           color: '#1976d2',
-                          '&:hover': { background: '#e3eafc' },
+                          '&:hover': { background: theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.16)' : '#e3eafc' },
                         }}
                       >
                         {t('clinics:viewOnMap')}
@@ -751,7 +751,7 @@ export default function ClinicsNearby() {
 
           {isAuthenticated && (
             <Grid item xs={12} md={5}>
-              <Box sx={{ borderLeft: { md: '1px solid #e0e0e0' }, pl: { md: 4 }, minHeight: '100%' }}>
+              <Box sx={{ borderLeft: { md: `1px solid ${theme.palette.divider}` }, pl: { md: 4 }, minHeight: '100%' }}>
                 <Typography variant="h5" fontWeight={800} color="#1976d2" mb={2} display="flex" alignItems="center" gap={1}>
                   ⭐ Favorite Clinics
                 </Typography>
@@ -770,7 +770,7 @@ export default function ClinicsNearby() {
                           borderRadius: 2,
                           p: 2,
                           borderLeft: '4px solid #fbc02d',
-                          background: '#fcfdfe',
+                          background: theme.palette.mode === 'dark' ? theme.palette.grey[900] : '#fcfdfe',
                         }}
                       >
                         <Typography variant="subtitle1" fontWeight={700} color="primary" sx={{ lineHeight: 1.2, mb: 0.5 }}>
@@ -823,12 +823,12 @@ export default function ClinicsNearby() {
                         sx={{
                           borderRadius: 4,
                           textTransform: 'none',
-                          color: '#555',
-                          borderColor: '#b0bec5',
+                          color: theme.palette.text.secondary,
+                          borderColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#b0bec5',
                           fontSize: '0.8rem',
                           py: 0.5,
                           px: 1.5,
-                          '&:hover': { borderColor: '#1976d2', color: '#1976d2', background: '#f4f8fb' },
+                          '&:hover': { borderColor: '#1976d2', color: '#1976d2', background: theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.14)' : '#f4f8fb' },
                         }}
                       >
                         {search.query}
@@ -845,15 +845,15 @@ export default function ClinicsNearby() {
       <style>{`
         .clinics-bg {
           min-height: 100vh;
-          background: linear-gradient(135deg, #f4f8fb 0%, #e3eafc 100%);
-          color: #222;
+          background: linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.mode === 'dark' ? '#1e293b' : '#e3eafc'} 100%);
+          color: ${theme.palette.text.primary};
           padding: 40px 0;
         }
 
         .clinics-container {
           max-width: 1000px;
           margin: 0 auto;
-          background: #fff;
+          background: ${theme.palette.background.paper};
           border-radius: 18px;
           box-shadow: 0 4px 32px 0 rgba(25, 118, 210, 0.08);
           padding: 36px 22px 28px 22px;
@@ -867,7 +867,7 @@ export default function ClinicsNearby() {
         }
 
         .clinics-desc {
-          color: #555;
+          color: ${theme.palette.text.secondary};
           font-size: 1.08rem;
           margin-bottom: 32px;
         }
