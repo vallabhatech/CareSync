@@ -1,4 +1,4 @@
-const { logSecurityEvent } = require('../utils/securityLogger');
+const { logSecurityEvent } = require('../utils/securityAuditLogger');
 const { EVENT_TYPES, SEVERITY } = require('../utils/securityEvents');
 
 // Must run AFTER authMiddleware (which sets req.user).
