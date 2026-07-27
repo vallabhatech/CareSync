@@ -15,11 +15,14 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import FamilyMembers from '../components/FamilyMembers';
 import EmergencyContacts from '../components/EmergencyContacts';
+import PaymentGateway from '../components/PaymentGateway';
 
 function Profile() {
   const { t } = useTranslation();
   const { user, isAuthenticated, updateProfile, logout } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [message, setMessage] = useState('');
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -226,6 +229,44 @@ function Profile() {
 
       <FamilyMembers />
       <EmergencyContacts />
+
+      <Box sx={{ mt: 4 }}>
+        <Card sx={{ borderRadius: 3, boxShadow: '0 4px 24px rgba(25,118,210,0.1)' }}>
+          <CardContent sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
+              {isPremium ? '💎 Premium Member' : 'Upgrade to CareSync Premium'}
+            </Typography>
+            {!isPremium && (
+              <>
+                <Typography variant="body1" color="text.secondary" mb={3}>
+                  Get access to unlimited telehealth consultations and personalized health AI insights for just $19.99/mo.
+                </Typography>
+                {!showPayment ? (
+                  <Button variant="contained" color="primary" onClick={() => setShowPayment(true)}>
+                    Upgrade Now
+                  </Button>
+                ) : (
+                  <Box sx={{ mt: 2 }}>
+                    <PaymentGateway 
+                      amount={19.99} 
+                      onCancel={() => setShowPayment(false)}
+                      onSuccess={() => {
+                        setShowPayment(false);
+                        setIsPremium(true);
+                      }}
+                    />
+                  </Box>
+                )}
+              </>
+            )}
+            {isPremium && (
+              <Typography variant="body1" color="success.main">
+                Thank you for being a Premium Member! Your subscription is active.
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 }
