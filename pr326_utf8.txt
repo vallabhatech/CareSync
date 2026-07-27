@@ -1,0 +1,149 @@
+﻿author:	vercel
+association:	none
+edited:	false
+status:	none
+--
+@rohitkumarnaidu is attempting to deploy a commit to the **vallabhatech's projects** Team on [Vercel](https://vercel.com).
+
+A member of the Team first needs to [authorize it](https://vercel.com/git/authorize?team=vallabhatech's%20projects&slug=vallabhatechs-projects&teamId=team_XEvLqU3kloqiTS3SEQgSVKnM&type=github&job=%7B%22headInfo%22%3A%7B%22sha%22%3A%22f72a5c33a3707f0172c56981d5d81882aadb456c%22%7D%2C%22id%22%3A%22QmcR9fpVSFvkRW3pq7iijwVWnCPs4sMzfa75gCBGxxSoTC%22%2C%22org%22%3A%22vallabhatech%22%2C%22prId%22%3A326%2C%22repo%22%3A%22CareSync%22%7D).
+
+
+--
+author:	Copilot (AI)
+association:	none
+edited:	false
+status:	commented
+--
+Copilot was unable to review this pull request because the user who requested the review has reached their quota limit.
+--
+author:	coderabbitai
+association:	none
+edited:	false
+status:	none
+--
+<!-- This is an auto-generated comment: summarize by coderabbit.ai -->
+<!-- This is an auto-generated comment: rate limited by coderabbit.ai -->
+
+> [!WARNING]
+> ## Review limit reached
+> 
+> `@rohitkumarnaidu`, you've reached your PR review limit, so we couldn't start this review.
+> 
+> **Next review available in:** **56 minutes**
+> 
+> Enable **[usage-based reviews](https://app.coderabbit.ai/settings/billing?tab=usage&orgId=cc990ced-70c0-4133-8264-3100524c302c)** in Billing to review now. Otherwise, wait until the next included review is available.
+> You're only billed for reviews past your plan's rate limits ($0.25/file).
+> 
+> <details>
+> <summary>How can I continue?</summary>
+> 
+> After more reviews become available, a review can be triggered using the `@coderabbitai review` command as a PR comment. Alternatively, push new commits to this PR.
+> 
+> To avoid repeated limits, reduce automatic review volume by pausing incremental auto-reviews earlier, using label-based review opt-in, excluding WIP or generated PR titles, or requesting reviews manually when the PR is ready. If your team needs uninterrupted high-volume reviews, an organization admin can enable usage-based reviews.
+> 
+> </details>
+> 
+> 
+> <details>
+> <summary>How do review limits work?</summary>
+> 
+> CodeRabbit enforces per-developer PR review limits for each organization. Most developers receive the normal plan review availability.
+> 
+> For paid Pro and Pro+ PR reviews, CodeRabbit uses adaptive limits for sustained high-volume activity. When a developer's recent PR review activity reaches the 95th percentile or higher among CodeRabbit users, additional reviews become available more gradually as earlier reviews age out of the rolling window.
+> 
+> Please refer [docs](https://docs.coderabbit.ai/management/plans#rate-limits) for additional details.
+> 
+> </details>
+> 
+> <details>
+> <summary>Review details</summary>
+> 
+> <details>
+> <summary>⚙️ Run configuration</summary>
+> 
+> **Configuration used**: defaults
+> 
+> **Review profile**: CHILL
+> 
+> **Plan**: Pro Plus
+> 
+> **Run ID**: `bbf5879c-d759-455b-b968-22c76b9e8cec`
+> 
+> </details>
+> 
+> <details>
+> <summary>📥 Commits</summary>
+> 
+> Reviewing files that changed from the base of the PR and between 1045be3a59b6f62d8d32d0ac747eb0a6b291afb8 and f72a5c33a3707f0172c56981d5d81882aadb456c.
+> 
+> </details>
+> 
+> <details>
+> <summary>📒 Files selected for processing (3)</summary>
+> 
+> * `src/App.jsx`
+> * `src/components/CookieConsent.jsx`
+> * `src/pages/Profile.jsx`
+> 
+> </details>
+> 
+> </details>
+
+<!-- end of auto-generated comment: rate limited by coderabbit.ai -->
+
+<!-- finishing_touch_checkbox_start -->
+
+<details>
+<summary>✨ Finishing Touches</summary>
+
+<details>
+<summary>🧪 Generate unit tests (beta)</summary>
+
+- [ ] <!-- {"checkboxId": "f47ac10b-58cc-4372-a567-0e02b2c3d479", "radioGroupId": "utg-output-choice-group-unknown_comment_id"} -->   Create PR with unit tests
+
+</details>
+
+</details>
+
+<!-- finishing_touch_checkbox_end -->
+<!-- tips_start -->
+
+---
+
+Thanks for using [CodeRabbit](https://coderabbit.ai?utm_source=oss&utm_medium=github&utm_campaign=vallabhatech/CareSync&utm_content=326)! It's free for OSS, and your support helps us grow. If you like it, consider giving us a shout-out.
+
+<details>
+<summary>❤️ Share</summary>
+
+- [X](https://twitter.com/intent/tweet?text=I%20just%20used%20%40coderabbitai%20for%20my%20code%20review%2C%20and%20it%27s%20fantastic%21%20It%27s%20free%20for%20OSS%20and%20offers%20a%20free%20trial%20for%20the%20proprietary%20code.%20Check%20it%20out%3A&url=https%3A//coderabbit.ai)
+- [Mastodon](https://mastodon.social/share?text=I%20just%20used%20%40coderabbitai%20for%20my%20code%20review%2C%20and%20it%27s%20fantastic%21%20It%27s%20free%20for%20OSS%20and%20offers%20a%20free%20trial%20for%20the%20proprietary%20code.%20Check%20it%20out%3A%20https%3A%2F%2Fcoderabbit.ai)
+- [Reddit](https://www.reddit.com/submit?title=Great%20tool%20for%20code%20review%20-%20CodeRabbit&text=I%20just%20used%20CodeRabbit%20for%20my%20code%20review%2C%20and%20it%27s%20fantastic%21%20It%27s%20free%20for%20OSS%20and%20offers%20a%20free%20trial%20for%20proprietary%20code.%20Check%20it%20out%3A%20https%3A//coderabbit.ai)
+- [LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcoderabbit.ai&mini=true&title=Great%20tool%20for%20code%20review%20-%20CodeRabbit&summary=I%20just%20used%20CodeRabbit%20for%20my%20code%20review%2C%20and%20it%27s%20fantastic%21%20It%27s%20free%20for%20OSS%20and%20offers%20a%20free%20trial%20for%20proprietary%20code)
+
+</details>
+
+
+<sub>Comment `@coderabbitai help` to get the list of available commands.</sub>
+
+<!-- tips_end -->
+--
+author:	sonarqubecloud
+association:	none
+edited:	false
+status:	none
+--
+## [![Quality Gate Passed](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/checks/QualityGateBadge/qg-passed-20px.png 'Quality Gate Passed')](https://sonarcloud.io/dashboard?id=vallabhatech_CareSync&pullRequest=326) **Quality Gate passed**  
+Issues  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed-16px.png '') [0 New issues](https://sonarcloud.io/project/issues?id=vallabhatech_CareSync&pullRequest=326&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/accepted-16px.png '') [0 Accepted issues](https://sonarcloud.io/project/issues?id=vallabhatech_CareSync&pullRequest=326&issueStatuses=ACCEPTED)
+
+Measures  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed-16px.png '') [0 Security Hotspots](https://sonarcloud.io/project/security_hotspots?id=vallabhatech_CareSync&pullRequest=326&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed-16px.png '') [0.0% Coverage on New Code](https://sonarcloud.io/component_measures?id=vallabhatech_CareSync&pullRequest=326&metric=new_coverage&view=list)  
+![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed-16px.png '') [0.0% Duplication on New Code](https://sonarcloud.io/component_measures?id=vallabhatech_CareSync&pullRequest=326&metric=new_duplicated_lines_density&view=list)  
+  
+<!-- sqra-placement-anchor -->
+[See analysis details on SonarQube Cloud](https://sonarcloud.io/dashboard?id=vallabhatech_CareSync&pullRequest=326)
+
+
+--
