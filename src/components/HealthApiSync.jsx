@@ -30,9 +30,11 @@ const HealthApiSync = () => {
     setSyncing(true);
     // Simulate fetching from Google Fit / Apple Health
     setTimeout(() => {
+      const getSecureRandom = () => window.crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
+      
       setMetrics({
-        steps: Math.floor(Math.random() * 5000) + 3000,
-        heartRate: Math.floor(Math.random() * 20) + 60,
+        steps: Math.floor(getSecureRandom() * 5000) + 3000,
+        heartRate: Math.floor(getSecureRandom() * 20) + 60,
         lastSynced: new Date().toLocaleTimeString()
       });
       setSyncing(false);
