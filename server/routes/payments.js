@@ -15,11 +15,11 @@ router.post('/process', auth, (req, res) => {
   // Simulate payment gateway latency (e.g. Stripe, PayPal API delay)
   setTimeout(() => {
     // 95% success rate for simulation
-    const isSuccess = Math.random() < 0.95;
+    const isSuccess = crypto.randomInt(0, 100) < 95;
     
     if (isSuccess) {
       const transactionId = `txn_mock_${crypto.randomBytes(8).toString('hex')}`;
-      console.log(`[Payment] Processed mock payment of $${amount} via ${paymentMethod} for user ${req.user?.id || 'anonymous'}`);
+      console.log(`[Payment] Processed mock payment for user ${req.user?.id || 'anonymous'}`);
       
       res.json({
         success: true,
