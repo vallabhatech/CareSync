@@ -45,7 +45,7 @@
  *   npm install js-yaml
  */
 
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { sanitizeConfig } from './sanitize';
 
 /**

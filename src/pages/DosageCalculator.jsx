@@ -49,7 +49,7 @@ export default function DosageCalculator() {
     : 'Enter your personal factors to see an individualized dose estimate.';
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f4f8fb', py: 6, px: 2 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6, px: 2 }}>
       <Box sx={{ maxWidth: 980, mx: 'auto' }}>
         <Button
           component={Link}
@@ -129,7 +129,7 @@ export default function DosageCalculator() {
                 {noteText}
               </Alert>
 
-              <Card sx={{ bgcolor: '#fff', borderRadius: 3, p: 3, boxShadow: 3 }}>
+              <Card sx={{ bgcolor: 'background.paper', borderRadius: 3, p: 3, boxShadow: 3 }}>
                 <Typography variant="h6" fontWeight={700} gutterBottom>
                   Estimated dose summary
                 </Typography>

@@ -1,14 +1,20 @@
 import { sanitizeConfig, validateAndNormalizeHeaders, validateUrl } from './sanitize';
 
+function defineOwnProperty(obj, key, value) {
+  Object.defineProperty(obj, key, {
+    value,
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
+  return obj;
+}
 
 describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   test('removes simple prototype pollution keys', () => {
-    const payload = JSON.parse(`{
-      safeKey: 'safeValue',
-      "__proto__": { "polluted": true },
-      "constructor": { "polluted": true },
-      "prototype": { "polluted": true }
-    }`);
+    const payload = defineOwnProperty({ safeKey: 'safeValue' }, '__proto__', { polluted: true });
+    defineOwnProperty(payload, 'constructor', { polluted: true });
+    defineOwnProperty(payload, 'prototype', { polluted: true });
 
     const result = sanitizeConfig(payload);
 
@@ -22,13 +28,10 @@ describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   });
 
   test('removes keys case-insensitively and handles spaces', () => {
-    const payload = JSON.parse(`{
-      safeKey: 'safeValue',
-      "__PROTO__": { "polluted": true },
-      "  __proto__  ": { "polluted": true },
-      "Constructor": { "polluted": true },
-      "PROTOTYPE": { "polluted": true }
-    }`);
+    const payload = defineOwnProperty({ safeKey: 'safeValue' }, '__PROTO__', { polluted: true });
+    defineOwnProperty(payload, '  __proto__  ', { polluted: true });
+    defineOwnProperty(payload, 'Constructor', { polluted: true });
+    defineOwnProperty(payload, 'PROTOTYPE', { polluted: true });
 
     const result = sanitizeConfig(payload);
 
@@ -40,16 +43,12 @@ describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   });
 
   test('recursively sanitizes nested objects', () => {
-    const payload = JSON.parse(`{
-      safeKey: {
-        nestedSafe: 'nestedVal',
-        "__proto__": { "polluted": true },
-        "nestedObject": {
-          "constructor": { "polluted": true },
-          "deepSafe": "deepVal"
-        }
-      }
-    }`);
+    const nestedObject = { nestedSafe: 'nestedVal' };
+    defineOwnProperty(nestedObject, '__proto__', { polluted: true });
+    defineOwnProperty(nestedObject, 'nestedObject', { deepSafe: 'deepVal' });
+    defineOwnProperty(nestedObject.nestedObject, 'constructor', { polluted: true });
+
+    const payload = { safeKey: nestedObject };
 
     const result = sanitizeConfig(payload);
 
@@ -60,11 +59,12 @@ describe('sanitizeConfig utility (Prototype Pollution prevention)', () => {
   });
 
   test('sanitizes objects inside arrays', () => {
-    const payload = JSON.parse(`[
-      { "id": 1, "safe": "yes" },
-      { "id": 2, "__proto__": { "polluted": true }, "safe": "also-yes" },
-      { "id": 3, "nested": [{ "constructor": { "polluted": true } }] }
-    ]`);
+    const nestedArrayEntry = { constructor: { polluted: true } };
+    const payload = [
+      { id: 1, safe: 'yes' },
+      defineOwnProperty({ id: 2, safe: 'also-yes' }, '__proto__', { polluted: true }),
+      { id: 3, nested: [nestedArrayEntry] },
+    ];
 
     const result = sanitizeConfig(payload);
 

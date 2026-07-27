@@ -169,7 +169,7 @@ export default function MedicalDocuments() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f4f8fb', py: 6, px: 2 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6, px: 2 }}>
       <Box sx={{ maxWidth: 900, mx: 'auto' }}>
         <Button component={Link} to="/dashboard" startIcon={<ArrowBackIcon />} variant="outlined" sx={{ mb: 3 }}>
           Back to Dashboard
@@ -261,7 +261,7 @@ export default function MedicalDocuments() {
             ) : (
               <Box sx={{ display: 'grid', gap: 2 }}>
                 {docs.map((doc) => (
-                  <Card key={doc._id} sx={{ bgcolor: '#fafafa', borderRadius: 2, borderLeft: '4px solid #1976d2' }}>
+                  <Card key={doc._id} sx={{ bgcolor: 'background.paper', borderRadius: 2, borderLeft: '4px solid', borderColor: 'primary.main' }}>
                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

@@ -85,5 +85,7 @@ const LabTestBookingSchema = new mongoose.Schema({
   },
 });
 
+LabTestBookingSchema.index({ user: 1, createdAt: -1 });
+
 module.exports = mongoose.model('LabTestBooking', LabTestBookingSchema);
 

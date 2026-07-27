@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Chip, Stack, LinearProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Box } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -448,6 +449,7 @@ function createHistoryEntry(symptoms, results) {
  */
 export default function SymptomChecker() {
   const { t } = useTranslation();
+  const theme = useTheme();
   const { isAuthenticated } = useAuth();
   const [input, setInput] = useState('');
   const [symptoms, setSymptoms] = useState([]);
@@ -815,14 +817,14 @@ export default function SymptomChecker() {
       <style>{`
         .symptom-bg {
           min-height: 100vh;
-          background: linear-gradient(135deg, #f4f8fb 0%, #e3f2fd 100%);
-          color: #222;
+          background: linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.mode === 'dark' ? '#1e293b' : '#e3f2fd'} 100%);
+          color: ${theme.palette.text.primary};
           padding: 40px 0;
         }
         .symptom-container {
           max-width: 650px;
           margin: 0 auto;
-          background: #fff;
+          background: ${theme.palette.background.paper};
           border-radius: 18px;
           box-shadow: 0 4px 32px 0 rgba(25, 118, 210, 0.08);
           padding: 36px 22px 28px 22px;
@@ -835,7 +837,7 @@ export default function SymptomChecker() {
           text-align: center;
         }
         .symptom-desc {
-          color: #555;
+          color: var(--mui-palette-text-secondary, #555);
           font-size: 1.08rem;
           margin-bottom: 18px;
           text-align: center;
@@ -848,8 +850,8 @@ export default function SymptomChecker() {
           justify-content: center;
         }
         .symptom-input {
-          background: #f4f8fb;
-          color: #222;
+          background: ${theme.palette.background.default};
+          color: ${theme.palette.text.primary};
           border: 1px solid #b0bec5;
           border-radius: 8px;
           padding: 8px 12px;
@@ -878,7 +880,7 @@ export default function SymptomChecker() {
           margin-bottom: 10px;
         }
         .symptom-result-card {
-          background: #f4f8fb;
+          background: ${theme.palette.mode === 'dark' ? '#1f2937' : '#f4f8fb'};
           border-radius: 14px;
           box-shadow: 0 2px 12px #1976d222;
           padding: 18px 16px 12px 16px;
@@ -921,7 +923,7 @@ export default function SymptomChecker() {
           font-size: 1.05rem;
         }
         .symptom-result-causes {
-          color: #444;
+          color: ${theme.palette.text.secondary};
           margin-bottom: 6px;
         }
         .symptom-result-solutions ul {
@@ -930,7 +932,7 @@ export default function SymptomChecker() {
         }
         .symptom-result-solutions li {
           font-size: 1rem;
-          color: #333;
+          color: ${theme.palette.text.primary};
         }
         .symptom-history-section {
           margin-top: 40px;
@@ -952,7 +954,7 @@ export default function SymptomChecker() {
           padding-right: 4px;
         }
         .symptom-history-item {
-          background: #f8fafd;
+          background: ${theme.palette.mode === 'dark' ? '#111827' : '#f8fafd'};
           border: 1px solid #e1e8ed;
           border-radius: 10px;
           padding: 12px 14px;
@@ -993,7 +995,7 @@ export default function SymptomChecker() {
           background-color: #43a047;
         }
         .symptom-history-symptoms {
-          color: #555;
+          color: var(--mui-palette-text-secondary, #555);
           font-size: 0.9rem;
         }
         @media (max-width: 700px) {
