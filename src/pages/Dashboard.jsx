@@ -10,6 +10,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useTheme } from "@mui/material/styles";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
+import HealthApiSync from "../components/HealthApiSync";
 
 const healthQuotes = [
   "Health is the greatest wealth.",
@@ -174,6 +175,9 @@ export default function Dashboard() {
             {t("dashboard:newQuote")}
           </button>
         </div>
+        
+        <HealthApiSync />
+
         <div className="dashboard-features" role="navigation"
   aria-label="Dashboard features">
           {dynamicFeatures.map((feature) => (
