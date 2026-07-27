@@ -418,7 +418,7 @@ function saveHistoryToLocalStorage(historyArray) {
 function createHistoryEntry(symptoms, results) {
   const topResult = results[0] || {};
   return {
-    _id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+    _id: `local_${Date.now()}_${(window.crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1)).toString(36).slice(2, 11)}`,
     checkedAt: new Date().toISOString(),
     symptoms,
     results: [{
