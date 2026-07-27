@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Card, CardContent, Typography, Button, TextField, Alert, CircularProgress } from '@mui/material';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import API from '../utils/api';
 
 export default function AmbulanceBooking() {
   const [address, setAddress] = useState('');
@@ -16,22 +17,12 @@ export default function AmbulanceBooking() {
     setBookingStatus('loading');
     
     try {
-      // Simulated dispatch-service request
-      const response = await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            ok: true,
-            data: {
-              driverName: 'John Doe',
-              vehicleNumber: 'AP-12-CD-5678',
-              etaMinutes: 12,
-              status: 'On the way'
-            }
-          });
-        }, 1500);
+      const response = await API.post('/api/ambulance/book', {
+        address,
+        emergencyType
       });
       
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         setDriverData(response.data);
         setBookingStatus('confirmed');
       } else {
