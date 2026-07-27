@@ -22,19 +22,6 @@ export function normalizeIPv4(ip) {
     return null;
   }
 
-  // Handle decimal IPs (e.g., 2130706433)
-  if (!ip.includes('.')) {
-    const num = Number.parseInt(ip, 10);
-    if (!Number.isNaN(num) && num >= 0 && num <= 0xffffffff) {
-      return [
-        (num >> 24) & 0xff,
-        (num >> 16) & 0xff,
-        (num >> 8) & 0xff,
-        num & 0xff,
-      ].join('.');
-    }
-  }
-
   const parts = ip.split('.').filter(p => p !== '');
   if (parts.length > 4) {
     return null;
@@ -52,7 +39,7 @@ export function normalizeIPv4(ip) {
       } else {
         return null;
       }
-      if (val < 0 || val > 255) {
+      if (val < 0) {
         return null;
       }
       return val;
@@ -64,14 +51,15 @@ export function normalizeIPv4(ip) {
 
     if (octets.length < 4) {
       const last = octets.pop() ?? 0;
+      const maxLast = Math.pow(256, 4 - octets.length) - 1;
+      if (last > maxLast) return null;
       const remaining = 4 - octets.length;
       for (let i = 0; i < remaining; i++) {
-        octets.push((last >> (8 * (remaining - 1 - i))) & 0xff);
+        octets.push((last >>> (8 * (remaining - 1 - i))) & 0xff);
       }
     }
-    // Ensure final array has 4 elements
-    if (octets.length !== 4) return null;
-
+    // Ensure final array has 4 elements and all are valid octets
+    if (octets.length !== 4 || octets.some(o => o > 255)) return null;
 
     return octets.join('.');
   } catch {
