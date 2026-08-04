@@ -193,7 +193,7 @@ export default function HealthMetrics() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f4f8fb', py: 6, px: 2 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6, px: 2 }}>
       <Box sx={{ maxWidth: 1000, mx: 'auto' }}>
         <Button
           component={Link}
@@ -229,7 +229,7 @@ export default function HealthMetrics() {
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-            <Box sx={{ bgcolor: '#f5f5f5', p: 3, borderRadius: 2, mb: 3 }}>
+            <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, mb: 3, border: '1px solid', borderColor: 'divider' }}>
               <Typography variant="h6" fontWeight={700} gutterBottom>
                 {editingId ? 'Edit Metric' : 'Record New Metric'}
               </Typography>
@@ -352,7 +352,7 @@ export default function HealthMetrics() {
             ) : (
               <Box sx={{ display: 'grid', gap: 2 }}>
                 {metrics.map((metric) => (
-                  <Card key={metric._id} sx={{ p: 2, bgcolor: '#fafafa', borderRadius: 2 }}>
+                  <Card key={metric._id} sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" color="text.secondary" gutterBottom>

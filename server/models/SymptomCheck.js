@@ -38,4 +38,6 @@ const SymptomCheckSchema = new mongoose.Schema({
   },
 });
 
+SymptomCheckSchema.index({ user: 1, checkedAt: -1 });
+
 module.exports = mongoose.model('SymptomCheck', SymptomCheckSchema);
