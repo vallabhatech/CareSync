@@ -234,14 +234,14 @@ function renderSymptoms(doc, symptoms) {
     return;
   }
 
-  symptoms.slice(0, 20).forEach((check) => {
+  symptoms.slice(0, 100).forEach((check) => {
     if (doc.y > 720) { doc.addPage(); renderHeader(doc, 'Health Report — Symptoms (continued)'); }
     
     doc.fontSize(10).font('Helvetica-Bold').text(new Date(check.checkedAt).toLocaleString('en-US'));
     doc.fontSize(9).font('Helvetica').text(`Symptoms: ${check.symptoms.join(', ')}`);
     
     if (check.results && check.results.length > 0) {
-      const res = check.results[0];
+      const res = [...check.results].sort((a, b) => b.probability - a.probability)[0];
       doc.text(`Probable Condition: ${res.condition} (${Math.round(res.probability * 100)}%) - Risk: ${res.risk.toUpperCase()}`);
     }
     doc.moveDown(0.5);

@@ -145,11 +145,11 @@ export default function Dashboard() {
     },
     {
       id: "export-health-report",
-      title: "Export Health Report",
-      desc: "Download a PDF summary of your health data to share with a provider.",
+      title: t("dashboard:exportReportTitle"),
+      desc: t("dashboard:exportReportDesc"),
       link: "/export-report",
       icon: <PictureAsPdfIcon fontSize="large" color="primary" />,
-      btn: "Export PDF",
+      btn: t("dashboard:exportReportBtn"),
     },
   ];
 

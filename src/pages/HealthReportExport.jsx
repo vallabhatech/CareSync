@@ -30,7 +30,7 @@ export default function HealthReportExport() {
       const [metricsRes, medRes, symptomRes] = await Promise.all([
         API.get('/api/health-metrics'),
         API.get('/api/medicines'),
-        API.get('/api/symptom-checks'),
+        API.get('/api/symptom-checks?limit=100'),
       ]);
       setMetrics(metricsRes.data);
       setMedicines(medRes.data);
