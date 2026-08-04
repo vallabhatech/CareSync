@@ -25,7 +25,7 @@ const transports = [
       winston.format.colorize(),
       winston.format.printf(({ level, message, timestamp, ...meta }) => {
         const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
-        return `${timestamp} [SECURITY:${level}] ${message}${metaStr}`;
+        return `${timestamp} [SECURITY_AUDIT:${level}] ${message}${metaStr}`;
       })
     ),
   }),
@@ -125,6 +125,9 @@ const logSecurityEvent = async ({
       eventType,
       severity,
       ip,
+      userAgent,
+      method,
+      path: reqPath,
       email: email || undefined,
       userId: userId ? String(userId) : undefined,
       statusCode: statusCode || undefined,

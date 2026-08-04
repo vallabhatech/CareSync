@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useToast } from './context/ToastContext';
 import {
   AppBar,
   Toolbar,
@@ -176,6 +177,7 @@ function Navbar() {
 
   const handleLogout = () => {
     logout();
+    addToast('Logged out successfully', 'info');
     navigate('/login');
   };
 

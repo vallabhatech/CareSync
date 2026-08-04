@@ -40,4 +40,6 @@ const MedicalDocumentSchema = new mongoose.Schema({
   },
 });
 
+MedicalDocumentSchema.index({ user: 1, uploadedAt: -1 });
+
 module.exports = mongoose.model('MedicalDocument', MedicalDocumentSchema);

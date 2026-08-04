@@ -19,14 +19,14 @@
     "helmet": "^8.2.0",
     "http-proxy-middleware": "^4.1.1",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.3.1",
+    "mongoose": "^8.24.1",
     "pdfkit": "^0.19.1",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0",
     "winston": "^3.19.0"
   },
   "devDependencies": {
-    "concurrently": "^10.0.3",
+    "concurrently": "^10.0.4",
     "jest": "^29.0.0",
     "nodemon": "^3.1.0",
     "supertest": "^6.3.3"
