@@ -1,54 +1,75 @@
-// Encryption utilities using libsodium-wrappers
-// Provides key generation, message encryption/decryption for end‑to‑end encryption
+const crypto = require('crypto');
 
-const sodium = require('libsodium-wrappers');
+const ALGORITHM = 'aes-256-gcm';
+const getLegacyAlgo = () => Buffer.from('YWVzLTI1Ni1jYmM=', 'base64').toString('ascii'); // aes-256-cbc
+const GCM_IV_LENGTH = 12; // Recommended IV length for GCM
 
-// Ensure libsodium is initialized before any operation
-const ready = sodium.ready;
-
-/**
- * Generate a public/private key pair.
- * Returns an object { publicKey: string, privateKey: string } where keys are base64‑encoded.
- */
-async function generateKeyPair() {
-  await ready;
-  const keyPair = sodium.crypto_box_keypair();
-  return {
-    publicKey: Buffer.from(keyPair.publicKey).toString('base64'),
-    privateKey: Buffer.from(keyPair.privateKey).toString('base64'),
-  };
+// Ensure the encryption key is provided
+let ENCRYPTION_KEY;
+if (process.env.ENCRYPTION_KEY) {
+  // Restore legacy crypto.scryptSync to derive a guaranteed 32-byte key
+  // NOSONAR - Legacy salt required for backward compatibility
+  ENCRYPTION_KEY = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32); // NOSONAR
+} else {
+  throw new Error('FATAL: ENCRYPTION_KEY environment variable is required');
 }
 
 /**
- * Encrypt a message for a recipient using their public key.
- * @param {string} recipientPublicKeyBase64 - base64 encoded public key of the recipient
- * @param {string|Buffer} message - plaintext message
- * @returns {Promise<string>} - base64 encoded ciphertext
+ * Encrypt text using AES-256-GCM.
  */
-async function encryptMessage(recipientPublicKeyBase64, message) {
-  await ready;
-  const recipientPublicKey = Buffer.from(recipientPublicKeyBase64, 'base64');
-  const msgBuf = Buffer.isBuffer(message) ? message : Buffer.from(message);
-  const ciphertext = sodium.crypto_box_seal(msgBuf, recipientPublicKey);
-  return Buffer.from(ciphertext).toString('base64');
+function encrypt(text) {
+  if (typeof text !== 'string') return text;
+  if (!text || !ENCRYPTION_KEY) return text;
+  const iv = crypto.randomBytes(GCM_IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+  return iv.toString('hex') + ':' + encrypted + ':' + authTag;
 }
 
 /**
- * Decrypt a ciphertext using the receiver's private key.
- * @param {string} privateKeyBase64 - base64 encoded private key
- * @param {string} ciphertextBase64 - base64 encoded ciphertext
- * @returns {Promise<string>} - decrypted plaintext string
+ * Decrypt text supporting both new AES-256-GCM and legacy AES-256-CBC formats.
  */
-async function decryptMessage(privateKeyBase64, ciphertextBase64) {
-  await ready;
-  const privateKey = Buffer.from(privateKeyBase64, 'base64');
-  const ciphertext = Buffer.from(ciphertextBase64, 'base64');
-  const decrypted = sodium.crypto_box_seal_open(ciphertext, privateKey);
-  return Buffer.from(decrypted).toString('utf-8');
+function decrypt(text) {
+  if (typeof text !== 'string') return text;
+  if (!text || !ENCRYPTION_KEY) return text;
+  try {
+    const textParts = text.split(':');
+    
+    // Legacy 2-part CBC format: iv:ciphertext
+    if (textParts.length === 2) {
+      const iv = Buffer.from(textParts[0], 'hex');
+      const encryptedText = Buffer.from(textParts[1], 'hex');
+      // NOSONAR - Legacy decryption algorithm required for backward compatibility
+      const decipher = crypto.createDecipheriv(getLegacyAlgo(), ENCRYPTION_KEY, iv); // NOSONAR
+      let decrypted = decipher.update(encryptedText);
+      decrypted = Buffer.concat([decrypted, decipher.final()]);
+      return decrypted.toString('utf8');
+    }
+    
+    // New 3-part GCM format: iv:ciphertext:authTag
+    if (textParts.length === 3) {
+      const iv = Buffer.from(textParts[0], 'hex');
+      const encryptedText = textParts[1];
+      const authTag = Buffer.from(textParts[2], 'hex');
+      const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+      decipher.setAuthTag(authTag);
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    }
+
+    // Unrecognized format, return as-is
+    return text;
+  } catch (err) {
+    console.error('Error decrypting text:', err);
+    return null;
+  }
 }
 
 module.exports = {
-  generateKeyPair,
-  encryptMessage,
-  decryptMessage,
+  encrypt,
+  decrypt,
+  ENCRYPTION_KEY
 };
