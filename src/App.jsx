@@ -45,6 +45,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
+import HealthReportExport from './pages/HealthReportExport';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
@@ -338,27 +339,25 @@ function Navbar() {
 function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <Navbar />
-        <div style={{ paddingTop: 80, minHeight: '100vh' }}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/medicine-tracker" element={<MedicineTracker />} />
-            <Route path="/symptom-checker" element={<SymptomChecker />} />
-            <Route path="/clinics-nearby" element={<ClinicsNearby />} />
-            <Route path="/dosage-calculator" element={<DosageCalculator />} />
-            <Route path="/health-metrics" element={<HealthMetrics />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
-        <ScrollToTopButton />
-        <Footer />
-        <ToastContainer />
-      </ToastProvider>
+      <Navbar />
+      <div style={{ paddingTop: 80, minHeight: '100vh' }}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/medicine-tracker" element={<MedicineTracker />} />
+          <Route path="/symptom-checker" element={<SymptomChecker />} />
+          <Route path="/clinics-nearby" element={<ClinicsNearby />} />
+          <Route path="/dosage-calculator" element={<DosageCalculator />} />
+          <Route path="/health-metrics" element={<HealthMetrics />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/export-report" element={<HealthReportExport />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+      <ScrollToTopButton />
+      <Footer />
     </AuthProvider>
   );
 }

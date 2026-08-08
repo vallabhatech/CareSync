@@ -7,6 +7,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import SearchIcon from "@mui/icons-material/Search";
 import PlaceIcon from "@mui/icons-material/Place";
 import SettingsIcon from "@mui/icons-material/Settings";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { useTheme } from "@mui/material/styles";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
@@ -141,6 +142,14 @@ export default function Dashboard() {
       link: "/settings",
       icon: <SettingsIcon fontSize="large" color="primary" />,
       btn: t("dashboard:goToSettings"),
+    },
+    {
+      id: "export-health-report",
+      title: t("dashboard:exportReportTitle"),
+      desc: t("dashboard:exportReportDesc"),
+      link: "/export-report",
+      icon: <PictureAsPdfIcon fontSize="large" color="primary" />,
+      btn: t("dashboard:exportReportBtn"),
     },
   ];
 
