@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Chip, Stack, LinearProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Box } from '@mui/material';
+import { Button, Chip, Stack, LinearProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -418,7 +418,7 @@ function saveHistoryToLocalStorage(historyArray) {
 function createHistoryEntry(symptoms, results) {
   const topResult = results[0] || {};
   return {
-    _id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+    _id: `local_${Date.now()}_${(window.crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1)).toString(36).slice(2, 11)}`,
     checkedAt: new Date().toISOString(),
     symptoms,
     results: [{
@@ -632,6 +632,31 @@ export default function SymptomChecker() {
     }
   };
 
+  const getSymptomTrends = () => {
+    if (!history || history.length === 0) return [];
+    
+    // Filter history for the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const recentHistory = history.filter(item => new Date(item.checkedAt) >= thirtyDaysAgo);
+    
+    const counts = {};
+    recentHistory.forEach(record => {
+      record.symptoms.forEach(sym => {
+        counts[sym] = (counts[sym] || 0) + 1;
+      });
+    });
+    
+    return Object.entries(counts)
+      .map(([symptom, count]) => ({ symptom, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  };
+
+  const trends = getSymptomTrends();
+  const maxTrendCount = trends.length > 0 ? trends[0].count : 1;
+
   return (
     <div className="symptom-bg">
       <div className="symptom-container">
@@ -764,16 +789,49 @@ export default function SymptomChecker() {
         
         {history.length > 0 && (
           <div className="symptom-history-section">
-            <h3 className="symptom-history-title">Assessment History</h3>
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              onClick={handleOpenClearDialog}
-              sx={{ mb: 2, fontWeight: 600 }}
-            >
-              Clear History
-            </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <h3 className="symptom-history-title" style={{ marginBottom: 0 }}>Assessment History & Trends</h3>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={handleOpenClearDialog}
+                sx={{ fontWeight: 600 }}
+              >
+                Clear History
+              </Button>
+            </Box>
+
+            {trends.length > 0 && (
+              <div className="symptom-trends-container">
+                <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
+                  Top Symptoms (Last 30 Days)
+                </Typography>
+                <div className="symptom-trends-list">
+                  {trends.map(t => (
+                    <div key={t.symptom} className="symptom-trend-item">
+                      <div className="symptom-trend-label">
+                        <span>{t.symptom}</span>
+                        <span>{t.count} times</span>
+                      </div>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={(t.count / maxTrendCount) * 100}
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          background: "#e0e0e0",
+                          '& .MuiLinearProgress-bar': {
+                            background: "linear-gradient(90deg, #1976d2, #43e97b)"
+                          }
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="symptom-history-list">
               {history.map((record) => (
                 <div key={record._id} className="symptom-history-item">
@@ -942,8 +1000,27 @@ export default function SymptomChecker() {
         .symptom-history-title {
           color: #1976d2;
           font-size: 1.25rem;
-          margin-bottom: 14px;
           font-weight: 700;
+        }
+        .symptom-trends-container {
+          background: ${theme.palette.mode === 'dark' ? '#1f2937' : '#f0f7ff'};
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 24px;
+          border: 1px solid #cde1f8;
+        }
+        .symptom-trends-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .symptom-trend-label {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.9rem;
+          font-weight: 600;
+          margin-bottom: 4px;
+          color: ${theme.palette.text.primary};
         }
         .symptom-history-list {
           display: flex;
