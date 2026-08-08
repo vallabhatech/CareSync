@@ -8,7 +8,9 @@
   },
   "scripts": {
     "start": "concurrently --kill-others-on-fail \"node index.js\" \"node services/authService.js\" \"node services/userService.js\" \"node services/medicineService.js\" \"node services/symptomService.js\" \"node services/telemedicineService.js\" \"node services/labTestService.js\"",
+    "start:gateway": "concurrently --kill-others-on-fail \"node gateway.js\" \"node index.js\" \"node services/authService.js\" \"node services/userService.js\" \"node services/medicineService.js\" \"node services/symptomService.js\" \"node services/telemedicineService.js\" \"node services/labTestService.js\"",
     "dev": "concurrently --kill-others-on-fail \"nodemon index.js\" \"nodemon services/authService.js\" \"nodemon services/userService.js\" \"nodemon services/medicineService.js\" \"nodemon services/symptomService.js\" \"nodemon services/telemedicineService.js\" \"nodemon services/labTestService.js\"",
+    "dev:gateway": "concurrently --kill-others-on-fail \"nodemon gateway.js\" \"nodemon index.js\" \"nodemon services/authService.js\" \"nodemon services/userService.js\" \"nodemon services/medicineService.js\" \"nodemon services/symptomService.js\" \"nodemon services/telemedicineService.js\" \"nodemon services/labTestService.js\"",
     "test": "jest"
   },
   "dependencies": {
@@ -16,6 +18,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.6.0",
     "helmet": "^8.2.0",
     "http-proxy-middleware": "^4.1.1",
     "jsonwebtoken": "^9.0.2",
