@@ -3,6 +3,7 @@ import IconButton from "@mui/material/IconButton";
 import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
+import { Alert, AlertTitle, Box, Typography } from "@mui/material";
 import {
   scheduleNotifications,
   requestNotificationPermission,
@@ -233,16 +234,24 @@ export default function MedicineTracker() {
             </ul>
           )}
           {interactionWarnings.length > 0 && (
-            <div style={{ marginTop: 12 }}>
+            <Box sx={{ mt: 3, mb: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant="h6" color="error" sx={{ fontWeight: 'bold' }}>
+                ⚠️ Critical Interaction Warnings
+              </Typography>
               {interactionWarnings.map((w, i) => (
-                <div
-                  key={i}
-                  className={`interaction-warning interaction-${w.severity}`}
+                <Alert 
+                  key={i} 
+                  severity={w.severity === 'high' ? 'error' : w.severity === 'moderate' ? 'warning' : 'info'}
+                  variant="filled"
+                  sx={{ borderRadius: '12px' }}
                 >
-                  <strong>{w.severity.toUpperCase()}:</strong> {w.description}
-                </div>
+                  <AlertTitle sx={{ fontWeight: 'bold' }}>
+                    {w.matchedNames.map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' + ')}
+                  </AlertTitle>
+                  {w.description}
+                </Alert>
               ))}
-            </div>
+            </Box>
           )}
         </div>
 

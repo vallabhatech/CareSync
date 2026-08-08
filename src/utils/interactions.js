@@ -1,38 +1,7 @@
 // Simple drug interaction dataset and checker for demo purposes.
 // Matches medicine names case-insensitively and by substring.
 
-const INTERACTIONS = [
-  {
-    drugs: ['warfarin', 'ibuprofen'],
-    severity: 'high',
-    description:
-      'Concurrent use of NSAIDs like ibuprofen with warfarin increases bleeding risk. Consult a clinician or pharmacist before combining.',
-  },
-  {
-    drugs: ['aspirin', 'warfarin'],
-    severity: 'high',
-    description:
-      'Aspirin can potentiate anticoagulant effects of warfarin and increase bleeding risk.',
-  },
-  {
-    drugs: ['lisinopril', 'spironolactone'],
-    severity: 'moderate',
-    description:
-      'Combination can increase potassium levels; monitor electrolytes and kidney function.',
-  },
-  {
-    drugs: ['acetaminophen', 'alcohol'],
-    severity: 'moderate',
-    description:
-      'Chronic alcohol use with acetaminophen increases risk of liver toxicity.',
-  },
-  {
-    drugs: ['metformin', 'contrast'],
-    severity: 'low',
-    description:
-      'Iodinated contrast can affect kidney function; check guidance for metformin around imaging procedures.',
-  },
-];
+import INTERACTIONS from './interactionsData.json';
 
 function normalize(name) {
   return String(name || '').toLowerCase().trim();
