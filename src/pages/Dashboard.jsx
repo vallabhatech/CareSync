@@ -10,6 +10,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useTheme } from "@mui/material/styles";
 import API from "../utils/api";
 import { useAuth } from "../context/AuthContext";
+import HealthApiSync from "../components/HealthApiSync";
 
 const healthQuotes = [
   "Health is the greatest wealth.",
@@ -49,8 +50,10 @@ export default function Dashboard() {
   const [todayCount, setTodayCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
 
+  const getSecureRandom = () => window.crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
+
   useEffect(() => {
-    setQuote(healthQuotes[Math.floor(Math.random() * healthQuotes.length)]);
+    setQuote(healthQuotes[Math.floor(getSecureRandom() * healthQuotes.length)]);
     // eslint-disable-next-line
   }, []);
 
@@ -81,7 +84,7 @@ export default function Dashboard() {
   }, [isAuthenticated]);
 
   const generateQuote = () => {
-    let idx = Math.floor(Math.random() * healthQuotes.length);
+    let idx = Math.floor(getSecureRandom() * healthQuotes.length);
     setQuote(healthQuotes[idx]);
   };
 
@@ -174,6 +177,9 @@ export default function Dashboard() {
             {t("dashboard:newQuote")}
           </button>
         </div>
+        
+        <HealthApiSync />
+
         <div className="dashboard-features" role="navigation"
   aria-label="Dashboard features">
           {dynamicFeatures.map((feature) => (
