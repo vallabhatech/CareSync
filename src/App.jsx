@@ -27,7 +27,7 @@ import {
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
 } from '@mui/icons-material';
-import { Link, Routes, Route, useNavigate } from 'react-router-dom';
+import { Link, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import '@fontsource/roboto/900.css';
 import '@fontsource/fira-mono';
 import {
@@ -47,7 +47,10 @@ import DosageCalculator from './pages/DosageCalculator';
 import HealthMetrics from './pages/HealthMetrics';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
-
+import ForumsDashboard from './pages/Forums/ForumsDashboard';
+import TopicList from './pages/Forums/TopicList';
+import TopicView from './pages/Forums/TopicView';
+import ModerationDashboard from './pages/Forums/ModerationDashboard';
 
 // Navigation targets. Labels are resolved at render time via i18n keys
 // (see the `nav` namespace) so the menu localises with the rest of the app.
@@ -57,6 +60,7 @@ const NAV_LINKS = [
   { key: 'symptomChecker', to: '/symptom-checker' },
   { key: 'clinicsNearby', to: '/clinics-nearby' },
   { key: 'telehealth', to: '/telehealth' },
+  { key: 'forums', to: '/forums' },
   { key: 'settings', to: '/settings' },
   { key: 'recommendations', to: '/recommendations' },
 ];
@@ -333,6 +337,24 @@ function Navbar() {
       </Drawer>
     </AppBar>
   );
+}
+
+function RequireAuth({ children, requireMod }) {
+  const { isAuthenticated, user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  if (requireMod && user?.role !== 'admin' && user?.role !== 'moderator') {
+    return <Navigate to="/forums" />;
+  }
+  return children;
 }
 
 function App() {
