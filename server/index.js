@@ -180,6 +180,9 @@ let server;
 if (require.main === module) {
   server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    // Start background jobs
+    const { startCron } = require('./utils/reminderCron');
+    startCron();
   });
 }
 

@@ -1,5 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import Badge from '@mui/material/Badge';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 /**
  * Navbar — sticky top navigation bar with links to all main routes.
@@ -20,6 +25,11 @@ import { Link, useLocation } from 'react-router-dom';
  */
 export default function Navbar() {
   const location = useLocation();
+  const [anchorEl, setAnchorEl] = useState(null);
+  
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
   return (
     <nav className="navbar">
       <div className="navbar-logo">
@@ -32,6 +42,29 @@ export default function Navbar() {
         <Link to="/symptom-checker" className={location.pathname === "/symptom-checker" ? "active" : ""}>Symptoms</Link>
         <Link to="/clinics-nearby" className={location.pathname === "/clinics-nearby" ? "active" : ""}>Clinics</Link>
         <Link to="/settings" className={location.pathname === "/settings" ? "active" : ""}>Settings</Link>
+        
+        <IconButton color="inherit" onClick={handleMenuOpen} sx={{ ml: 1 }}>
+          <Badge badgeContent={1} color="error">
+            <NotificationsIcon sx={{ color: '#b0b0b0' }} />
+          </Badge>
+        </IconButton>
+        
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          PaperProps={{
+            style: {
+              background: '#232526',
+              color: '#fff',
+              marginTop: '10px'
+            }
+          }}
+        >
+          <MenuItem onClick={handleMenuClose}>
+            📅 Reminder: Dr. Smith appointment at 2:00 PM
+          </MenuItem>
+        </Menu>
       </div>
       <style>{`
         .navbar {
