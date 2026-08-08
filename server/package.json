@@ -22,6 +22,7 @@
     "mongoose": "^8.24.1",
     "pdfkit": "^0.19.1",
     "qrcode": "^1.5.4",
+    "redis": "^6.1.0",
     "speakeasy": "^2.0.0",
     "winston": "^3.19.0"
   },
