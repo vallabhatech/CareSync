@@ -5,7 +5,7 @@ import API from '../utils/api';
 const AuthContext = createContext(null);
 
 /** Allowed user roles for the application. */
-const ALLOWED_ROLES = ['Patient', 'Doctor', 'Admin', 'Caregiver'];
+const ALLOWED_ROLES = new Set(['Patient', 'Doctor', 'Admin', 'Caregiver']);
 
 /**
  * Sanitize a user object before storing in browser localStorage.
@@ -17,12 +17,12 @@ const ALLOWED_ROLES = ['Patient', 'Doctor', 'Admin', 'Caregiver'];
 const sanitizeUserForStorage = (userObj) => {
   if (!userObj || typeof userObj !== 'object') return null;
   const rawRole = String(userObj.role || 'Patient');
-  const safeRole = ALLOWED_ROLES.includes(rawRole) ? rawRole : 'Patient';
+  const safeRole = ALLOWED_ROLES.has(rawRole) ? rawRole : 'Patient';
 
   const cleanAvatar = String(userObj.avatar || '');
   const safeAvatar = cleanAvatar.startsWith('data:image/')
-    ? cleanAvatar
-    : cleanAvatar.replace(/[^\w.:/_-]/g, '');
+    ? cleanAvatar.replace(/[^\w.:/;,+=?-]/g, '')
+    : cleanAvatar.replace(/[^\w.:/-]/g, '');
 
   return {
     id: String(userObj.id || userObj._id || '').replace(/[^\w-]/g, ''),
@@ -92,7 +92,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await API.post('/api/auth/login', { email, password });
       const { token, user: loggedUser } = res.data;
-      if (typeof token !== 'string' || !/^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(token)) {
+      if (typeof token !== 'string' || !/^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/.test(token)) {
         throw new Error('Server returned an invalid or missing authentication token.');
       }
       localStorage.setItem('caresync_token', token);
@@ -128,7 +128,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await API.post('/api/auth/register', { name, email, password });
       const { token, user: loggedUser } = res.data;
-      if (typeof token !== 'string' || !/^[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+$/.test(token)) {
+      if (typeof token !== 'string' || !/^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/.test(token)) {
         throw new Error('Server returned an invalid or missing authentication token.');
       }
       localStorage.setItem('caresync_token', token);
