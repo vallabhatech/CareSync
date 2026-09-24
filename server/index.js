@@ -101,10 +101,11 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: limits.DEFAULT_BODY_LIMIT }));
 app.use(express.urlencoded({ limit: limits.DEFAULT_BODY_LIMIT, extended: true }));
 
-// Sanitize incoming JSON bodies to prevent prototype pollution attacks.
+// Sanitize incoming JSON bodies and query parameters to prevent prototype pollution attacks.
 // This must run AFTER the body parsers.
-const { sanitizeBody } = require('./utils/requestSanitize');
+const { sanitizeBody, sanitizeQuery } = require('./utils/requestSanitize');
 app.use(sanitizeBody);
+app.use(sanitizeQuery);
 
 // Middleware to catch oversized payload errors thrown by body parsers and log them
 app.use((err, req, res, next) => {
