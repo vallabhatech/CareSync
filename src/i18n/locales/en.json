@@ -44,7 +44,10 @@
     "findClinics": "Find Clinics",
     "profileSettingsTitle": "Profile & Settings",
     "profileSettingsDesc": "Update your preferences and profile.",
-    "goToSettings": "Go to Settings"
+    "goToSettings": "Go to Settings",
+    "exportReportTitle": "Export Health Report",
+    "exportReportDesc": "Download a PDF summary of your health data to share with a provider.",
+    "exportReportBtn": "Export PDF"
   },
   "medicine": {
     "title": "Medicine Tracker",
