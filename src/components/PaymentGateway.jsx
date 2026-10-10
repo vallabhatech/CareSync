@@ -64,6 +64,8 @@ const PaymentGateway = ({ amount = 100, onSuccess, onCancel }) => {
         This is a simulated payment gateway. Do not enter real credit card details.
       </Alert>
 
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+
       <Typography variant="h6" mb={3}>
         Total Amount: ${amount.toFixed(2)}
       </Typography>
@@ -104,11 +106,11 @@ const PaymentGateway = ({ amount = 100, onSuccess, onCancel }) => {
               Cancel
             </Button>
           )}
-          <Button 
-            type="submit" 
-            variant="contained" 
-            color="primary" 
-            fullWidth 
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            fullWidth
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : <LockIcon />}
           >
