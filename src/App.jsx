@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useToast } from './context/ToastContext';
+import { ToastProvider, useToast } from './context/ToastContext';
+import { ToastContainer } from './components/Toast';
 import {
   AppBar,
   Toolbar,
@@ -167,6 +168,7 @@ function ScrollToTopButton() {
 
 function Navbar() {
   const { t } = useTranslation();
+  const { addToast } = useToast();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const trigger = useScrollTrigger({ threshold: 80 });
   const { isAuthenticated, user, logout } = useAuth();
