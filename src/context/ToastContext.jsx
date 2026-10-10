@@ -15,9 +15,7 @@ export const ToastProvider = ({ children }) => {
   }, []);
 
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
-    // Replaced deprecated .substr() with non-deprecated .slice()
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-    
     setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
 
     const timer = setTimeout(() => {
@@ -28,9 +26,9 @@ export const ToastProvider = ({ children }) => {
   }, [removeToast]);
 
   useEffect(() => {
+    const timers = timersRef.current;
     return () => {
-      // Clean up all pending timers if the provider unmounts
-      Object.values(timersRef.current).forEach(clearTimeout);
+      Object.values(timers).forEach(clearTimeout);
     };
   }, []);
 
