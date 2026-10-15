@@ -65,7 +65,7 @@
     "react-app-rewired": "^2.2.1",
     "react-scripts": "^5.0.1",
     "tailwindcss": "^4.3.3",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "postcss-svgo": "^8.0.1",
     "svgo": "^4.0.2"
   },
