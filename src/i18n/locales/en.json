@@ -21,7 +21,8 @@
     "viewProfile": "View Profile",
     "logOut": "Log Out",
     "logIn": "Log In",
-    "telehealth": "Telehealth"
+    "telehealth": "Telehealth",
+    "forums": "Community Forums"
   },
   "dashboard": {
     "greetingMorning": "Good Morning",

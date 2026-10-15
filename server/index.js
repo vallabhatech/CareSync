@@ -161,6 +161,7 @@ app.use('/api/forums', require('./routes/forums'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/family', require('./routes/family'));
 app.use('/api/security', require('./routes/security'));
+app.use('/api/forums', require('./routes/forums'));
 
 // Health Check / Default route
 app.get('/', (req, res) => {
