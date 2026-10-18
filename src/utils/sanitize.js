@@ -71,6 +71,38 @@ export function sanitizeConfig(obj) {
 }
 
 /**
+ * Escapes HTML-sensitive characters in a CSS string so it can be safely
+ * embedded inside an HTML document (either inside a `<style>` element or a
+ * `style="..."` attribute) without allowing markup/script injection.
+ *
+ * CSS stringifiers (including PostCSS's) emit raw CSS text verbatim and do
+ * not perform any HTML-escaping — that is not their responsibility. If
+ * untrusted input ever reaches a CSS string that is later concatenated into
+ * HTML (e.g. `` `<style>${css}</style>` `` or `dangerouslySetInnerHTML`), a
+ * payload such as `</style><script>...</script>` can break out of the CSS
+ * context and execute as markup. This helper neutralizes that by encoding
+ * the HTML-sensitive characters recognized by the HTML parser.
+ *
+ * '&' is escaped first so the entities introduced for the other characters
+ * are not themselves re-escaped.
+ *
+ * @param {string} cssText - Raw CSS text (selector, declaration value, or full stylesheet).
+ * @returns {string} HTML-safe text with `&`, `<`, `>`, `"`, `'` entity-encoded.
+ */
+export function escapeCssForHtml(cssText) {
+  if (cssText === null || cssText === undefined) {
+    return '';
+  }
+
+  return String(cssText)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+/**
  * Normalizes and validates a single header value or an array of values.
  * @param {string|string[]} value - The header value(s).
  * @param {string} key - The header key (for error messages).
