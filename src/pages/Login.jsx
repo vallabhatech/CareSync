@@ -10,13 +10,15 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../context/AuthContext';
+import { getRedirectFromParams } from '../utils/routeRedirects';
 
 function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const { login, signup } = useAuth();
   const theme = useTheme();
@@ -48,7 +50,7 @@ function Login() {
     try {
       await login(loginEmail, loginPassword);
       setLoading(false);
-      navigate('/dashboard');
+      navigate(getRedirectFromParams(searchParams));
     } catch (err) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
@@ -78,7 +80,7 @@ function Login() {
     try {
       await signup(signupName, signupEmail, signupPassword);
       setLoading(false);
-      navigate('/dashboard');
+      navigate(getRedirectFromParams(searchParams));
     } catch (err) {
       console.error('Signup error:', err);
       setError(err.response?.data?.message || 'Signup failed. Please try again.');

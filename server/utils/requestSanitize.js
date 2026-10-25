@@ -57,4 +57,16 @@ function sanitizeBody(req, res, next) {
   next();
 }
 
-module.exports = { sanitizeBody };
+function sanitizeQuery(req, res, next) {
+  try {
+    if (typeof req.query === 'object' && req.query !== null) {
+      req.query = sanitizeObject(req.query);
+    }
+  } catch (e) {
+    console.warn('Query sanitization failed:', e && e.message);
+  }
+  next();
+}
+
+module.exports = { sanitizeBody, sanitizeQuery };
+
