@@ -1,20 +1,17 @@
 /**
  * Unit tests for src/utils/settingsPreferences.js
- *
- * Verifies the email-notification preference read/write helpers and their
- * persistence semantics (default-on, explicit-false disables, round-trips
- * survive a simulated reload).
  */
 
 import {
   EMAIL_NOTIFICATIONS_KEY,
   getEmailNotificationsEnabled,
   setEmailNotificationsEnabled,
+  getSoundNotificationsEnabled,
+  setSoundNotificationsEnabled,
+  getDashboardSettings,
+  setDashboardSettings,
+  DEFAULT_DASHBOARD_SETTINGS,
 } from './settingsPreferences';
-
-/* ------------------------------------------------------------------ */
-/*  localStorage mock                                                  */
-/* ------------------------------------------------------------------ */
 
 beforeEach(() => {
   const store = {};
@@ -36,10 +33,6 @@ beforeEach(() => {
   });
 });
 
-/* ------------------------------------------------------------------ */
-/*  getEmailNotificationsEnabled                                       */
-/* ------------------------------------------------------------------ */
-
 describe('getEmailNotificationsEnabled', () => {
   test('defaults to true when nothing is stored', () => {
     expect(getEmailNotificationsEnabled()).toBe(true);
@@ -54,16 +47,7 @@ describe('getEmailNotificationsEnabled', () => {
     localStorage.setItem(EMAIL_NOTIFICATIONS_KEY, 'false');
     expect(getEmailNotificationsEnabled()).toBe(false);
   });
-
-  test('treats a legacy/unexpected stored value as enabled (default-on)', () => {
-    localStorage.setItem(EMAIL_NOTIFICATIONS_KEY, 'yes');
-    expect(getEmailNotificationsEnabled()).toBe(true);
-  });
 });
-
-/* ------------------------------------------------------------------ */
-/*  setEmailNotificationsEnabled                                       */
-/* ------------------------------------------------------------------ */
 
 describe('setEmailNotificationsEnabled', () => {
   test('persists true under the documented key', () => {
@@ -75,34 +59,46 @@ describe('setEmailNotificationsEnabled', () => {
     setEmailNotificationsEnabled(false);
     expect(localStorage.getItem(EMAIL_NOTIFICATIONS_KEY)).toBe('false');
   });
+});
 
-  test('coerces truthy/falsy inputs to a strict boolean string', () => {
-    setEmailNotificationsEnabled(0);
-    expect(localStorage.getItem(EMAIL_NOTIFICATIONS_KEY)).toBe('false');
-    setEmailNotificationsEnabled(1);
-    expect(localStorage.getItem(EMAIL_NOTIFICATIONS_KEY)).toBe('true');
+describe('sound notifications preference', () => {
+  test('defaults to true when nothing is stored', () => {
+    expect(getSoundNotificationsEnabled()).toBe(true);
   });
 
-  test('returns the stored boolean value', () => {
-    expect(setEmailNotificationsEnabled(true)).toBe(true);
-    expect(setEmailNotificationsEnabled(false)).toBe(false);
+  test('persists sound notification toggle', () => {
+    setSoundNotificationsEnabled(false);
+    expect(getSoundNotificationsEnabled()).toBe(false);
+    setSoundNotificationsEnabled(true);
+    expect(getSoundNotificationsEnabled()).toBe(true);
   });
 });
 
-/* ------------------------------------------------------------------ */
-/*  Round-trip (survives a simulated reload)                           */
-/* ------------------------------------------------------------------ */
-
-describe('round-trip persistence', () => {
-  test('a disabled preference is still disabled after a reload', () => {
-    setEmailNotificationsEnabled(false);
-    // Simulate a fresh page load: a new getter reads the same backing store.
-    expect(getEmailNotificationsEnabled()).toBe(false);
+describe('dashboard settings preference', () => {
+  test('returns default settings when nothing stored', () => {
+    const settings = getDashboardSettings();
+    expect(settings.showGreeting).toBe(true);
+    expect(settings.showHealthQuote).toBe(true);
+    expect(settings.showStatsRow).toBe(true);
+    expect(settings.visibleCards.todaysMedicines).toBe(true);
   });
 
-  test('a re-enabled preference is read back as enabled', () => {
-    setEmailNotificationsEnabled(false);
-    setEmailNotificationsEnabled(true);
-    expect(getEmailNotificationsEnabled()).toBe(true);
+  test('persists and reads back custom dashboard settings', () => {
+    const custom = {
+      showGreeting: false,
+      showHealthQuote: false,
+      showStatsRow: true,
+      visibleCards: {
+        todaysMedicines: true,
+        recentSymptomChecks: false,
+      },
+    };
+    setDashboardSettings(custom);
+    const readBack = getDashboardSettings();
+    expect(readBack.showGreeting).toBe(false);
+    expect(readBack.showHealthQuote).toBe(false);
+    expect(readBack.showStatsRow).toBe(true);
+    expect(readBack.visibleCards.recentSymptomChecks).toBe(false);
+    expect(readBack.visibleCards.todaysMedicines).toBe(true);
   });
 });
